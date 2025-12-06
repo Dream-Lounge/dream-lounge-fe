@@ -1,0 +1,92 @@
+import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+
+export function Footer() {
+    return (
+        <footer className="w-full flex justify-center bg-stone-900 text-stone-100">
+            <div
+                className="w-full max-w-7xl px-12 py-10 flex flex-col gap-8 items-start relative box-border"
+                data-node-id="7:541"
+            >
+                {/* Top Section */}
+                <div className="w-full flex gap-13 items-start relative shrink-0">
+
+                    {/* Left Column: Logo & Description */}
+                    <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
+                        {/* Logo */}
+                        <div className="relative shrink-0 w-full h-11">
+                            <span className="absolute left-0 top-0 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
+                                Dream
+                            </span>
+                            <span className="absolute left-0 top-5 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
+                                Lounge
+                            </span>
+                        </div>
+
+                        {/* Description */}
+                        <div className="relative shrink-0 w-full h-10 font-kr text-sm text-stone-400">
+                            <p className="leading-5">대학생들의 꿈과 열정을 이어주는</p>
+                            <p className="leading-5">동아리 플랫폼입니다.</p>
+                        </div>
+
+                        {/* Social Icons */}
+                        <div className="flex gap-4 mt-2">
+                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
+                                <Facebook className="size-5" />
+                            </div>
+                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
+                                <Instagram className="size-5" />
+                            </div>
+                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
+                                <Youtube className="size-5" />
+                            </div>
+                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
+                                <Twitter className="size-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Columns: Navigation */}
+                    <div className="flex-1 flex gap-20 pt-2">
+                        {/* Column 1: Introduction (Inferred) */}
+                        <div className="flex flex-col gap-3">
+                            <h3 className="font-kr font-bold text-base text-white">소개</h3>
+                            <ul className="flex flex-col gap-2">
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">서비스 소개</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">팀 소개</a></li>
+                            </ul>
+                        </div>
+
+                        {/* Column 2: Customer Support */}
+                        <div className="flex flex-col gap-3">
+                            <h3 className="font-kr font-bold text-base text-white">고객지원</h3>
+                            <ul className="flex flex-col gap-2">
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">공지사항</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">자주 묻는 질문</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">신고하기</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">개발자 센터</a></li>
+                            </ul>
+                        </div>
+
+                        {/* Column 3: Policy */}
+                        <div className="flex flex-col gap-3">
+                            <h3 className="font-kr font-bold text-base text-white">정책</h3>
+                            <ul className="flex flex-col gap-2">
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">이용약관</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">개인정보처리방침</a></li>
+                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">쿠키정책</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Bottom Section: Copyright */}
+                <div className="w-full pt-8 border-t border-stone-800 mt-auto">
+                    <p className="font-kr text-xs text-stone-600 text-center">
+                        © 2024 Dream Lounge. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    );
+}

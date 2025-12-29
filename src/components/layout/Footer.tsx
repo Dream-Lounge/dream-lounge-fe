@@ -1,6 +1,40 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
 
+const SOCIAL_LINKS = [
+    { Icon: Facebook, href: "#", label: "Facebook" },
+    { Icon: Instagram, href: "#", label: "Instagram" },
+    { Icon: Youtube, href: "#", label: "Youtube" },
+    { Icon: Twitter, href: "#", label: "Twitter" },
+];
+
+const FOOTER_SECTIONS = [
+    {
+        title: "소개",
+        links: [
+            { to: "/about", text: "서비스 소개" },
+            { to: "/team", text: "팀 소개" },
+        ],
+    },
+    {
+        title: "고객지원",
+        links: [
+            { to: "/notice", text: "공지사항" },
+            { to: "/faq", text: "자주 묻는 질문" },
+            { to: "/report", text: "신고하기" },
+            { to: "/developers", text: "개발자 센터" },
+        ],
+    },
+    {
+        title: "정책",
+        links: [
+            { to: "/terms", text: "이용약관" },
+            { to: "/privacy", text: "개인정보처리방침" },
+            { to: "/cookies", text: "쿠키정책" },
+        ],
+    },
+];
+
 export function Footer() {
     return (
         <footer className="w-full flex justify-center bg-stone-900 text-stone-100">
@@ -14,14 +48,14 @@ export function Footer() {
                     {/* Left Column: Logo & Description */}
                     <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
                         {/* Logo */}
-                        <div className="relative shrink-0 w-full h-11">
+                        <Link to="/" className="relative shrink-0 w-full h-11 block">
                             <span className="absolute left-0 top-0 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
                                 Dream
                             </span>
                             <span className="absolute left-0 top-5 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
                                 Lounge
                             </span>
-                        </div>
+                        </Link>
 
                         {/* Description */}
                         <div className="relative shrink-0 w-full h-10 font-kr text-sm text-stone-400">
@@ -31,12 +65,7 @@ export function Footer() {
 
                         {/* Social Icons */}
                         <div className="flex gap-4 mt-2">
-                            {[
-                                { Icon: Facebook, href: "#", label: "Facebook" },
-                                { Icon: Instagram, href: "#", label: "Instagram" },
-                                { Icon: Youtube, href: "#", label: "Youtube" },
-                                { Icon: Twitter, href: "#", label: "Twitter" },
-                            ].map(({ Icon, href, label }) => (
+                            {SOCIAL_LINKS.map(({ Icon, href, label }) => (
                                 <a
                                     key={label}
                                     href={href}
@@ -53,32 +82,7 @@ export function Footer() {
 
                     {/* Right Columns: Navigation */}
                     <div className="flex-1 flex gap-20 pt-2">
-                        {[
-                            {
-                                title: "소개",
-                                links: [
-                                    { to: "/about", text: "서비스 소개" },
-                                    { to: "/team", text: "팀 소개" },
-                                ],
-                            },
-                            {
-                                title: "고객지원",
-                                links: [
-                                    { to: "/notice", text: "공지사항" },
-                                    { to: "/faq", text: "자주 묻는 질문" },
-                                    { to: "/report", text: "신고하기" },
-                                    { to: "/developers", text: "개발자 센터" },
-                                ],
-                            },
-                            {
-                                title: "정책",
-                                links: [
-                                    { to: "/terms", text: "이용약관" },
-                                    { to: "/privacy", text: "개인정보처리방침" },
-                                    { to: "/cookies", text: "쿠키정책" },
-                                ],
-                            },
-                        ].map(({ title, links }) => (
+                        {FOOTER_SECTIONS.map(({ title, links }) => (
                             <div key={title} className="flex flex-col gap-3">
                                 <h3 className="font-kr font-bold text-base text-white">{title}</h3>
                                 <ul className="flex flex-col gap-2">

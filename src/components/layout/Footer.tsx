@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
 
 export function Footer() {
@@ -52,35 +53,45 @@ export function Footer() {
 
                     {/* Right Columns: Navigation */}
                     <div className="flex-1 flex gap-20 pt-2">
-                        {/* Column 1: Introduction (Inferred) */}
-                        <div className="flex flex-col gap-3">
-                            <h3 className="font-kr font-bold text-base text-white">소개</h3>
-                            <ul className="flex flex-col gap-2">
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">서비스 소개</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">팀 소개</a></li>
-                            </ul>
-                        </div>
-
-                        {/* Column 2: Customer Support */}
-                        <div className="flex flex-col gap-3">
-                            <h3 className="font-kr font-bold text-base text-white">고객지원</h3>
-                            <ul className="flex flex-col gap-2">
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">공지사항</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">자주 묻는 질문</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">신고하기</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">개발자 센터</a></li>
-                            </ul>
-                        </div>
-
-                        {/* Column 3: Policy */}
-                        <div className="flex flex-col gap-3">
-                            <h3 className="font-kr font-bold text-base text-white">정책</h3>
-                            <ul className="flex flex-col gap-2">
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">이용약관</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">개인정보처리방침</a></li>
-                                <li><a href="#" className="font-kr text-sm text-stone-400 hover:text-white transition-colors">쿠키정책</a></li>
-                            </ul>
-                        </div>
+                        {[
+                            {
+                                title: "소개",
+                                links: [
+                                    { to: "/about", text: "서비스 소개" },
+                                    { to: "/team", text: "팀 소개" },
+                                ],
+                            },
+                            {
+                                title: "고객지원",
+                                links: [
+                                    { to: "/notice", text: "공지사항" },
+                                    { to: "/faq", text: "자주 묻는 질문" },
+                                    { to: "/report", text: "신고하기" },
+                                    { to: "/developers", text: "개발자 센터" },
+                                ],
+                            },
+                            {
+                                title: "정책",
+                                links: [
+                                    { to: "/terms", text: "이용약관" },
+                                    { to: "/privacy", text: "개인정보처리방침" },
+                                    { to: "/cookies", text: "쿠키정책" },
+                                ],
+                            },
+                        ].map(({ title, links }) => (
+                            <div key={title} className="flex flex-col gap-3">
+                                <h3 className="font-kr font-bold text-base text-white">{title}</h3>
+                                <ul className="flex flex-col gap-2">
+                                    {links.map(({ to, text }) => (
+                                        <li key={text}>
+                                            <Link to={to} className="font-kr text-sm text-stone-400 hover:text-white transition-colors">
+                                                {text}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </div>
 
                 </div>

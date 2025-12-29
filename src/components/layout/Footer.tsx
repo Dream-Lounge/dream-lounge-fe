@@ -30,18 +30,23 @@ export function Footer() {
 
                         {/* Social Icons */}
                         <div className="flex gap-4 mt-2">
-                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
-                                <Facebook className="size-5" />
-                            </div>
-                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
-                                <Instagram className="size-5" />
-                            </div>
-                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
-                                <Youtube className="size-5" />
-                            </div>
-                            <div className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900">
-                                <Twitter className="size-5" />
-                            </div>
+                            {[
+                                { Icon: Facebook, href: "#", label: "Facebook" },
+                                { Icon: Instagram, href: "#", label: "Instagram" },
+                                { Icon: Youtube, href: "#", label: "Youtube" },
+                                { Icon: Twitter, href: "#", label: "Twitter" },
+                            ].map(({ Icon, href, label }) => (
+                                <a
+                                    key={label}
+                                    href={href}
+                                    aria-label={label}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="size-8 bg-stone-400 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white transition-colors text-stone-900"
+                                >
+                                    <Icon className="size-5" />
+                                </a>
+                            ))}
                         </div>
                     </div>
 

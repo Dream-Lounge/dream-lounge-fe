@@ -38,10 +38,7 @@ const FOOTER_SECTIONS = [
 export function Footer() {
     return (
         <footer className="w-full flex justify-center bg-stone-900 text-stone-100">
-            <div
-                className="w-full max-w-7xl px-12 py-10 flex flex-col gap-8 items-start relative box-border"
-                data-node-id="7:541"
-            >
+            <div className="w-full max-w-7xl px-12 py-10 flex flex-col gap-8 items-start relative box-border">
                 {/* Top Section */}
                 <div className="w-full flex gap-13 items-start relative shrink-0">
 

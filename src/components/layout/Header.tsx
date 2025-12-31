@@ -1,6 +1,14 @@
+import { Link } from "react-router-dom";
 import { Search, Bell } from "lucide-react";
 import { Input } from "../ui/input";
 
+
+const NAV_ITEMS = [
+    { label: "동아리 찾기", to: "/clubs" },
+    { label: "커뮤니티", to: "/community" },
+    { label: "이벤트", to: "/events" },
+    { label: "고객센터", to: "/support" },
+];
 
 export function Header() {
     return (
@@ -11,7 +19,7 @@ export function Header() {
                     {/* Left Section: Logo & Navigation */}
                     <div className="flex items-center gap-10">
                         {/* Logo */}
-                        <div className="w-14 h-12 relative shrink-0 flex items-center">
+                        <Link to="/" className="w-14 h-12 relative shrink-0 flex items-center">
                             <div className="relative w-full h-full">
                                 <span className="absolute top-1 left-0 font-logo text-base leading-4 tracking-tighter text-primary">
                                     Dream
@@ -20,18 +28,18 @@ export function Header() {
                                     Lounge
                                 </span>
                             </div>
-                        </div>
+                        </Link>
 
                         {/* Navigation */}
                         <nav className="h-10 flex items-center gap-4 sm:gap-6">
-                            {["동아리 찾기", "커뮤니티", "이벤트", "고객센터"].map((item) => (
-                                <a
-                                    key={item}
-                                    href="#"
+                            {NAV_ITEMS.map(({ label, to }) => (
+                                <Link
+                                    key={label}
+                                    to={to}
                                     className="font-kr text-base font-bold text-foreground hover:text-primary transition-colors px-3 py-1.5"
                                 >
-                                    {item}
-                                </a>
+                                    {label}
+                                </Link>
                             ))}
                         </nav>
                     </div>

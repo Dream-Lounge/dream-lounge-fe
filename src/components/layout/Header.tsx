@@ -10,15 +10,20 @@ const NAV_ITEMS = [
     { label: "고객센터", to: "/support" },
 ];
 
+/**
+ * 헤더 컴포넌트
+ * - 사이트 전반의 네비게이션 및 주요 액션(검색, 알림 등)을 담당합니다.
+ * - 반응형 디자인을 고려하여 제작되었습니다.
+ */
 export function Header() {
     return (
         <header className="w-full flex justify-center bg-white shadow-sm">
             <div className="w-full px-12 py-5 flex flex-col items-start bg-background shadow box-border">
                 <div className="w-full flex items-center justify-between relative shrink-0">
 
-                    {/* Left Section: Logo & Navigation */}
+                    {/** 좌측 영역: 로고 및 메인 네비게이션 */}
                     <div className="flex items-center gap-10">
-                        {/* Logo */}
+                        {/** 로고 영역: 클릭 시 홈으로 이동 */}
                         <Link to="/" className="w-14 h-12 relative shrink-0 flex items-center">
                             <div className="relative w-full h-full">
                                 <span className="absolute top-1 left-0 font-logo text-base leading-4 tracking-tighter text-primary">
@@ -30,7 +35,7 @@ export function Header() {
                             </div>
                         </Link>
 
-                        {/* Navigation */}
+                        {/** 메인 네비게이션: 메뉴 목록 렌더링 */}
                         <nav className="h-10 flex items-center gap-4 sm:gap-6">
                             {NAV_ITEMS.map(({ label, to }) => (
                                 <Link
@@ -44,9 +49,9 @@ export function Header() {
                         </nav>
                     </div>
 
-                    {/* Right Section: Search & Actions */}
+                    {/** 우측 영역: 검색 바 및 사용자 액션 버튼 */}
                     <div className="flex items-center gap-4">
-                        {/* Search Bar */}
+                        {/** 검색 바: 동아리 검색 기능 제공 */}
                         <div className="w-full max-w-sm space-y-2">
                             <div className="relative h-9">
                                 <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
@@ -59,7 +64,7 @@ export function Header() {
                             </div>
                         </div>
 
-                        {/* Icon Button (Placeholder) */}
+                        {/** 알림 버튼: 사용자 알림 확인 (추후 기능 구현 예정) */}
                         <button className="size-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
                             <Bell className="size-5 text-foreground" />
                         </button>

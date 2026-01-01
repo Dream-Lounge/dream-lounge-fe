@@ -35,16 +35,21 @@ const FOOTER_SECTIONS = [
     },
 ];
 
+/**
+ * 푸터 컴포넌트
+ * - 사이트 하단에 위치하며 로고, 소셜 링크, 사이트맵, 저작권 정보를 포함합니다.
+ * - 주요 정보 접근성을 높이기 위해 구조화된 링크를 제공합니다.
+ */
 export function Footer() {
     return (
         <footer className="w-full flex justify-center bg-stone-900 text-stone-100">
             <div className="w-full max-w-7xl px-12 py-10 flex flex-col gap-8 items-start relative box-border">
-                {/* Top Section */}
+                {/** 상단 영역: 로고, 서비스 소개, 소셜 링크 및 사이트맵 */}
                 <div className="w-full flex gap-13 items-start relative shrink-0">
 
-                    {/* Left Column: Logo & Description */}
+                    {/** 좌측 열: 브랜드 로고 및 서비스 간단 소개 */}
                     <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
-                        {/* Logo */}
+                        {/** 로고: 클릭 시 메인 페이지로 이동 */}
                         <Link to="/" className="relative shrink-0 w-full h-11 block">
                             <span className="absolute left-0 top-0 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
                                 Dream
@@ -54,13 +59,13 @@ export function Footer() {
                             </span>
                         </Link>
 
-                        {/* Description */}
+                        {/** 서비스 설명: 플랫폼의 비전/슬로건 표시 */}
                         <div className="relative shrink-0 w-full h-10 font-kr text-sm text-stone-400">
                             <p className="leading-5">대학생들의 꿈과 열정을 이어주는</p>
                             <p className="leading-5">동아리 플랫폼입니다.</p>
                         </div>
 
-                        {/* Social Icons */}
+                        {/** 소셜 미디어 링크: 외부 SNS 페이지로 연결 */}
                         <div className="flex gap-4 mt-2">
                             {SOCIAL_LINKS.map(({ Icon, href, label }) => (
                                 <a
@@ -77,7 +82,7 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* Right Columns: Navigation */}
+                    {/** 우측 열: 사이트맵 네비게이션 (소개, 고객지원, 정책 등) */}
                     <div className="flex-1 flex gap-20 pt-2">
                         {FOOTER_SECTIONS.map(({ title, links }) => (
                             <div key={title} className="flex flex-col gap-3">
@@ -97,10 +102,10 @@ export function Footer() {
 
                 </div>
 
-                {/* Bottom Section: Copyright */}
+                {/** 하단 영역: 저작권(Copyright) 표시 */}
                 <div className="w-full pt-8 border-t border-stone-800 mt-auto">
                     <p className="font-kr text-xs text-stone-600 text-center">
-                        © 2024 Dream Lounge. All rights reserved.
+                        © 2026 Dream Lounge. All rights reserved.
                     </p>
                 </div>
             </div>

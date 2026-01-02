@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Music, Laptop, Palette, BookOpen, Camera, Utensils, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import { MoreLink } from "@/components/common/MoreLink";
 
 /**
@@ -11,6 +12,7 @@ import { MoreLink } from "@/components/common/MoreLink";
  * - 우측에는 분과별 통계 및 카테고리 바로가기를 제공합니다.
  */
 export function RecruitingSection() {
+    const navigate = useNavigate();
     // 모집중인 동아리 임시 데이터
     const recruitingClubs = [
         {
@@ -114,7 +116,12 @@ export function RecruitingSection() {
                                     )}
                                     role="button"
                                     tabIndex={0}
-                                    onKeyDown={() => { }}
+                                    onClick={() => navigate(`/club/${club.id}`)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            navigate(`/club/${club.id}`);
+                                        }
+                                    }}
                                 >
                                     <CardContent className="h-full flex flex-col justify-between relative z-10">
                                         <div className="flex justify-between items-start">
@@ -141,6 +148,7 @@ export function RecruitingSection() {
                     {/* 우측 사이드바: 분과별 정보 및 태그 탐색 */}
                     <div className="w-full lg:w-96 shrink-0 space-y-8">
                         <div>
+                            {/* TODO: mt-1 추가하기 */}
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">분과별 모아보기</h2>
                             <div className="space-y-4">
                                 {divisions.map((division) => (

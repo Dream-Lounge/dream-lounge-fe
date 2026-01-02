@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Home } from "@/pages/Home";
+import { ClubDetail } from "@/pages/ClubDetail";
 
 /**
  * 앱의 메인 진입점 컴포넌트
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           {/* 라우터 추가 */}
+          <Route path="/club/:id" element={<ClubDetail />} />
         </Routes>
       </main>
       <Footer />

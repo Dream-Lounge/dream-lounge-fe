@@ -112,6 +112,9 @@ export function RecruitingSection() {
                                         "group cursor-pointer",
                                         "transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                                     )}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={() => { }}
                                 >
                                     <CardContent className="h-full flex flex-col justify-between relative z-10">
                                         <div className="flex justify-between items-start">
@@ -141,7 +144,13 @@ export function RecruitingSection() {
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">분과별 모아보기</h2>
                             <div className="space-y-4">
                                 {divisions.map((division) => (
-                                    <div key={division.name} className="flex justify-between items-center group cursor-pointer">
+                                    <div
+                                        key={division.name}
+                                        className="flex justify-between items-center group cursor-pointer"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={() => { }}
+                                    >
                                         <span className="text-gray-700 font-medium group-hover:text-gray-900">{division.name}</span>
                                         <MoreLink className="text-gray-400 group-hover:text-gray-600">
                                             {division.count}개 동아리
@@ -171,6 +180,9 @@ export function RecruitingSection() {
                                         "bg-white border border-gray-100 rounded-lg shadow-sm",
                                         "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
                                     )}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={() => { }}
                                 >
                                     <cat.icon className="h-4 w-4 text-gray-500" />
                                     <span className="text-sm font-medium text-gray-700">{cat.name}</span>

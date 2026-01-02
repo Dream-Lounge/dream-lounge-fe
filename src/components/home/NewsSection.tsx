@@ -86,7 +86,12 @@ export function NewsSection() {
                     {/* 뉴스 콘텐츠 그리드 레이아웃 */}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         {/* 메인 뉴스 (가장 최신 항목 강조) */}
-                        <div className="group cursor-pointer space-y-4 lg:col-span-2">
+                        <div
+                            className="group cursor-pointer space-y-4 lg:col-span-2"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={() => { }}
+                        >
                             <div className="overflow-hidden rounded-xl border bg-gray-100 aspect-video relative">
                                 <img
                                     src={mainNews.imageUrl}
@@ -122,7 +127,13 @@ export function NewsSection() {
                         {/* 서브 뉴스 리스트 */}
                         <div className="flex flex-col gap-6 lg:col-span-3">
                             {otherNews.map((item) => (
-                                <div key={item.id} className="group flex gap-4 cursor-pointer">
+                                <div
+                                    key={item.id}
+                                    className="group flex gap-4 cursor-pointer"
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={() => { }}
+                                >
                                     <div className="w-32 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
                                         <img
                                             src={item.imageUrl}

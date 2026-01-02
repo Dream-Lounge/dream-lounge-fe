@@ -21,7 +21,7 @@ interface HeroSlide {
 }
 
 /**
- * 히어로 캐러셀 슬라이드 데이터 목록
+ * 히어로 캐러셀 슬라이드 임시 데이터
  */
 const SLIDES: HeroSlide[] = [
     {

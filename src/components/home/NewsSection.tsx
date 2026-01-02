@@ -64,6 +64,12 @@ const NEWS_ITEMS: NewsItem[] = [
  * - 첫 번째 아이템은 크게 강조하고, 나머지는 리스트 형태로 보여줍니다.
  */
 export function NewsSection() {
+    const [mainNews, ...otherNews] = NEWS_ITEMS;
+
+    if (!mainNews) {
+        return null;
+    }
+
     return (
         <Card>
             <CardContent>
@@ -83,13 +89,13 @@ export function NewsSection() {
                         <div className="group cursor-pointer space-y-4 lg:col-span-2">
                             <div className="overflow-hidden rounded-xl border bg-gray-100 aspect-video relative">
                                 <img
-                                    src={NEWS_ITEMS[0].imageUrl}
-                                    alt={NEWS_ITEMS[0].title}
+                                    src={mainNews.imageUrl}
+                                    alt={mainNews.title}
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute top-4 left-4">
                                     <Badge className="bg-white/90 text-primary border-0 backdrop-blur-sm shadow-sm">
-                                        {NEWS_ITEMS[0].category}
+                                        {mainNews.category}
                                     </Badge>
                                 </div>
                             </div>
@@ -97,25 +103,25 @@ export function NewsSection() {
                                 <div className="flex items-center gap-3 text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
                                         <Calendar className="h-3.5 w-3.5" />
-                                        {NEWS_ITEMS[0].date}
+                                        {mainNews.date}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <MessageSquare className="h-3.5 w-3.5" />
-                                        {NEWS_ITEMS[0].comments}
+                                        {mainNews.comments}
                                     </span>
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
-                                    {NEWS_ITEMS[0].title}
+                                    {mainNews.title}
                                 </h3>
                                 <p className="text-gray-600 line-clamp-2">
-                                    {NEWS_ITEMS[0].description}
+                                    {mainNews.description}
                                 </p>
                             </div>
                         </div>
 
                         {/* 서브 뉴스 리스트 */}
                         <div className="flex flex-col gap-6 lg:col-span-3">
-                            {NEWS_ITEMS.slice(1).map((item) => (
+                            {otherNews.map((item) => (
                                 <div key={item.id} className="group flex gap-4 cursor-pointer">
                                     <div className="w-32 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
                                         <img

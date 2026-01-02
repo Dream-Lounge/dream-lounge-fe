@@ -122,10 +122,14 @@ function CarouselDots({ api, count }: { api: CarouselApi | undefined, count: num
 
     useEffect(() => {
         if (!api) return;
-
-        api.on("select", () => {
+        const onSelect = () => {
             setCurrent(api.selectedScrollSnap());
-        });
+        };
+        api.on("select", onSelect);
+        onSelect();
+        return () => {
+            api.off("select", onSelect);
+        };
     }, [api]);
 
     return (

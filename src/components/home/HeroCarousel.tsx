@@ -7,6 +7,7 @@ import {
     type CarouselApi,
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 /**
@@ -137,8 +138,10 @@ function CarouselDots({ api, count }: { api: CarouselApi | undefined, count: num
             {Array.from({ length: count }).map((_, index) => (
                 <div
                     key={index}
-                    className={`h-2 rounded-full transition-all duration-300 ${current === index ? "w-8 bg-white" : "w-2 bg-white/50"
-                        }`}
+                    className={cn(
+                        "h-2 rounded-full transition-all duration-300",
+                        current === index ? "w-8 bg-white" : "w-2 bg-white/50"
+                    )}
                 />
             ))}
         </div>

@@ -18,7 +18,7 @@ const NAV_ITEMS = [
 export function Header() {
     return (
         <header className="w-full flex justify-center bg-background shadow-sm sticky top-0 z-50">
-            <div className="container px-8 py-2 flex flex-col items-start box-border">
+            <div className="container px-8 py-2 flex flex-col items-start">
                 <div className="w-full flex items-center justify-between relative shrink-0">
 
                     {/** 좌측 영역: 로고 및 메인 네비게이션 */}

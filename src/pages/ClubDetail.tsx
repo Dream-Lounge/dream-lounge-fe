@@ -81,7 +81,7 @@ export function ClubDetail() {
                     <section className="space-y-4">
                         <h2 className="text-xl font-bold">동아리 소개</h2>
                         <div className="text-base leading-relaxed text-muted-foreground">
-                            {clubData.longDescription}
+                            {clubData.longDescription.trim()}
                         </div>
                     </section>
 

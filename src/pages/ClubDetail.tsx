@@ -8,6 +8,7 @@ import { NotFound } from "@/pages/error/NotFound";
 
 // 동아리 데이터 타입 정의
 interface ClubData {
+  panel: string;
   title: string;
   category: string;
   tags: string[];
@@ -44,17 +45,17 @@ const MOCK_CLUB_DATA: Record<string, ClubData> = {
       {
         id: 1,
         title: "코딩테스트 스터디",
-        image: "https://placehold.co/400x300/e2e8f0/1e293b?text=Pitching",
+        image: "/images/coding_test_study.jpg",
       },
       {
         id: 2,
-        title: "AI 논문리뷰",
-        image: "https://placehold.co/400x300/e2e8f0/1e293b?text=Lecture",
+        title: "AI 논문 리뷰",
+        image: "/images/paper_review.png",
       },
       {
         id: 3,
         title: "미래 준비에 대한 교수님 초청 강연",
-        image: "https://placehold.co/400x300/e2e8f0/1e293b?text=Hackathon",
+        image: "/images/lecture.png",
       },
     ],
     recruitment: {
@@ -153,10 +154,10 @@ export function ClubDetail() {
                   <img
                     src={activity.image}
                     alt={activity.title}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-55 object-cover object-bottom"
                   />
                   <div className="p-3">
-                    <p className="font-medium text-center text-sm">
+                    <p className="font-bold text-center text-sm">
                       {activity.title}
                     </p>
                   </div>

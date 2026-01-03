@@ -40,7 +40,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-logo: "Alfa Slab One", display;
-  --font-kr: "Noto Sans KR", sans-serif;
+  --font-sans: "Noto Sans KR", sans-serif;
 }
 
 :root {

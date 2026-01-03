@@ -101,126 +101,122 @@ export function RecruitingSection() {
   ];
 
   return (
-    <Card>
-      <CardContent>
-        <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto px-4 py-2">
-          {/* 좌측 영역: 모집중인 동아리 카드 리스트 */}
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                모집중인 동아리
-              </h2>
-              <MoreLink>더보기</MoreLink>
-            </div>
+    <div className="flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-extrabold text-gray-900">
+          모집중인 동아리
+        </h2>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {recruitingClubs.map((club) => (
-                <Card
-                  key={club.id}
-                  className={cn(
-                    club.bgColor,
-                    club.textColor,
-                    "overflow-hidden border-none shadow-sm h-100 relative",
-                    "group cursor-pointer",
-                    "transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                  )}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/club/${club.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      navigate(`/club/${club.id}`);
-                    }
-                  }}
-                >
-                  <CardContent className="h-full flex flex-col justify-between relative z-10">
-                    <div className="flex justify-between items-start">
-                      <Badge className="bg-primary text-primary-foreground border-none py-1 px-3">
-                        {club.category}
+      <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto">
+        {/* 좌측 영역: 모집중인 동아리 카드 리스트 */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {recruitingClubs.map((club) => (
+              <Card
+                key={club.id}
+                className={cn(
+                  club.bgColor,
+                  club.textColor,
+                  "overflow-hidden border-none shadow-sm h-100 relative",
+                  "group cursor-pointer",
+                  "transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                )}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/club/${club.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    navigate(`/club/${club.id}`);
+                  }
+                }}
+              >
+                <CardContent className="h-full flex flex-col justify-between relative z-10">
+                  <div className="flex justify-between items-start">
+                    <Badge className="bg-primary text-primary-foreground border-none py-1 px-3">
+                      {club.category}
+                    </Badge>
+                    {club.deadlineText && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-secondary text-secondary-foreground border-none py-1 px-3"
+                      >
+                        {club.deadlineText}
                       </Badge>
-                      {club.deadlineText && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-secondary text-secondary-foreground border-none py-1 px-3"
-                        >
-                          {club.deadlineText}
-                        </Badge>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold mb-1">{club.title}</h3>
-                      <p className="text-sm opacity-70">{club.endDate}</p>
-                    </div>
-                  </CardContent>
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* 우측 사이드바: 분과별 정보 및 태그 탐색 */}
-          <div className="w-full lg:w-96 shrink-0 space-y-8">
-            <div>
-              {/* TODO: mt-1 추가하기 */}
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                분과별 모아보기
-              </h2>
-              <div className="space-y-4">
-                {divisions.map((division) => (
-                  <div
-                    key={division.name}
-                    className="flex justify-between items-center group cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={() => {}}
-                  >
-                    <span className="text-gray-700 font-medium group-hover:text-gray-900">
-                      {division.name}
-                    </span>
-                    <MoreLink className="text-gray-400 group-hover:text-gray-600">
-                      {division.count}개 동아리
-                    </MoreLink>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">{club.title}</h3>
+                    <p className="text-sm opacity-70">{club.endDate}</p>
+                  </div>
+                </CardContent>
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
+              </Card>
+            ))}
+          </div>
+        </div>
 
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full h-12",
-                "text-gray-700 border-border",
-                "hover:bg-gray-50 hover:text-gray-900",
-                "cursor-pointer"
-              )}
-            >
-              전체 동아리
-            </Button>
-
-            <div className="flex flex-wrap gap-3">
-              {categories.map((cat) => (
+        {/* 우측 사이드바: 분과별 정보 및 태그 탐색 */}
+        <div className="w-full lg:w-96 shrink-0 space-y-8">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-600 mb-6">
+              분과별 모아보기
+            </h3>
+            <div className="space-y-4">
+              {divisions.map((division) => (
                 <div
-                  key={cat.name}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2",
-                    "bg-white border border-gray-100 rounded-lg shadow-sm",
-                    "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
-                  )}
+                  key={division.name}
+                  className="flex justify-between items-center group cursor-pointer"
                   role="button"
                   tabIndex={0}
                   onKeyDown={() => {}}
                 >
-                  <cat.icon className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {cat.name}
+                  <span className="text-gray-700 font-medium group-hover:text-gray-900">
+                    {division.name}
                   </span>
-                  <span className="text-xs text-gray-400">{cat.count}</span>
+                  <MoreLink className="text-gray-400 group-hover:text-gray-600">
+                    {division.count}개 동아리
+                  </MoreLink>
                 </div>
               ))}
             </div>
           </div>
+
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full h-12",
+              "text-gray-700 border-border",
+              "hover:bg-gray-50 hover:text-gray-900",
+              "cursor-pointer"
+            )}
+          >
+            전체 동아리
+          </Button>
+
+          <div className="flex flex-wrap gap-3">
+            {categories.map((cat) => (
+              <div
+                key={cat.name}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2",
+                  "bg-white border border-gray-100 rounded-lg shadow-sm",
+                  "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
+                )}
+                role="button"
+                tabIndex={0}
+                onKeyDown={() => {}}
+              >
+                <cat.icon className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  {cat.name}
+                </span>
+                <span className="text-xs text-gray-400">{cat.count}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

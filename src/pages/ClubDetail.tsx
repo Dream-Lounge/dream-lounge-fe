@@ -8,7 +8,6 @@ import { NotFound } from "@/pages/error/NotFound";
 
 // 동아리 데이터 타입 정의
 interface ClubData {
-  panel: string;
   title: string;
   category: string;
   tags: string[];

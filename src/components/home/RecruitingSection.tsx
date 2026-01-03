@@ -103,9 +103,9 @@ export function RecruitingSection() {
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-3xl font-extrabold text-gray-900">
           모집중인 동아리
-        </h1>
+        </h2>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto">

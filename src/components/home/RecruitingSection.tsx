@@ -17,35 +17,35 @@ export function RecruitingSection() {
     const recruitingClubs = [
         {
             id: 1,
-            title: "코딩 마스터즈",
-            category: "학술",
+            title: "디스토션",
+            category: "공연",
             endDate: "2023.09.26",
-            deadlineText: "오늘까지",
+            deadlineText: "",
             bgColor: "bg-slate-800",
             textColor: "text-white"
         },
         {
             id: 2,
-            title: "디지털 아트 크리에이터",
-            category: "교양",
+            title: "RCY",
+            category: "봉사",
             endDate: "2025.09.26",
-            deadlineText: "오늘까지",
+            deadlineText: "",
             bgColor: "bg-slate-800",
             textColor: "text-white"
         },
         {
             id: 3,
-            title: "경제 분석 연구회",
-            category: "학술",
+            title: "사진 분석 연구회",
+            category: "교양",
             endDate: "2025.09.26",
-            deadlineText: "오늘까지",
+            deadlineText: "",
             bgColor: "bg-slate-800",
             textColor: "text-white"
         },
         {
             id: 4,
-            title: "지역사회 봉사단",
-            category: "봉사",
+            title: "스매시",
+            category: "체육",
             endDate: "2025.09.28",
             deadlineText: "",
             bgColor: "bg-slate-800",
@@ -53,19 +53,19 @@ export function RecruitingSection() {
         },
         {
             id: 5,
-            title: "드림라운지 산악회",
-            category: "체육",
+            title: "유스호스텔",
+            category: "교양",
             endDate: "2025.09.26",
-            deadlineText: "오늘까지",
+            deadlineText: "",
             bgColor: "bg-slate-800",
             textColor: "text-white"
         },
         {
             id: 6,
-            title: "드림라운지 음악회",
-            category: "음악",
-            endDate: "2025.09.28",
-            deadlineText: "",
+            title: "CPR",
+            category: "학술",
+            endDate: "상시모집",
+            deadlineText: "모집중",
             bgColor: "bg-slate-800",
             textColor: "text-white"
         }

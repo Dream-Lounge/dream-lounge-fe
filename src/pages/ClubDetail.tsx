@@ -1,11 +1,70 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
-import { MOCK_CLUB_DATA } from "@/data/clubs";
+
+// 동아리 데이터 타입 정의
+interface ClubData {
+  title: string;
+  category: string;
+  tags: string[];
+  description: string;
+  longDescription: string;
+  activities: { id: number; title: string; image: string }[];
+  recruitment: {
+    status: string;
+    period: string;
+    target: string;
+    process: string;
+  };
+}
+
+/**
+ * 동아리 목업 데이터 상수
+ * - 성능 최적화를 위해 컴포넌트 외부로 분리했습니다.
+ * - ID를 키로 사용하여 O(1) 조회가 가능하도록 구성했습니다.
+ * - 다양한 동아리 데이터를 추가하여 동적 라우팅 테스트가 가능합니다.
+ */
+const MOCK_CLUB_DATA: Record<string, ClubData> = {
+  "6": {
+    title: "CPR (CJU Public Relation)",
+    category: "학술분과",
+    tags: ["#코딩", "#취준", "#대학원", "#인공지능"],
+    description:
+      "프로그래밍과 AI에 대한 열정을 실현하며 미래를 준비하는 동아리 입니다.",
+    longDescription: `
+      우리 동아리는 학생들이 자신의 꿈과 목표를 찾고, 그것을 실현하기 위한 실질적인 지식과 경험을 쌓을 수 있는 동아리 활동을 제공하는 것이 CPR의 목표입니다!
+
+우리는 취업과 진학이라는 두 가지 주요 진로 방향에 맞춰 체계적인 지원 시스템을 구축하여, 부원들이 각자의 길을 찾고 성장할 수 있도록 서포트하는 동아리입니다.
+    `,
+    activities: [
+      {
+        id: 1,
+        title: "코딩테스트 스터디",
+        image: "/images/coding_test_study.jpg",
+      },
+      {
+        id: 2,
+        title: "AI 논문 리뷰",
+        image: "/images/paper_review.png",
+      },
+      {
+        id: 3,
+        title: "미래 준비에 대한 교수님 초청 강연",
+        image: "/images/lecture.png",
+      },
+    ],
+    recruitment: {
+      status: "모집예정",
+      period: "2026.03.01 ~ 2026.03.14",
+      target: "코딩과 인공지능에 열정 있는 모든 재학생 (전공 무관)",
+      process: "서류 심사 > 면접 > 최종 합격",
+    },
+  },
+};
 
 /**
  * 동아리 상세 페이지 컴포넌트
@@ -13,14 +72,18 @@ import { MOCK_CLUB_DATA } from "@/data/clubs";
  * - MOCK_CLUB_DATA를 활용하여 다양한 동아리 예시를 보여줍니다.
  */
 export function ClubDetail() {
-  const navigate = useNavigate();
-
+  // 1. URL 파라미터에서 id 추출
   const { id } = useParams<{ id: string }>();
+
+  // 2. id에 해당하는 동아리 데이터 조회 (없으면 null)
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
+
+  // 3. 데이터가 없을 경우 (잘못된 접근 또는 존재하지 않는 ID)
   if (!clubData) {
     return <NotFound />;
   }
 
+  // 4. 정상적으로 데이터가 로드된 경우 렌더링
   return (
     <div className="container flex flex-col gap-8 pb-20 mx-auto w-full">
       {/** 히어로 섹션: 동아리 대표 이미지 및 모집 상태 뱃지 */}
@@ -141,9 +204,7 @@ export function ClubDetail() {
 
                 <Separator className="my-2" />
 
-                <Button
-                  onClick={() => navigate(`/club/${id}/apply`)}
-                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
+                <Button className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
                   지원하기
                 </Button>
               </CardContent>

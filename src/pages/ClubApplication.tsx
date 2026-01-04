@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DEPARTMENTS } from "@/data/departments";
 import { getClubApplicationData } from "@/data/clubs";
+import { NotFound } from "@/pages/error/NotFound";
 
 /**
  * 동아리 지원서 페이지 컴포넌트
@@ -42,6 +43,10 @@ export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
   // 공유 목업 데이터에서 필요한 필드(title, category, description)만 가져옴
   const clubData = id ? getClubApplicationData(id) : null;
+  if (!clubData) {
+    return <NotFound />;
+  }
+
   const navigate = useNavigate();
 
   // 폼 필드 상태
@@ -232,12 +237,10 @@ export function ClubApplication() {
                                   key={dept}
                                   value={dept}
                                   onSelect={(value) => {
-                                    const newValue =
-                                      value === selectedDepartment ? "" : value;
-                                    setSelectedDepartment(newValue);
+                                    setSelectedDepartment(value);
                                     setDepartmentOpen(false);
                                     // 학과 선택 시 에러 상태 해제
-                                    if (newValue && errors.department) {
+                                    if (value && errors.department) {
                                       setErrors((prev) => ({
                                         ...prev,
                                         department: false,

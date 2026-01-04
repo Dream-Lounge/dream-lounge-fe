@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Home } from "@/pages/Home";
 import { ClubDetail } from "@/pages/ClubDetail";
 import { ClubApplication } from "@/pages/ClubApplication";
@@ -8,24 +8,29 @@ import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 /**
  * 앱의 메인 진입점 컴포넌트
- * - 전체 레이아웃 (헤더, 푸터)을 설정하고 라우팅을 관리합니다.
- * - Flexbox를 사용하여 footer가 항상 하단에 위치하도록 레이아웃을 구성했습니다.
+ * - MainLayout: 헤더/푸터가 있는 일반 페이지용 레이아웃
+ * - AuthLayout: 헤더/푸터 없는 인증 페이지용 레이아웃
  */
 function App() {
   return (
     <div className="min-h-screen bg-background font-sans flex flex-col">
       <ScrollToTop />
-      <Header />
-      <main className="container mx-auto py-8 px-4 flex-1">
-        <Routes>
+      <Routes>
+        {/* 헤더/푸터 없는 인증 페이지 */}
+        <Route element={<AuthLayout />}>
+          <Route path="/signup" element={<div>회원가입 페이지 (준비중)</div>} />
+          <Route path="/login" element={<div>로그인 페이지 (준비중)</div>} />
+        </Route>
+
+        {/* 헤더/푸터 있는 일반 페이지 */}
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
           <Route path="/club/:id/apply" element={<ClubApplication />} />
-        </Routes>
-      </main>
-      <Footer />
+        </Route>
+      </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

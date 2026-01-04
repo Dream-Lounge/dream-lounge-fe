@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,18 +72,14 @@ const MOCK_CLUB_DATA: Record<string, ClubData> = {
  * - MOCK_CLUB_DATA를 활용하여 다양한 동아리 예시를 보여줍니다.
  */
 export function ClubDetail() {
-  // 1. URL 파라미터에서 id 추출
+  const navigate = useNavigate();
+
   const { id } = useParams<{ id: string }>();
-
-  // 2. id에 해당하는 동아리 데이터 조회 (없으면 null)
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
-
-  // 3. 데이터가 없을 경우 (잘못된 접근 또는 존재하지 않는 ID)
   if (!clubData) {
     return <NotFound />;
   }
 
-  // 4. 정상적으로 데이터가 로드된 경우 렌더링
   return (
     <div className="container flex flex-col gap-8 pb-20 mx-auto w-full">
       {/** 히어로 섹션: 동아리 대표 이미지 및 모집 상태 뱃지 */}
@@ -204,7 +200,9 @@ export function ClubDetail() {
 
                 <Separator className="my-2" />
 
-                <Button className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
+                <Button
+                  onClick={() => navigate(`/club/${id}/apply`)}
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
                   지원하기
                 </Button>
               </CardContent>

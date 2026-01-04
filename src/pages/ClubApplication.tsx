@@ -166,7 +166,7 @@ export function ClubApplication() {
                     onBlur={() => validateFieldOnBlur("name", name)}
                     className={cn(
                       errors.name &&
-                        "border-red-500 focus-visible:ring-red-500",
+                        "border-destructive focus-visible:ring-destructive",
                     )}
                     required
                   />
@@ -183,7 +183,7 @@ export function ClubApplication() {
                     onBlur={() => validateFieldOnBlur("studentId", studentId)}
                     className={cn(
                       errors.studentId &&
-                        "border-red-500 focus-visible:ring-red-500",
+                        "border-destructive focus-visible:ring-destructive",
                     )}
                     required
                   />
@@ -204,7 +204,7 @@ export function ClubApplication() {
                         className={cn(
                           "w-full justify-between font-normal",
                           errors.department &&
-                            "border-red-500 focus-visible:ring-red-500",
+                            "border-destructive focus-visible:ring-destructive",
                         )}
                       >
                         <span
@@ -276,7 +276,7 @@ export function ClubApplication() {
                     onBlur={() => validateFieldOnBlur("email", email)}
                     className={cn(
                       errors.email &&
-                        "border-red-500 focus-visible:ring-red-500",
+                        "border-destructive focus-visible:ring-destructive",
                     )}
                     required
                   />
@@ -308,7 +308,7 @@ export function ClubApplication() {
                     className={cn(
                       "min-h-[120px] resize-none",
                       errors.motivation &&
-                        "border-red-500 focus-visible:ring-red-500",
+                        "border-destructive focus-visible:ring-destructive",
                     )}
                     value={motivation}
                     onChange={(e) => setMotivation(e.target.value)}

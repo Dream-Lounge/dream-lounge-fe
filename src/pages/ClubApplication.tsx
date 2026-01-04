@@ -120,7 +120,9 @@ export function ClubApplication() {
                                                 aria-expanded={departmentOpen}
                                                 className="w-full justify-between font-normal"
                                             >
-                                                {selectedDepartment || "학과를 선택하세요"}
+                                                <span className={cn(!selectedDepartment && "text-muted-foreground")}>
+                                                    {selectedDepartment || "학과를 선택하세요"}
+                                                </span>
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>

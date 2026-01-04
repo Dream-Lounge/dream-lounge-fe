@@ -106,7 +106,7 @@ export function ClubApplication() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 max-w-[800px]">
+      <div className="container mx-auto px-4 max-w-4xl">
         {/* 뒤로가기 링크 */}
         <Button
           variant="outline"
@@ -114,7 +114,7 @@ export function ClubApplication() {
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">동아리 상세로 돌아가기</span>
+          <span className="text-sm">돌아가기</span>
         </Button>
 
         <div className="flex flex-col gap-8">

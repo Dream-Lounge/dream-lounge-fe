@@ -237,12 +237,10 @@ export function ClubApplication() {
                                   key={dept}
                                   value={dept}
                                   onSelect={(value) => {
-                                    const newValue =
-                                      value === selectedDepartment ? "" : value;
-                                    setSelectedDepartment(newValue);
+                                    setSelectedDepartment(value);
                                     setDepartmentOpen(false);
                                     // 학과 선택 시 에러 상태 해제
-                                    if (newValue && errors.department) {
+                                    if (value && errors.department) {
                                       setErrors((prev) => ({
                                         ...prev,
                                         department: false,

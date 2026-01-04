@@ -22,24 +22,18 @@ import {
 import { FileText, HelpCircle, Send, ArrowLeft, Users, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEPARTMENTS } from "@/data/departments";
-
-// 동아리 데이터 (ClubDetail.tsx와 동일한 목업 데이터)
-const MOCK_CLUB_DATA: Record<string, { title: string; category: string; description: string }> = {
-    "6": {
-        title: "CPR (CJU Public Relation)",
-        category: "학술분과",
-        description: "프로그래밍과 AI에 대한 열정을 실현하며 미래를 준비하는 동아리 입니다.",
-    },
-};
+import { getClubApplicationData } from "@/data/clubs";
 
 /**
  * 동아리 지원서 페이지 컴포넌트
  * - Figma 디자인(node 249-1301)을 기반으로 구현
  * - 기본 정보, 지원 동기 입력 폼으로 구성
+ * - 공유 데이터에서 title, category, description만 추출하여 사용
  */
 export function ClubApplication() {
     const { id } = useParams<{ id: string }>();
-    const clubData = id ? MOCK_CLUB_DATA[id] : null;
+    // 공유 목업 데이터에서 필요한 필드(title, category, description)만 가져옴
+    const clubData = id ? getClubApplicationData(id) : null;
     const navigate = useNavigate();
 
     // 학과 선택 상태

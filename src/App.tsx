@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Home } from "@/pages/Home";
 import { ClubDetail } from "@/pages/ClubDetail";
+import { ClubApplication } from "@/pages/ClubApplication";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 /**
@@ -18,8 +19,8 @@ function App() {
       <main className="container mx-auto py-8 px-4 flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* 라우터 추가 */}
           <Route path="/club/:id" element={<ClubDetail />} />
+          <Route path="/club/:id/apply" element={<ClubApplication />} />
         </Routes>
       </main>
       <Footer />

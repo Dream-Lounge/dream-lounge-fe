@@ -145,8 +145,8 @@ export function Signup() {
         <CardContent>
           <FieldGroup className="gap-3">
             <Field>
-              <FieldLabel htmlFor="studentId" className="gap-1">
-                학번<span className="text-destructive">*</span>
+              <FieldLabel htmlFor="studentId">
+                학번
               </FieldLabel>
               <Input
                 id="studentId"
@@ -158,7 +158,7 @@ export function Signup() {
                 onBlur={(e) => handleBlur("studentId", e.target.value)}
                 className={cn(
                   errors.studentId &&
-                    "border-destructive focus-visible:ring-destructive",
+                  "border-destructive focus-visible:ring-destructive",
                 )}
                 required
               />
@@ -170,8 +170,8 @@ export function Signup() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="password" className="gap-1">
-                비밀번호<span className="text-destructive">*</span>
+              <FieldLabel htmlFor="password">
+                비밀번호
               </FieldLabel>
               <div className="relative">
                 <Input
@@ -186,7 +186,7 @@ export function Signup() {
                   className={cn(
                     "pr-10",
                     errors.password &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
@@ -212,8 +212,8 @@ export function Signup() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="passwordConfirm" className="gap-1">
-                비밀번호 확인<span className="text-destructive">*</span>
+              <FieldLabel htmlFor="passwordConfirm">
+                비밀번호 확인
               </FieldLabel>
               <div className="relative">
                 <Input
@@ -226,7 +226,7 @@ export function Signup() {
                   className={cn(
                     "pr-10",
                     (errors.passwordConfirm || errors.passwordMismatch) &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
@@ -255,12 +255,12 @@ export function Signup() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field>
-                <FieldLabel htmlFor="name" className="gap-1">
-                  이름<span className="text-destructive">*</span>
+                <FieldLabel htmlFor="name">
+                  이름
                 </FieldLabel>
                 <Input
                   id="name"
-                  placeholder="홍길동"
+                  placeholder="이름을 입력해주세요"
                   value={name}
                   onChange={(e) =>
                     handleFieldChange("name", e.target.value, setName)
@@ -268,20 +268,20 @@ export function Signup() {
                   onBlur={(e) => handleBlur("name", e.target.value)}
                   className={cn(
                     errors.name &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="phone" className="gap-1">
-                  전화번호<span className="text-destructive">*</span>
+                <FieldLabel htmlFor="phone">
+                  전화번호
                 </FieldLabel>
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="01012345678"
+                  placeholder="전화번호를 입력해주세요"
                   value={phone}
                   onChange={(e) =>
                     handleFieldChange("phone", e.target.value, setPhone)
@@ -289,7 +289,7 @@ export function Signup() {
                   onBlur={(e) => handleBlur("phone", e.target.value)}
                   className={cn(
                     errors.phone &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
@@ -302,8 +302,8 @@ export function Signup() {
             </div>
 
             <Field>
-              <FieldLabel htmlFor="department" className="gap-1">
-                학과<span className="text-destructive">*</span>
+              <FieldLabel htmlFor="department">
+                학과
               </FieldLabel>
               <DepartmentCombobox
                 value={selectedDepartment}

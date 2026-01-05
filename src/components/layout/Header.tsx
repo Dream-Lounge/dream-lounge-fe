@@ -29,15 +29,8 @@ export function Header() {
                     {/** 좌측 영역: 로고 및 메인 네비게이션 */}
                     <div className="flex items-center gap-10">
                         {/** 로고 영역: 클릭 시 홈으로 이동 */}
-                        <Link to="/" className="w-14 h-12 relative shrink-0 flex items-center">
-                            <div className="relative w-full h-full">
-                                <span className="absolute top-1 left-0 font-logo text-base leading-4 tracking-tighter text-primary">
-                                    Dream
-                                </span>
-                                <span className="absolute top-7 left-0 font-logo text-base leading-4 tracking-tighter text-primary">
-                                    Lounge
-                                </span>
-                            </div>
+                        <Link to="/" className="h-12 shrink-0 flex items-center">
+                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" />
                         </Link>
 
                         {/** 메인 네비게이션: 메뉴 목록 렌더링 */}

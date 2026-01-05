@@ -6,30 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  FileText,
-  HelpCircle,
-  Send,
-  ArrowLeft,
-  Users,
-  Check,
-  ChevronsUpDown,
-} from "lucide-react";
+import { DepartmentCombobox } from "@/components/common/DepartmentCombobox";
+import { FileText, HelpCircle, Send, ArrowLeft, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEPARTMENTS } from "@/data/departments";
 import { getClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
 
@@ -56,7 +35,6 @@ export function ClubApplication() {
   const [motivation, setMotivation] = useState("");
 
   // 학과 선택 상태
-  const [departmentOpen, setDepartmentOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
 
   // 에러 상태 (필수 필드 유효성 검사)
@@ -197,74 +175,20 @@ export function ClubApplication() {
                   <FieldLabel htmlFor="department" className="gap-1">
                     학과<span className="text-destructive">*</span>
                   </FieldLabel>
-                  <Popover
-                    open={departmentOpen}
-                    onOpenChange={setDepartmentOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={departmentOpen}
-                        className={cn(
-                          "w-full justify-between font-normal",
-                          errors.department &&
-                            "border-destructive focus-visible:ring-destructive",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            !selectedDepartment && "text-muted-foreground",
-                          )}
-                        >
-                          {selectedDepartment || "학과를 선택하세요"}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="학과 검색..." />
-                        <CommandList>
-                          <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
-                          {DEPARTMENTS.map((collegeGroup) => (
-                            <CommandGroup
-                              key={collegeGroup.college}
-                              heading={collegeGroup.college}
-                            >
-                              {collegeGroup.departments.map((dept) => (
-                                <CommandItem
-                                  key={dept}
-                                  value={dept}
-                                  onSelect={(value) => {
-                                    setSelectedDepartment(value);
-                                    setDepartmentOpen(false);
-                                    // 학과 선택 시 에러 상태 해제
-                                    if (value && errors.department) {
-                                      setErrors((prev) => ({
-                                        ...prev,
-                                        department: false,
-                                      }));
-                                    }
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedDepartment === dept
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-                                  {dept}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          ))}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <DepartmentCombobox
+                    value={selectedDepartment}
+                    onValueChange={(value) => {
+                      setSelectedDepartment(value);
+                      // 학과 선택 시 에러 상태 해제
+                      if (value && errors.department) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          department: false,
+                        }));
+                      }
+                    }}
+                    hasError={errors.department}
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="email" className="gap-1">

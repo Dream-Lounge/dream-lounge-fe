@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
-import { Search, Bell } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { Input } from "../ui/input";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 
 const NAV_ITEMS = [
@@ -57,10 +62,30 @@ export function Header() {
                             </div>
                         </div>
 
-                        {/** 알림 버튼: 사용자 알림 확인 (추후 기능 구현 예정) */}
-                        <button className="size-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
-                            <Bell className="size-5 text-foreground" />
-                        </button>
+                        {/** 사용자 메뉴: 로그인 및 지원 내역 */}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button className="size-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
+                                    <User className="size-5 text-foreground" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-40 p-1">
+                                <div className="flex flex-col">
+                                    <Link
+                                        to="/login"
+                                        className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                    >
+                                        로그인
+                                    </Link>
+                                    <Link
+                                        to="/my-applications"
+                                        className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                    >
+                                        내 지원 내역
+                                    </Link>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
 
                 </div>

@@ -6,10 +6,12 @@ import { Outlet } from "react-router-dom";
  */
 export function AuthLayout() {
   return (
-    <main className="min-h-screen flex items-start justify-center pt-[12vh] pb-8 px-4">
+    <main className="min-h-screen grid grid-rows-[2fr_auto_3fr] justify-items-center px-4">
+      <div />
       <div className="w-full max-w-md">
         <Outlet />
       </div>
+      <div />
     </main>
   );
 }

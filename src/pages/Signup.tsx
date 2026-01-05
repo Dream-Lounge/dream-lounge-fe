@@ -54,7 +54,9 @@ export function Signup() {
   });
 
   // 폼 제출 핸들러
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
     const newErrors = {
       name: validators.name(name),
       phone: validators.phone(phone),
@@ -82,8 +84,8 @@ export function Signup() {
       password,
     });
 
-    // 성공 시 홈으로 이동 (임시)
-    navigate("/");
+    // 성공 시 로그인 페이지로 이동
+    navigate("/login");
   };
 
   // 실시간 검증 핸들러
@@ -143,7 +145,8 @@ export function Signup() {
           <CardTitle className="text-2xl font-bold">회원가입</CardTitle>
         </CardHeader>
         <CardContent>
-          <FieldGroup className="gap-3">
+          <form onSubmit={handleSubmit}>
+            <FieldGroup className="gap-3">
             <Field>
               <FieldLabel htmlFor="studentId">
                 학번
@@ -321,9 +324,9 @@ export function Signup() {
             </Field>
 
             <Button
+              type="submit"
               size="lg"
               className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all mt-6"
-              onClick={handleSubmit}
             >
               <UserPlus className="h-5 w-5 mr-2" />
               회원가입
@@ -339,7 +342,8 @@ export function Signup() {
                 로그인
               </Button>
             </p>
-          </FieldGroup>
+            </FieldGroup>
+          </form>
         </CardContent>
       </Card>
     </>

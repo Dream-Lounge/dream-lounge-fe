@@ -36,7 +36,9 @@ export function Login() {
   const [loginError, setLoginError] = useState(false);
 
   // 폼 제출 핸들러
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
     const newErrors = {
       studentId: validators.studentId(studentId),
       password: validators.password(password),
@@ -59,10 +61,9 @@ export function Login() {
     });
 
     // 임시: 로그인 실패 에러 표시 (API 연동 시 제거)
-    setLoginError(true);
+    // setLoginError(true);
 
-    // 성공 시 홈으로 이동 (API 연동 후 활성화)
-    // navigate("/");
+    navigate("/");
   };
 
   // 실시간 검증 핸들러
@@ -100,100 +101,102 @@ export function Login() {
           <CardTitle className="text-2xl font-bold">로그인</CardTitle>
         </CardHeader>
         <CardContent>
-          <FieldGroup className="gap-3">
-            <Field>
-              <FieldLabel htmlFor="studentId">
-                학번
-              </FieldLabel>
-              <Input
-                id="studentId"
-                placeholder="학번을 입력해주세요"
-                value={studentId}
-                onChange={(e) =>
-                  handleFieldChange("studentId", e.target.value, setStudentId)
-                }
-                onBlur={(e) => handleBlur("studentId", e.target.value)}
-                className={cn(
-                  (errors.studentId || loginError) &&
-                  "border-destructive focus-visible:ring-destructive",
-                )}
-                required
-              />
-              {errors.studentId && studentId && !loginError && (
-                <p className="text-sm text-destructive mt-1">
-                  {ERROR_MESSAGES.STUDENT_ID}
-                </p>
-              )}
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="password">
-                비밀번호
-              </FieldLabel>
-              <div className="relative">
+          <form onSubmit={handleSubmit}>
+            <FieldGroup className="gap-3">
+              <Field>
+                <FieldLabel htmlFor="studentId">
+                  학번
+                </FieldLabel>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  placeholder="비밀번호를 입력해주세요"
+                  id="studentId"
+                  placeholder="학번을 입력해주세요"
+                  value={studentId}
                   onChange={(e) =>
-                    handleFieldChange("password", e.target.value, setPassword)
+                    handleFieldChange("studentId", e.target.value, setStudentId)
                   }
-                  onBlur={(e) => handleBlur("password", e.target.value)}
+                  onBlur={(e) => handleBlur("studentId", e.target.value)}
                   className={cn(
-                    "pr-10",
-                    (errors.password || loginError) &&
+                    (errors.studentId || loginError) &&
                     "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </div>
-              {errors.password && password && !loginError && (
-                <p className="text-sm text-destructive mt-1">
-                  {ERROR_MESSAGES.PASSWORD}
+                {errors.studentId && studentId && !loginError && (
+                  <p className="text-sm text-destructive mt-1">
+                    {ERROR_MESSAGES.STUDENT_ID}
+                  </p>
+                )}
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="password">
+                  비밀번호
+                </FieldLabel>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    placeholder="비밀번호를 입력해주세요"
+                    onChange={(e) =>
+                      handleFieldChange("password", e.target.value, setPassword)
+                    }
+                    onBlur={(e) => handleBlur("password", e.target.value)}
+                    className={cn(
+                      "pr-10",
+                      (errors.password || loginError) &&
+                      "border-destructive focus-visible:ring-destructive",
+                    )}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                {errors.password && password && !loginError && (
+                  <p className="text-sm text-destructive mt-1">
+                    {ERROR_MESSAGES.PASSWORD}
+                  </p>
+                )}
+              </Field>
+
+              {loginError && (
+                <p className="text-sm text-destructive text-center">
+                  학번 또는 비밀번호가 일치하지 않습니다
                 </p>
               )}
-            </Field>
 
-            {loginError && (
-              <p className="text-sm text-destructive text-center">
-                학번 또는 비밀번호가 일치하지 않습니다
-              </p>
-            )}
-
-            <Button
-              size="lg"
-              className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all mt-6"
-              onClick={handleSubmit}
-            >
-              <LogIn className="h-5 w-5 mr-2" />
-              로그인
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              계정이 없으신가요?{" "}
               <Button
-                variant="link"
-                className="p-0 h-auto font-semibold"
-                onClick={() => navigate("/signup")}
+                type="submit"
+                size="lg"
+                className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all mt-6"
               >
-                회원가입
+                <LogIn className="h-5 w-5 mr-2" />
+                로그인
               </Button>
-            </p>
-          </FieldGroup>
+
+              <p className="text-center text-sm text-muted-foreground">
+                계정이 없으신가요?{" "}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-semibold"
+                  onClick={() => navigate("/signup")}
+                >
+                  회원가입
+                </Button>
+              </p>
+            </FieldGroup>
+          </form>
         </CardContent>
       </Card>
     </>

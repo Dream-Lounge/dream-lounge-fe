@@ -50,19 +50,14 @@ export function Footer() {
                     {/** 좌측 열: 브랜드 로고 및 서비스 간단 소개 */}
                     <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
                         {/** 로고: 클릭 시 메인 페이지로 이동 */}
-                        <Link to="/" className="relative shrink-0 w-full h-11 block">
-                            <span className="absolute left-0 top-0 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
-                                Dream
-                            </span>
-                            <span className="absolute left-0 top-5 font-logo font-bold text-lg leading-snug tracking-tight text-primary">
-                                Lounge
-                            </span>
+                        <Link to="/" className="shrink-0 h-20 block bg-background rounded-sm px-3 py-2">
+                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" />
                         </Link>
 
                         {/** 서비스 설명: 플랫폼의 비전/슬로건 표시 */}
-                        <div className="relative shrink-0 w-full h-10 font-kr text-sm text-stone-400">
-                            <p className="leading-5">대학생들의 꿈과 열정을 이어주는</p>
-                            <p className="leading-5">동아리 플랫폼입니다.</p>
+                        <div className="relative shrink-0 w-full h-10 font-kr text-sm text-stone-100">
+                            <p className="leading-5">드림라운지는 대학생들의 꿈과 열정을</p>
+                            <p className="leading-5">이어주는 동아리 플랫폼입니다.</p>
                         </div>
 
                         {/** 소셜 미디어 링크: 외부 SNS 페이지로 연결 */}

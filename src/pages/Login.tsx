@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { validators, ERROR_MESSAGES } from "@/lib/validators";
 
 /**
  * 로그인 페이지 컴포넌트
@@ -37,8 +38,8 @@ export function Login() {
   // 폼 제출 핸들러
   const handleSubmit = () => {
     const newErrors = {
-      studentId: !studentId.trim(),
-      password: !password.trim(),
+      studentId: validators.studentId(studentId),
+      password: validators.password(password),
     };
 
     setErrors(newErrors);
@@ -64,26 +65,27 @@ export function Login() {
     // navigate("/");
   };
 
-  // 필드별 onBlur 검증 핸들러
-  const validateFieldOnBlur = (field: keyof typeof errors, value: string) => {
-    if (value.trim() && errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: false }));
-    }
-  };
-
-  // 입력 필드 변경 시 로그인 에러 초기화
-  const handleStudentIdChange = (value: string) => {
-    setStudentId(value);
+  // 실시간 검증 핸들러
+  const handleFieldChange = (
+    field: "studentId" | "password",
+    value: string,
+    setter: (value: string) => void,
+  ) => {
+    setter(value);
     if (loginError) {
       setLoginError(false);
     }
+    if (errors[field]) {
+      const hasError = validators[field](value);
+      if (!hasError) {
+        setErrors((prev) => ({ ...prev, [field]: false }));
+      }
+    }
   };
 
-  const handlePasswordChange = (value: string) => {
-    setPassword(value);
-    if (loginError) {
-      setLoginError(false);
-    }
+  const handleBlur = (field: "studentId" | "password", value: string) => {
+    const hasError = validators[field](value);
+    setErrors((prev) => ({ ...prev, [field]: hasError }));
   };
 
   return (
@@ -107,14 +109,21 @@ export function Login() {
                 id="studentId"
                 placeholder="학번을 입력해주세요"
                 value={studentId}
-                onChange={(e) => handleStudentIdChange(e.target.value)}
-                onBlur={() => validateFieldOnBlur("studentId", studentId)}
+                onChange={(e) =>
+                  handleFieldChange("studentId", e.target.value, setStudentId)
+                }
+                onBlur={(e) => handleBlur("studentId", e.target.value)}
                 className={cn(
                   (errors.studentId || loginError) &&
-                    "border-destructive focus-visible:ring-destructive",
+                  "border-destructive focus-visible:ring-destructive",
                 )}
                 required
               />
+              {errors.studentId && studentId && !loginError && (
+                <p className="text-sm text-destructive mt-1">
+                  {ERROR_MESSAGES.STUDENT_ID}
+                </p>
+              )}
             </Field>
 
             <Field>
@@ -127,12 +136,14 @@ export function Login() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   placeholder="비밀번호를 입력해주세요"
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  onBlur={() => validateFieldOnBlur("password", password)}
+                  onChange={(e) =>
+                    handleFieldChange("password", e.target.value, setPassword)
+                  }
+                  onBlur={(e) => handleBlur("password", e.target.value)}
                   className={cn(
                     "pr-10",
                     (errors.password || loginError) &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
@@ -150,6 +161,11 @@ export function Login() {
                   )}
                 </Button>
               </div>
+              {errors.password && password && !loginError && (
+                <p className="text-sm text-destructive mt-1">
+                  {ERROR_MESSAGES.PASSWORD}
+                </p>
+              )}
             </Field>
 
             {loginError && (

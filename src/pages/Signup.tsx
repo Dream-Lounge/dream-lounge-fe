@@ -12,6 +12,7 @@ import {
 import { DepartmentCombobox } from "@/components/common/DepartmentCombobox";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { validators, ERROR_MESSAGES } from "@/lib/validators";
 
 /**
  * 회원가입 페이지 컴포넌트
@@ -55,12 +56,12 @@ export function Signup() {
   // 폼 제출 핸들러
   const handleSubmit = () => {
     const newErrors = {
-      name: !name.trim(),
-      phone: !phone.trim(),
-      studentId: !studentId.trim(),
-      department: !selectedDepartment,
-      password: !password.trim(),
-      passwordConfirm: !passwordConfirm.trim(),
+      name: validators.name(name),
+      phone: validators.phone(phone),
+      studentId: validators.studentId(studentId),
+      department: validators.department(selectedDepartment),
+      password: validators.password(password),
+      passwordConfirm: validators.passwordConfirm(passwordConfirm),
       passwordMismatch: password !== passwordConfirm,
     };
 
@@ -85,22 +86,49 @@ export function Signup() {
     navigate("/");
   };
 
-  // 필드별 onBlur 검증 핸들러
-  const validateFieldOnBlur = (field: keyof typeof errors, value: string) => {
-    if (value.trim() && errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: false }));
+  // 실시간 검증 핸들러
+  const handleFieldChange = (
+    field: "name" | "phone" | "studentId" | "password",
+    value: string,
+    setter: (value: string) => void,
+  ) => {
+    setter(value);
+    if (errors[field]) {
+      const hasError = validators[field](value);
+      if (!hasError) {
+        setErrors((prev) => ({ ...prev, [field]: false }));
+      }
     }
   };
 
-  // 비밀번호 확인 필드 onBlur 핸들러
-  const validatePasswordConfirmOnBlur = () => {
-    if (passwordConfirm.trim()) {
-      setErrors((prev) => ({
-        ...prev,
-        passwordConfirm: false,
-        passwordMismatch: password !== passwordConfirm,
-      }));
+  // 비밀번호 확인 실시간 검증
+  const handlePasswordConfirmChange = (value: string) => {
+    setPasswordConfirm(value);
+    if (errors.passwordConfirm || errors.passwordMismatch) {
+      if (value.trim()) {
+        setErrors((prev) => ({
+          ...prev,
+          passwordConfirm: false,
+          passwordMismatch: password !== value,
+        }));
+      }
     }
+  };
+
+  const handleBlur = (
+    field: "name" | "phone" | "studentId" | "password",
+    value: string,
+  ) => {
+    const hasError = validators[field](value);
+    setErrors((prev) => ({ ...prev, [field]: hasError }));
+  };
+
+  const handlePasswordConfirmBlur = () => {
+    setErrors((prev) => ({
+      ...prev,
+      passwordConfirm: validators.passwordConfirm(passwordConfirm),
+      passwordMismatch: passwordConfirm.trim() ? password !== passwordConfirm : false,
+    }));
   };
 
   return (
@@ -124,14 +152,21 @@ export function Signup() {
                 id="studentId"
                 placeholder="학번을 입력해주세요"
                 value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                onBlur={() => validateFieldOnBlur("studentId", studentId)}
+                onChange={(e) =>
+                  handleFieldChange("studentId", e.target.value, setStudentId)
+                }
+                onBlur={(e) => handleBlur("studentId", e.target.value)}
                 className={cn(
                   errors.studentId &&
                     "border-destructive focus-visible:ring-destructive",
                 )}
                 required
               />
+              {errors.studentId && studentId && (
+                <p className="text-sm text-destructive mt-1">
+                  {ERROR_MESSAGES.STUDENT_ID}
+                </p>
+              )}
             </Field>
 
             <Field>
@@ -144,8 +179,10 @@ export function Signup() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   placeholder="8자 이상, 영문 대/소문자, 숫자, 특수문자 포함"
-                  onChange={(e) => setPassword(e.target.value)}
-                  onBlur={() => validateFieldOnBlur("password", password)}
+                  onChange={(e) =>
+                    handleFieldChange("password", e.target.value, setPassword)
+                  }
+                  onBlur={(e) => handleBlur("password", e.target.value)}
                   className={cn(
                     "pr-10",
                     errors.password &&
@@ -167,6 +204,11 @@ export function Signup() {
                   )}
                 </Button>
               </div>
+              {errors.password && password && (
+                <p className="text-sm text-destructive mt-1">
+                  {ERROR_MESSAGES.PASSWORD}
+                </p>
+              )}
             </Field>
 
             <Field>
@@ -179,8 +221,8 @@ export function Signup() {
                   type={showPasswordConfirm ? "text" : "password"}
                   value={passwordConfirm}
                   placeholder="비밀번호를 다시 입력해주세요"
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  onBlur={validatePasswordConfirmOnBlur}
+                  onChange={(e) => handlePasswordConfirmChange(e.target.value)}
+                  onBlur={handlePasswordConfirmBlur}
                   className={cn(
                     "pr-10",
                     (errors.passwordConfirm || errors.passwordMismatch) &&
@@ -220,8 +262,10 @@ export function Signup() {
                   id="name"
                   placeholder="홍길동"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={() => validateFieldOnBlur("name", name)}
+                  onChange={(e) =>
+                    handleFieldChange("name", e.target.value, setName)
+                  }
+                  onBlur={(e) => handleBlur("name", e.target.value)}
                   className={cn(
                     errors.name &&
                       "border-destructive focus-visible:ring-destructive",
@@ -239,14 +283,21 @@ export function Signup() {
                   type="tel"
                   placeholder="01012345678"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onBlur={() => validateFieldOnBlur("phone", phone)}
+                  onChange={(e) =>
+                    handleFieldChange("phone", e.target.value, setPhone)
+                  }
+                  onBlur={(e) => handleBlur("phone", e.target.value)}
                   className={cn(
                     errors.phone &&
                       "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                 />
+                {errors.phone && phone && (
+                  <p className="text-sm text-destructive mt-1">
+                    {ERROR_MESSAGES.PHONE}
+                  </p>
+                )}
               </Field>
             </div>
 

@@ -5,6 +5,7 @@ import { Home } from "@/pages/Home";
 import { ClubDetail } from "@/pages/ClubDetail";
 import { ClubApplication } from "@/pages/ClubApplication";
 import { Signup } from "@/pages/Signup";
+import { Login } from "@/pages/Login";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 /**
@@ -20,7 +21,7 @@ function App() {
         {/* 헤더/푸터 없는 인증 페이지 */}
         <Route element={<AuthLayout />}>
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<div>로그인 페이지 (준비중)</div>} />
+          <Route path="/login" element={<Login />} />
         </Route>
 
         {/* 헤더/푸터 있는 일반 페이지 */}

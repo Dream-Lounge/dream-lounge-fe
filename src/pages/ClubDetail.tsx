@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
+import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
+import { useState } from "react";
 
 /**
  * 동아리 상세 페이지 컴포넌트
@@ -14,6 +17,8 @@ import { MOCK_CLUB_DATA } from "@/data/clubs";
  */
 export function ClubDetail() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
@@ -142,8 +147,14 @@ export function ClubDetail() {
                 <Separator className="my-2" />
 
                 <Button
-                  onClick={() => navigate(`/club/${id}/apply`)}
-                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setIsLoginAlertOpen(true);
+                      return;
+                    }
+                    navigate(`/club/${id}/apply`);
+                  }}
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer">
                   지원하기
                 </Button>
               </CardContent>
@@ -155,6 +166,11 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
+      <LoginAlertDialog
+        open={isLoginAlertOpen}
+        onOpenChange={setIsLoginAlertOpen}
+        reason="동아리 지원을 위해서는 로그인이 필요합니다."
+      />
     </div>
   );
 }

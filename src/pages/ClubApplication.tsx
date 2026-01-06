@@ -22,9 +22,6 @@ export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
   // 공유 목업 데이터에서 필요한 필드(title, category, description)만 가져옴
   const clubData = id ? getClubApplicationData(id) : null;
-  if (!clubData) {
-    return <NotFound />;
-  }
 
   const navigate = useNavigate();
 
@@ -87,6 +84,10 @@ export function ClubApplication() {
     }
   };
 
+  if (!clubData) {
+    return <NotFound />;
+  }
+
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -94,7 +95,7 @@ export function ClubApplication() {
         <Button
           variant="outline"
           onClick={() => navigate(`/club/${id}`)}
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm">돌아가기</span>
@@ -270,7 +271,7 @@ export function ClubApplication() {
           {/* 제출 버튼 */}
           <Button
             size="lg"
-            className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all"
+            className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
             onClick={handleSubmit}
           >
             <Send className="h-5 w-5 mr-2" />

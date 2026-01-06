@@ -51,7 +51,7 @@ export function Footer() {
                     <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
                         {/** 로고: 클릭 시 메인 페이지로 이동 */}
                         <Link to="/" className="h-24">
-                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" />
+                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" draggable={false} />
                         </Link>
 
                         {/** 서비스 설명: 플랫폼의 비전/슬로건 표시 */}

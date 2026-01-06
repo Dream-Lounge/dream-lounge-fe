@@ -10,9 +10,10 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { DepartmentCombobox } from "@/components/common/DepartmentCombobox";
-import { UserPlus, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validators, ERROR_MESSAGES } from "@/lib/validators";
+import { api } from "@/lib/api";
 
 /**
  * 회원가입 페이지 컴포넌트
@@ -30,9 +31,11 @@ export function Signup() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  // 비밀번호 표시 상태
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // 에러 상태
   const [errors, setErrors] = useState<{
@@ -53,8 +56,7 @@ export function Signup() {
     passwordMismatch: false,
   });
 
-  // 폼 제출 핸들러
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors = {
@@ -69,23 +71,32 @@ export function Signup() {
 
     setErrors(newErrors);
 
-    // 에러가 있으면 제출 중단
     const hasErrors = Object.values(newErrors).some((error) => error);
     if (hasErrors) {
       return;
     }
 
-    // TODO: 실제 회원가입 API 호출
-    console.log("회원가입 제출:", {
-      name,
-      phone,
-      studentId,
-      selectedDepartment,
-      password,
-    });
+    setIsLoading(true);
+    setApiError(null);
 
-    // 성공 시 로그인 페이지로 이동
-    navigate("/login");
+    try {
+      await api.signup({
+        studentId,
+        name,
+        department: selectedDepartment,
+        phone,
+        password,
+        passwordConfirm,
+      });
+
+      navigate("/login");
+    } catch (error) {
+      setApiError(
+        error instanceof Error ? error.message : "회원가입 중 오류가 발생했습니다"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 실시간 검증 핸들러
@@ -137,7 +148,7 @@ export function Signup() {
     <>
       <div className="flex justify-center mb-6">
         <Link to="/">
-          <img src="/logo.svg" alt="Dream Lounge" className="h-20" />
+          <img src="/logo.svg" alt="Dream Lounge" className="h-20" draggable={false} />
         </Link>
       </div>
       <Card>
@@ -323,13 +334,29 @@ export function Signup() {
               />
             </Field>
 
+            {apiError && (
+              <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+                {apiError}
+              </div>
+            )}
+
             <Button
               type="submit"
               size="lg"
+              disabled={isLoading}
               className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all mt-6"
             >
-              <UserPlus className="h-5 w-5 mr-2" />
-              회원가입
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  회원가입 중...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  회원가입
+                </>
+              )}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

@@ -16,7 +16,24 @@ export interface LoginResponse {
 }
 
 export interface ApiError {
-  detail: string;
+  detail: string | Array<{ loc: string[]; msg: string; type: string }>;
+}
+
+export interface SignupRequest {
+  studentId: string;
+  name: string;
+  department: string;
+  phone: string;
+  password: string;
+  passwordConfirm: string;
+}
+
+export interface SignupResponse {
+  student_id: number;
+  name: string;
+  department: string | null;
+  phone: string | null;
+  registered_at: string;
 }
 
 class ApiClient {
@@ -101,7 +118,12 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({
         detail: "요청 처리 중 오류가 발생했습니다",
       }));
-      throw new Error(error.detail);
+      
+      const errorMessage = Array.isArray(error.detail)
+        ? error.detail.map((e) => e.msg).join(", ")
+        : error.detail;
+      
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -125,6 +147,22 @@ class ApiClient {
 
   async getCurrentUser(): Promise<User> {
     return this.request<User>("/members/me");
+  }
+
+  async signup(data: SignupRequest): Promise<SignupResponse> {
+    const requestBody = {
+      student_id: parseInt(data.studentId, 10),
+      name: data.name,
+      department: data.department,
+      phone: data.phone,
+      password: data.password,
+      password_confirm: data.passwordConfirm,
+    };
+
+    return this.request<SignupResponse>("/members/signup", {
+      method: "POST",
+      body: JSON.stringify(requestBody),
+    });
   }
 }
 

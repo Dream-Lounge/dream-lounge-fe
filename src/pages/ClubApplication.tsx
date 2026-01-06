@@ -29,10 +29,11 @@ export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [mode, setMode] = useState<ApplicationMode>("create");
   const [clubData, setClubData] = useState<ClubApplicationData | null>(null);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -45,6 +46,10 @@ export function ClubApplication() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+
+    let ignore = false;
+
     const determineMode = () => {
       if (location.pathname.endsWith("/view")) return "view";
       if (location.pathname.endsWith("/edit")) return "edit";
@@ -56,34 +61,59 @@ export function ClubApplication() {
 
     const loadData = async () => {
       if (!id) return;
+      
+      setIsDataLoading(true);
 
       if (currentMode === "create") {
+        if (isAuthenticated && user) {
+          try {
+            const hasApplied = await api.checkApplicationStatus(id);
+            if (ignore) return;
+
+            if (hasApplied) {
+              toast.error("이미 지원서를 제출한 동아리입니다.", { id: "already-applied" });
+              navigate(`/users/${user.studentId}/applications`, { replace: true });
+              return;
+            }
+          } catch (error) {
+            console.error("Failed to check application status", error);
+          }
+        }
+
+        if (ignore) return;
         const data = getClubApplicationData(id);
         setClubData(data);
       } else {
         try {
           const numericId = parseInt(id, 10);
           if (isNaN(numericId)) {
-            setSubmitError("유효하지 않은 지원서 ID입니다.");
+            if (!ignore) setSubmitError("유효하지 않은 지원서 ID입니다.");
             return;
           }
           const appData = await api.getApplication(numericId);
           
-          setMotivation(appData.content.motivation);
-          setExperience(appData.content.experience || "");
-          setQuestions(appData.content.questions || "");
+          if (!ignore) {
+            setMotivation(appData.content.motivation);
+            setExperience(appData.content.experience || "");
+            setQuestions(appData.content.questions || "");
 
-          const cData = getClubApplicationData(String(appData.club_id));
-          setClubData(cData);
+            const cData = getClubApplicationData(String(appData.club_id));
+            setClubData(cData);
+          }
         } catch (error) {
           console.error("Failed to load application", error);
-          setSubmitError("지원서 정보를 불러오는데 실패했습니다.");
+          if (!ignore) setSubmitError("지원서 정보를 불러오는데 실패했습니다.");
         }
       }
+      if (!ignore) setIsDataLoading(false);
     };
 
     loadData();
-  }, [id, location.pathname]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [id, location.pathname, isAuthLoading, isAuthenticated, user, navigate]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -173,15 +203,18 @@ export function ClubApplication() {
     }
   };
 
+  const isLoading = isAuthLoading || isDataLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!clubData && !submitError) {
-    if (mode !== "create") {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-    if (mode === "create") return <NotFound />;
+    return <NotFound />;
   }
   
   if (submitError && !clubData) {

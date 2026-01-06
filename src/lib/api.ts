@@ -1,3 +1,5 @@
+import { isTokenExpired } from "./auth";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 if (!API_BASE_URL) {
@@ -10,7 +12,6 @@ export function apiUrl(path: string) {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
-
 
 export interface User {
   studentId: number;
@@ -63,12 +64,41 @@ export interface SignupResponse {
   registered_at: string;
 }
 
+export interface ApplicationContent {
+  motivation: string;
+  experience?: string;
+  questions?: string;
+}
+
+export interface MemberApplicationRequest {
+  clubId: number;
+  content: ApplicationContent;
+}
+
+export interface ApplicationResponse {
+  message: string;
+  application_id: number;
+  applicant: {
+    student_id: number;
+    name: string;
+    department: string | null;
+    phone: string | null;
+  };
+}
+
 interface ApiSignupResponse {
   student_id: number;
   name: string;
   department: string | null;
   phone: string | null;
   registered_at: string;
+}
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("세션이 만료되었습니다. 다시 로그인해주세요.");
+    this.name = "SessionExpiredError";
+  }
 }
 
 function mapUser(apiUser: ApiUser): User {
@@ -110,6 +140,11 @@ class ApiClient {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) return false;
 
+    if (isTokenExpired(refreshToken, 0)) {
+      this.clearTokens();
+      return false;
+    }
+
     try {
       const response = await fetch(`${this.baseUrl}/members/refresh`, {
         method: "POST",
@@ -124,7 +159,7 @@ class ApiClient {
 
       const data: ApiLoginResponse = await response.json();
       const user = mapUser(data.user);
-      
+
       this.setTokens(data.access_token, data.refresh_token);
       localStorage.setItem("user", JSON.stringify(user));
       return true;
@@ -135,12 +170,17 @@ class ApiClient {
     }
   }
 
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const accessToken = this.getAccessToken();
+    let accessToken = this.getAccessToken();
+
+    if (accessToken && isTokenExpired(accessToken, 30)) {
+      const refreshed = await this.refreshAccessToken();
+      if (!refreshed) {
+        throw new SessionExpiredError();
+      }
+      accessToken = this.getAccessToken();
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -158,6 +198,8 @@ class ApiClient {
       if (refreshed) {
         headers["Authorization"] = `Bearer ${this.getAccessToken()}`;
         response = await fetch(url, { ...options, headers });
+      } else {
+        throw new SessionExpiredError();
       }
     }
 
@@ -165,11 +207,11 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({
         detail: "요청 처리 중 오류가 발생했습니다",
       }));
-      
+
       const errorMessage = Array.isArray(error.detail)
         ? error.detail.map((e) => e.msg).join(", ")
         : error.detail;
-      
+
       throw new Error(errorMessage);
     }
 
@@ -221,6 +263,30 @@ class ApiClient {
       ...response,
       studentId: response.student_id,
     };
+  }
+
+  async submitMemberApplication(
+    data: MemberApplicationRequest
+  ): Promise<ApplicationResponse> {
+    return this.request<ApplicationResponse>("/applications/member", {
+      method: "POST",
+      body: JSON.stringify({
+        club_id: data.clubId,
+        content: data.content,
+      }),
+    });
+  }
+
+  async checkApplicationStatus(clubId: string | number): Promise<boolean> {
+    try {
+      const response = await this.request<{ has_applied: boolean }>(
+        `/applications/check?club_id=${clubId}`
+      );
+      return response.has_applied;
+    } catch (e) {
+      console.error("Failed to check application status", e);
+      throw e;
+    }
   }
 }
 

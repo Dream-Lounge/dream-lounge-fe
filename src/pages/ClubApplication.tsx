@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,77 +7,113 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { DepartmentCombobox } from "@/components/common/DepartmentCombobox";
-import { FileText, HelpCircle, Send, ArrowLeft, Users } from "lucide-react";
+import {
+  FileText,
+  HelpCircle,
+  Send,
+  ArrowLeft,
+  Users,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
-/**
- * 동아리 지원서 페이지 컴포넌트
- * - Figma 디자인(node 249-1301)을 기반으로 구현
- * - 기본 정보, 지원 동기 입력 폼으로 구성
- * - 공유 데이터에서 title, category, description만 추출하여 사용
- */
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
-  // 공유 목업 데이터에서 필요한 필드(title, category, description)만 가져옴
   const clubData = id ? getClubApplicationData(id) : null;
-
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
-  // 폼 필드 상태
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [motivation, setMotivation] = useState("");
-
-  // 학과 선택 상태
+  const [experience, setExperience] = useState("");
+  const [questions, setQuestions] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // 에러 상태 (필수 필드 유효성 검사)
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setName(user.name);
+      setStudentId(String(user.studentId));
+      setSelectedDepartment(user.department || "");
+      setPhone(user.phone || "");
+    }
+  }, [isAuthenticated, user]);
+
   const [errors, setErrors] = useState<{
     name: boolean;
     studentId: boolean;
     department: boolean;
-    email: boolean;
+    phone: boolean;
     motivation: boolean;
   }>({
     name: false,
     studentId: false,
     department: false,
-    email: false,
+    phone: false,
     motivation: false,
   });
 
-  // 폼 제출 핸들러
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors = {
       name: !name.trim(),
       studentId: !studentId.trim(),
       department: !selectedDepartment,
-      email: !email.trim(),
+      phone: !phone.trim(),
       motivation: !motivation.trim(),
     };
 
     setErrors(newErrors);
+    setSubmitError(null);
 
-    // 에러가 있으면 제출 중단
     const hasErrors = Object.values(newErrors).some((error) => error);
     if (hasErrors) {
       return;
     }
 
-    // TODO: 실제 제출 로직 구현
-    console.log("지원서 제출:", {
-      name,
-      studentId,
-      selectedDepartment,
-      email,
-      motivation,
-    });
+    if (!isAuthenticated) {
+      setSubmitError("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!id) {
+      setSubmitError("동아리 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await api.submitMemberApplication({
+        clubId: parseInt(id, 10),
+        content: {
+          motivation,
+          experience: experience || undefined,
+          questions: questions || undefined,
+        },
+      });
+
+      toast.success("지원서가 성공적으로 제출되었습니다.");
+
+      navigate(`/club/${id}`, {
+        state: { applicationSuccess: true },
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "신청서 제출에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // 필드별 onBlur 검증 핸들러 - 값이 입력되면 에러 상태 해제
   const validateFieldOnBlur = (field: keyof typeof errors, value: string) => {
     if (value.trim() && errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: false }));
@@ -91,7 +127,6 @@ export function ClubApplication() {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* 뒤로가기 링크 */}
         <Button
           variant="outline"
           onClick={() => navigate(`/club/${id}`)}
@@ -102,7 +137,6 @@ export function ClubApplication() {
         </Button>
 
         <div className="flex flex-col gap-8">
-          {/* 동아리 정보 섹션 */}
           <Card>
             <CardContent>
               <div className="flex items-center gap-4">
@@ -126,7 +160,6 @@ export function ClubApplication() {
             </CardContent>
           </Card>
 
-          {/* 기본 정보 섹션 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-lg">
@@ -149,9 +182,11 @@ export function ClubApplication() {
                     onChange={(e) => setName(e.target.value)}
                     onBlur={() => validateFieldOnBlur("name", name)}
                     className={cn(
+                      isAuthenticated && "bg-muted cursor-not-allowed",
                       errors.name &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
+                    readOnly={isAuthenticated}
                     required
                   />
                 </Field>
@@ -166,9 +201,11 @@ export function ClubApplication() {
                     onChange={(e) => setStudentId(e.target.value)}
                     onBlur={() => validateFieldOnBlur("studentId", studentId)}
                     className={cn(
+                      isAuthenticated && "bg-muted cursor-not-allowed",
                       errors.studentId &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
+                    readOnly={isAuthenticated}
                     required
                   />
                 </Field>
@@ -176,36 +213,46 @@ export function ClubApplication() {
                   <FieldLabel htmlFor="department" className="gap-1">
                     학과<span className="text-destructive">*</span>
                   </FieldLabel>
-                  <DepartmentCombobox
-                    value={selectedDepartment}
-                    onValueChange={(value) => {
-                      setSelectedDepartment(value);
-                      // 학과 선택 시 에러 상태 해제
-                      if (value && errors.department) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          department: false,
-                        }));
-                      }
-                    }}
-                    hasError={errors.department}
-                  />
+                  {isAuthenticated ? (
+                    <Input
+                      id="department"
+                      value={selectedDepartment}
+                      className="bg-muted cursor-not-allowed"
+                      readOnly
+                    />
+                  ) : (
+                    <DepartmentCombobox
+                      value={selectedDepartment}
+                      onValueChange={(value) => {
+                        setSelectedDepartment(value);
+                        if (value && errors.department) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            department: false,
+                          }));
+                        }
+                      }}
+                      hasError={errors.department}
+                    />
+                  )}
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="email" className="gap-1">
-                    이메일<span className="text-destructive">*</span>
+                  <FieldLabel htmlFor="phone" className="gap-1">
+                    전화번호<span className="text-destructive">*</span>
                   </FieldLabel>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="example@cju.ac.kr"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => validateFieldOnBlur("email", email)}
+                    id="phone"
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => validateFieldOnBlur("phone", phone)}
                     className={cn(
-                      errors.email &&
+                      isAuthenticated && "bg-muted cursor-not-allowed",
+                      errors.phone &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
+                    readOnly={isAuthenticated}
                     required
                   />
                 </Field>
@@ -213,7 +260,6 @@ export function ClubApplication() {
             </CardContent>
           </Card>
 
-          {/* 지원 동기 / 질문 섹션 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-lg">
@@ -252,6 +298,8 @@ export function ClubApplication() {
                     id="experience"
                     placeholder="프로젝트 경험, 스터디 참여, 수강 과목 등 관련 경험을 자유롭게 작성해주세요."
                     className="min-h-[120px] resize-none"
+                    value={experience}
+                    onChange={(e) => setExperience(e.target.value)}
                   />
                 </Field>
                 <Field>
@@ -262,20 +310,37 @@ export function ClubApplication() {
                     id="questions"
                     placeholder="궁금한 점을 자유롭게 작성해주세요."
                     className="min-h-[80px] resize-none"
+                    value={questions}
+                    onChange={(e) => setQuestions(e.target.value)}
                   />
                 </Field>
               </FieldGroup>
             </CardContent>
           </Card>
 
-          {/* 제출 버튼 */}
+          {submitError && (
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+              {submitError}
+            </div>
+          )}
+
           <Button
             size="lg"
             className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
             onClick={handleSubmit}
+            disabled={isSubmitting}
           >
-            <Send className="h-5 w-5 mr-2" />
-            지원서 제출
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                제출 중...
+              </>
+            ) : (
+              <>
+                <Send className="h-5 w-5 mr-2" />
+                지원서 제출
+              </>
+            )}
           </Button>
         </div>
       </div>

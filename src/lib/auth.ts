@@ -28,3 +28,29 @@ export function getAccessToken(): string | null {
 export function getRefreshToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 }
+
+export function getTokenExpiration(token: string): number | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const payload = JSON.parse(atob(parts[1]));
+    return typeof payload.exp === "number" ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenExpired(token: string, bufferSeconds = 30): boolean {
+  const exp = getTokenExpiration(token);
+  if (!exp) return true;
+
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  return nowInSeconds >= exp - bufferSeconds;
+}
+
+export function isAccessTokenExpired(bufferSeconds = 30): boolean {
+  const token = getAccessToken();
+  if (!token) return true;
+  return isTokenExpired(token, bufferSeconds);
+}

@@ -8,7 +8,8 @@ import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
 import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 /**
  * 동아리 상세 페이지 컴포넌트
@@ -22,6 +23,21 @@ export function ClubDetail() {
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
+
+  const [hasApplied, setHasApplied] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && id) {
+      api.checkApplicationStatus(id)
+        .then(setHasApplied)
+        .catch((error) => {
+          console.error("Failed to check application status:", error);
+        });
+    } else {
+      setHasApplied(false);
+    }
+  }, [isAuthenticated, id]);
+
   if (!clubData) {
     return <NotFound />;
   }
@@ -154,8 +170,10 @@ export function ClubDetail() {
                     }
                     navigate(`/club/${id}/apply`);
                   }}
-                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer">
-                  지원하기
+                  disabled={hasApplied}
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                >
+                  {hasApplied ? "지원 완료" : "지원하기"}
                 </Button>
               </CardContent>
             </Card>

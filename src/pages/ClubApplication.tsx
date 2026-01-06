@@ -94,7 +94,7 @@ export function ClubApplication() {
         <Button
           variant="outline"
           onClick={() => navigate(`/club/${id}`)}
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm">돌아가기</span>
@@ -270,7 +270,7 @@ export function ClubApplication() {
           {/* 제출 버튼 */}
           <Button
             size="lg"
-            className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all"
+            className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
             onClick={handleSubmit}
           >
             <Send className="h-5 w-5 mr-2" />

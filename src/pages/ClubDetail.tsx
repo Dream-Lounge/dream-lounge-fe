@@ -154,7 +154,7 @@ export function ClubDetail() {
                     }
                     navigate(`/club/${id}/apply`);
                   }}
-                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer">
                   지원하기
                 </Button>
               </CardContent>

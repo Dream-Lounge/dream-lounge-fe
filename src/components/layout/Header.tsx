@@ -72,7 +72,7 @@ export function Header() {
                         {/** 사용자 메뉴: 로그인 및 지원 내역 */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <button className="size-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
+                                <button className="size-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors cursor-pointer">
                                     <User className="size-5 text-foreground" />
                                 </button>
                             </PopoverTrigger>

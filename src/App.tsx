@@ -40,8 +40,8 @@ function App() {
               path="/applications/:id/view"
               element={<ClubApplication />}
             />
+            <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
-          <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
         </Route>
       </Routes>
     </div>

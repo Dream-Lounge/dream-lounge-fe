@@ -32,8 +32,16 @@ function App() {
           <Route path="/club/:id" element={<ClubDetail />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/club/:id/apply" element={<ClubApplication />} />
+            <Route
+              path="/applications/:id/edit"
+              element={<ClubApplication />}
+            />
+            <Route
+              path="/applications/:id/view"
+              element={<ClubApplication />}
+            />
+            <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
-          <Route path="/my-applications" element={<ApplicationStatus />} />
         </Route>
       </Routes>
     </div>

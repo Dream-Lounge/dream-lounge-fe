@@ -85,7 +85,7 @@ export function Header() {
                                             </div>
                                             <Separator className="my-1" />
                                             <Link
-                                                to="/my-applications"
+                                                to={`/users/${user?.studentId}/applications`}
                                                 className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                             >
                                                 내 지원 내역
@@ -106,11 +106,13 @@ export function Header() {
                                                 로그인
                                             </Link>
                                             <Link
-                                                to="/my-applications"
+                                                to={user ? `/users/${user.studentId}/applications` : "/login"}
                                                 className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                                 onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setIsLoginAlertOpen(true);
+                                                    if (!user) {
+                                                        e.preventDefault();
+                                                        setIsLoginAlertOpen(true);
+                                                    }
                                                 }}
                                             >
                                                 내 지원 내역

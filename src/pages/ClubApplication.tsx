@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,20 +14,26 @@ import {
   ArrowLeft,
   Users,
   Loader2,
+  Edit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getClubApplicationData } from "@/data/clubs";
+import { getClubApplicationData, type ClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
+type ApplicationMode = "create" | "edit" | "view";
+
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
-  const clubData = id ? getClubApplicationData(id) : null;
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
 
+  const [mode, setMode] = useState<ApplicationMode>("create");
+  const [clubData, setClubData] = useState<ClubApplicationData | null>(null);
+  
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
   const [phone, setPhone] = useState("");
@@ -37,6 +43,47 @@ export function ClubApplication() {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const determineMode = () => {
+      if (location.pathname.endsWith("/view")) return "view";
+      if (location.pathname.endsWith("/edit")) return "edit";
+      return "create";
+    };
+
+    const currentMode = determineMode();
+    setMode(currentMode);
+
+    const loadData = async () => {
+      if (!id) return;
+
+      if (currentMode === "create") {
+        const data = getClubApplicationData(id);
+        setClubData(data);
+      } else {
+        try {
+          const numericId = parseInt(id, 10);
+          if (isNaN(numericId)) {
+            setSubmitError("유효하지 않은 지원서 ID입니다.");
+            return;
+          }
+          const appData = await api.getApplication(numericId);
+          
+          setMotivation(appData.content.motivation);
+          setExperience(appData.content.experience || "");
+          setQuestions(appData.content.questions || "");
+
+          const cData = getClubApplicationData(String(appData.club_id));
+          setClubData(cData);
+        } catch (error) {
+          console.error("Failed to load application", error);
+          setSubmitError("지원서 정보를 불러오는데 실패했습니다.");
+        }
+      }
+    };
+
+    loadData();
+  }, [id, location.pathname]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -62,6 +109,8 @@ export function ClubApplication() {
   });
 
   const handleSubmit = async () => {
+    if (mode === "view") return;
+
     const newErrors = {
       name: !name.trim(),
       studentId: !studentId.trim(),
@@ -83,7 +132,7 @@ export function ClubApplication() {
       return;
     }
 
-    if (!id) {
+    if (!id || !clubData) {
       setSubmitError("동아리 정보를 찾을 수 없습니다.");
       return;
     }
@@ -91,23 +140,27 @@ export function ClubApplication() {
     setIsSubmitting(true);
 
     try {
-      await api.submitMemberApplication({
-        clubId: parseInt(id, 10),
-        content: {
-          motivation,
-          experience: experience || undefined,
-          questions: questions || undefined,
-        },
-      });
+      const content = {
+        motivation,
+        experience: experience || undefined,
+        questions: questions || undefined,
+      };
 
-      toast.success("지원서가 성공적으로 제출되었습니다.");
-
-      navigate(`/club/${id}`, {
-        state: { applicationSuccess: true },
-      });
+      if (mode === "create") {
+        await api.submitMemberApplication({
+          clubId: parseInt(id, 10),
+          content,
+        });
+        toast.success("지원서가 성공적으로 제출되었습니다.");
+        navigate(`/club/${id}`, { state: { applicationSuccess: true } });
+      } else {
+        await api.updateApplication(parseInt(id, 10), content);
+        toast.success("지원서가 성공적으로 수정되었습니다.");
+        navigate(user ? `/users/${user.studentId}/applications` : '/');
+      }
     } catch (error) {
       setSubmitError(
-        error instanceof Error ? error.message : "신청서 제출에 실패했습니다."
+        error instanceof Error ? error.message : "작업 처리에 실패했습니다."
       );
     } finally {
       setIsSubmitting(false);
@@ -120,20 +173,47 @@ export function ClubApplication() {
     }
   };
 
-  if (!clubData) {
-    return <NotFound />;
+  if (!clubData && !submitError) {
+    if (mode !== "create") {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+    if (mode === "create") return <NotFound />;
   }
+  
+  if (submitError && !clubData) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+            <div className="text-destructive font-medium">{submitError}</div>
+            <Button onClick={() => navigate(-1)}>뒤로 가기</Button>
+        </div>
+      );
+  }
+
+  const isReadOnly = mode === "view";
+  const isEdit = mode === "edit";
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
         <Button
           variant="outline"
-          onClick={() => navigate(`/club/${id}`)}
+          onClick={() => {
+             if (mode === 'create') {
+                navigate(`/club/${id}`);
+             } else {
+                navigate(user ? `/users/${user.studentId}/applications` : '/');
+             }
+          }}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">돌아가기</span>
+          <span className="text-sm">
+            {mode === 'create' ? '동아리 상세로 돌아가기' : '내 지원 내역으로 돌아가기'}
+          </span>
         </Button>
 
         <div className="flex flex-col gap-8">
@@ -182,11 +262,11 @@ export function ClubApplication() {
                     onChange={(e) => setName(e.target.value)}
                     onBlur={() => validateFieldOnBlur("name", name)}
                     className={cn(
-                      isAuthenticated && "bg-muted cursor-not-allowed",
+                      "bg-muted cursor-not-allowed",
                       errors.name &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
-                    readOnly={isAuthenticated}
+                    readOnly
                     required
                   />
                 </Field>
@@ -201,11 +281,11 @@ export function ClubApplication() {
                     onChange={(e) => setStudentId(e.target.value)}
                     onBlur={() => validateFieldOnBlur("studentId", studentId)}
                     className={cn(
-                      isAuthenticated && "bg-muted cursor-not-allowed",
+                      "bg-muted cursor-not-allowed",
                       errors.studentId &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
-                    readOnly={isAuthenticated}
+                    readOnly
                     required
                   />
                 </Field>
@@ -213,7 +293,7 @@ export function ClubApplication() {
                   <FieldLabel htmlFor="department" className="gap-1">
                     학과<span className="text-destructive">*</span>
                   </FieldLabel>
-                  {isAuthenticated ? (
+                  {isAuthenticated || isReadOnly ? (
                     <Input
                       id="department"
                       value={selectedDepartment}
@@ -248,11 +328,11 @@ export function ClubApplication() {
                     onChange={(e) => setPhone(e.target.value)}
                     onBlur={() => validateFieldOnBlur("phone", phone)}
                     className={cn(
-                      isAuthenticated && "bg-muted cursor-not-allowed",
+                      "bg-muted cursor-not-allowed",
                       errors.phone &&
                         "border-destructive focus-visible:ring-destructive",
                     )}
-                    readOnly={isAuthenticated}
+                    readOnly
                     required
                   />
                 </Field>
@@ -283,11 +363,13 @@ export function ClubApplication() {
                       "min-h-[120px] resize-none",
                       errors.motivation &&
                         "border-destructive focus-visible:ring-destructive",
+                      isReadOnly && "bg-muted cursor-not-allowed"
                     )}
                     value={motivation}
                     onChange={(e) => setMotivation(e.target.value)}
                     onBlur={() => validateFieldOnBlur("motivation", motivation)}
                     required
+                    readOnly={isReadOnly}
                   />
                 </Field>
                 <Field>
@@ -297,9 +379,10 @@ export function ClubApplication() {
                   <Textarea
                     id="experience"
                     placeholder="프로젝트 경험, 스터디 참여, 수강 과목 등 관련 경험을 자유롭게 작성해주세요."
-                    className="min-h-[120px] resize-none"
+                    className={cn("min-h-[120px] resize-none", isReadOnly && "bg-muted cursor-not-allowed")}
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
+                    readOnly={isReadOnly}
                   />
                 </Field>
                 <Field>
@@ -309,9 +392,10 @@ export function ClubApplication() {
                   <Textarea
                     id="questions"
                     placeholder="궁금한 점을 자유롭게 작성해주세요."
-                    className="min-h-[80px] resize-none"
+                    className={cn("min-h-[80px] resize-none", isReadOnly && "bg-muted cursor-not-allowed")}
                     value={questions}
                     onChange={(e) => setQuestions(e.target.value)}
+                    readOnly={isReadOnly}
                   />
                 </Field>
               </FieldGroup>
@@ -324,24 +408,26 @@ export function ClubApplication() {
             </div>
           )}
 
-          <Button
-            size="lg"
-            className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                제출 중...
-              </>
-            ) : (
-              <>
-                <Send className="h-5 w-5 mr-2" />
-                지원서 제출
-              </>
-            )}
-          </Button>
+          {!isReadOnly && (
+            <Button
+              size="lg"
+              className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  {isEdit ? "수정 중..." : "제출 중..."}
+                </>
+              ) : (
+                <>
+                  {isEdit ? <Edit className="h-5 w-5 mr-2" /> : <Send className="h-5 w-5 mr-2" />}
+                  {isEdit ? "수정 완료" : "지원서 제출"}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

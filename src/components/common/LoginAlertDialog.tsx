@@ -25,7 +25,14 @@ export function LoginAlertDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            navigate("/login");
+          }
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>로그인이 필요한 서비스입니다</AlertDialogTitle>
           <AlertDialogDescription>

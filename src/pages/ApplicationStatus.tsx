@@ -85,7 +85,7 @@ function ApplicationItem({ application }: ApplicationItemProps) {
       </div>
 
       <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
-        {application.rawStatus === "임시저장" ? (
+        {application.status === "pending" ? (
           <>
             <Button 
               variant="outline" 

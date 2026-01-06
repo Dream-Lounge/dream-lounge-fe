@@ -44,12 +44,16 @@ const APPLICATIONS: Application[] = [
 ];
 
 export function ApplicationStatus() {
-  const stats = {
-    total: APPLICATIONS.length,
-    accepted: APPLICATIONS.filter((app) => app.status === "accepted").length,
-    rejected: APPLICATIONS.filter((app) => app.status === "rejected").length,
-    pending: APPLICATIONS.filter((app) => app.status === "pending").length,
-  };
+  const stats = APPLICATIONS.reduce(
+    (acc, app) => {
+      acc.total++;
+      if (app.status === "accepted") acc.accepted++;
+      else if (app.status === "rejected") acc.rejected++;
+      else if (app.status === "pending") acc.pending++;
+      return acc;
+    },
+    { total: 0, accepted: 0, rejected: 0, pending: 0 }
+  );
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">

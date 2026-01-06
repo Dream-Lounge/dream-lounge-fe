@@ -82,7 +82,8 @@ class ApiClient {
       this.setTokens(data.access_token, data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.user));
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Access token refresh failed:", error);
       this.clearTokens();
       return false;
     }

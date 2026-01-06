@@ -265,6 +265,18 @@ class ApiClient {
       }),
     });
   }
+
+  async checkApplicationStatus(clubId: string | number): Promise<boolean> {
+    try {
+      const response = await this.request<{ has_applied: boolean }>(
+        `/applications/check?club_id=${clubId}`
+      );
+      return response.has_applied;
+    } catch (e) {
+      console.error("Failed to check application status", e);
+      return false;
+    }
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

@@ -29,7 +29,8 @@ export function RecruitingSection() {
       category: "공연",
       endDate: "2023.09.26",
       deadlineText: "",
-      bgColor: "bg-slate-800",
+      imgSize: "88%", // 꽉 차게 (기본)
+      image: "/images/performence.jpg",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -38,7 +39,8 @@ export function RecruitingSection() {
       category: "봉사",
       endDate: "2025.09.26",
       deadlineText: "",
-      bgColor: "bg-slate-800",
+      imgSize: "92%", // 꽉 차게 (기본)
+      image: "/images/RCY.jpg",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -47,7 +49,7 @@ export function RecruitingSection() {
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",
-      bgColor: "bg-slate-800",
+      image: "/images/PHOTO_EXHIBITION.png",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -56,7 +58,7 @@ export function RecruitingSection() {
       category: "체육",
       endDate: "2025.09.28",
       deadlineText: "",
-      bgColor: "bg-slate-800",
+      image: "/images/smash.jpg",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -65,7 +67,7 @@ export function RecruitingSection() {
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",
-      bgColor: "bg-slate-800",
+      image: "/images/hostel.jpg",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -73,8 +75,9 @@ export function RecruitingSection() {
       title: "CPR",
       category: "학술",
       endDate: "상시모집",
+      imgSize: "68%", // 꽉 차게 (기본)
       deadlineText: "모집예정",
-      bgColor: "bg-slate-800",
+      image: "/images/CPR.png",  // ← 이미 있는 이미지!
       textColor: "text-white",
     },
   ];
@@ -109,48 +112,56 @@ export function RecruitingSection() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto">
-        {/* 좌측 영역: 모집중인 동아리 카드 리스트 */}
+        {/* 좌측 영역 */}
         <div className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {recruitingClubs.map((club) => (
               <Card
                 key={club.id}
                 className={cn(
-                  club.bgColor,
                   club.textColor,
-                  "overflow-hidden border-none shadow-sm h-100 relative",
+                  "overflow-hidden border-none shadow-sm h-64 relative", // h-100 대신 h-64 등 구체적 높이 필요 (h-100은 기본 tailwind에 없음)
                   "group cursor-pointer",
                   "transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                 )}
-                role="button"
-                tabIndex={0}
                 onClick={() => navigate(`/club/${club.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    navigate(`/club/${club.id}`);
-                  }
-                }}
               >
-                <CardContent className="h-full flex flex-col justify-between relative z-10">
+                {/* ▼▼▼ [수정된 부분] 배경 이미지 추가 ▼▼▼ */}
+                <div
+                  className={cn(
+                    "absolute inset-0 transition-transform duration-500 group-hover:scale-110",
+                    "bg-center bg-no-repeat" // 중요: 이미지가 반복되지 않고 중앙에 오도록 설정
+                  )}
+                  style={{ 
+                    backgroundImage: `url(${club.image})`,
+                    // 데이터에 imgSize가 있으면 그걸 쓰고, 없으면 기본값 'cover' 사용
+                    backgroundSize: club.imgSize || 'cover' 
+                  }}
+                />
+                
+                {/* 그라데이션 오버레이 (텍스트 잘 보이게) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                {/* ▲▲▲ [수정 끝] ▲▲▲ */}
+
+                <CardContent className="h-full flex flex-col justify-between relative z-10 p-4">
                   <div className="flex justify-between items-start">
-                    <Badge className="bg-primary text-primary-foreground border-none py-1 px-3">
+                    <Badge className="bg-primary/90 text-primary-foreground border-none py-1 px-3 backdrop-blur-sm">
                       {club.category}
                     </Badge>
                     {club.deadlineText && (
                       <Badge
                         variant="secondary"
-                        className="bg-secondary text-secondary-foreground border-none py-1 px-3"
+                        className="bg-secondary/90 text-secondary-foreground border-none py-1 px-3 backdrop-blur-sm"
                       >
                         {club.deadlineText}
                       </Badge>
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1">{club.title}</h3>
-                    <p className="text-sm opacity-70">{club.endDate}</p>
+                    <h3 className="text-lg font-bold mb-1 drop-shadow-md">{club.title}</h3>
+                    <p className="text-sm opacity-90 drop-shadow-sm">{club.endDate}</p>
                   </div>
                 </CardContent>
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
               </Card>
             ))}
           </div>

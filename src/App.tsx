@@ -7,6 +7,7 @@ import { ClubApplication } from "@/pages/ClubApplication";
 import { ApplicationStatus } from "@/pages/ApplicationStatus";
 import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
+import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 /**
@@ -29,7 +30,9 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
-          <Route path="/club/:id/apply" element={<ClubApplication />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/club/:id/apply" element={<ClubApplication />} />
+          </Route>
           <Route path="/my-applications" element={<ApplicationStatus />} />
         </Route>
       </Routes>

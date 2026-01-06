@@ -22,9 +22,6 @@ export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
   // 공유 목업 데이터에서 필요한 필드(title, category, description)만 가져옴
   const clubData = id ? getClubApplicationData(id) : null;
-  if (!clubData) {
-    return <NotFound />;
-  }
 
   const navigate = useNavigate();
 
@@ -86,6 +83,10 @@ export function ClubApplication() {
       setErrors((prev) => ({ ...prev, [field]: false }));
     }
   };
+
+  if (!clubData) {
+    return <NotFound />;
+  }
 
   return (
     <div className="min-h-screen">

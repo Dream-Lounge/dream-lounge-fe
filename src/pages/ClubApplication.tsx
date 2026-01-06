@@ -20,6 +20,7 @@ import { getClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
@@ -98,6 +99,8 @@ export function ClubApplication() {
           questions: questions || undefined,
         },
       });
+
+      toast.success("지원서가 성공적으로 제출되었습니다.");
 
       navigate(`/club/${id}`, {
         state: { applicationSuccess: true },

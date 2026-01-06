@@ -1,6 +1,17 @@
 import { isTokenExpired } from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error("VITE_API_URL is not defined. Please set it in your environment variables.");
+}
+
+// URL 합치기 유틸 (슬래시 중복 방지)
+export function apiUrl(path: string) {
+  const base = API_BASE_URL.replace(/\/+$/, "");
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${p}`;
+}
 
 export interface User {
   studentId: number;

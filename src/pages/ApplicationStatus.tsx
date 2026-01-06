@@ -133,24 +133,30 @@ function getStatusMessage(status: string) {
 
 export function ApplicationStatus() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    if (!isAuthLoading && isAuthenticated && user) {
       if (studentId && String(user.studentId) !== studentId) {
         navigate(`/users/${user.studentId}/applications`, { replace: true });
       }
     }
-  }, [studentId, user, isAuthenticated, isLoading, navigate]);
+  }, [studentId, user, isAuthenticated, isAuthLoading, navigate]);
 
   useEffect(() => {
+    if (isAuthLoading || !user || (studentId && String(user.studentId) !== studentId)) {
+      return;
+    }
+
     const fetchApplications = async () => {
       setIsLoading(true);
       try {
         const data = await api.getMyApplications();
+
+
         
         const mappedData: Application[] = data.map((item: ApplicationListResponseItem) => {
             let status: Application["status"] = "pending";

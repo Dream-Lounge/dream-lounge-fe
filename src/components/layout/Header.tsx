@@ -37,7 +37,7 @@ export function Header() {
                     <div className="flex items-center gap-10">
                         {/** 로고 영역: 클릭 시 홈으로 이동 */}
                         <Link to="/" className="h-12 shrink-0 flex items-center">
-                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" />
+                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" draggable={false} />
                         </Link>
 
                         {/** 메인 네비게이션: 메뉴 목록 렌더링 */}

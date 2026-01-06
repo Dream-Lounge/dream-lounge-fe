@@ -148,7 +148,7 @@ export function Signup() {
     <>
       <div className="flex justify-center mb-6">
         <Link to="/">
-          <img src="/logo.svg" alt="Dream Lounge" className="h-20" />
+          <img src="/logo.svg" alt="Dream Lounge" className="h-20" draggable={false} />
         </Link>
       </div>
       <Card>

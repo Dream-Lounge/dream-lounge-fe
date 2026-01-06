@@ -40,7 +40,7 @@ export function RecruitingSection() {
       endDate: "2025.09.26",
       deadlineText: "",
       imgSize: "92%", // 꽉 차게 (기본)
-      image: "/images/RCY.jpg",  // ← 이미지 추가!
+      image: "/images/rcy_v1.jpg",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -49,7 +49,7 @@ export function RecruitingSection() {
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",
-      image: "/images/PHOTO_EXHIBITION.png",  // ← 이미지 추가!
+      image: "/images/photo_exhibition_v1.png",  // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -77,7 +77,7 @@ export function RecruitingSection() {
       endDate: "상시모집",
       imgSize: "68%", // 꽉 차게 (기본)
       deadlineText: "모집예정",
-      image: "/images/CPR.png",  // ← 이미 있는 이미지!
+      image: "/images/cpr_v1.png",  // ← 이미 있는 이미지!
       textColor: "text-white",
     },
   ];

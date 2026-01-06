@@ -17,7 +17,7 @@ import {
   Edit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getClubApplicationData } from "@/data/clubs";
+import { getClubApplicationData, type ClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
@@ -32,7 +32,7 @@ export function ClubApplication() {
   const { user, isAuthenticated } = useAuth();
 
   const [mode, setMode] = useState<ApplicationMode>("create");
-  const [clubData, setClubData] = useState<any>(null);
+  const [clubData, setClubData] = useState<ClubApplicationData | null>(null);
   
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -62,7 +62,12 @@ export function ClubApplication() {
         setClubData(data);
       } else {
         try {
-          const appData = await api.getApplication(parseInt(id, 10));
+          const numericId = parseInt(id, 10);
+          if (isNaN(numericId)) {
+            setSubmitError("유효하지 않은 지원서 ID입니다.");
+            return;
+          }
+          const appData = await api.getApplication(numericId);
           
           setMotivation(appData.content.motivation);
           setExperience(appData.content.experience || "");
@@ -169,7 +174,7 @@ export function ClubApplication() {
   };
 
   if (!clubData && !submitError) {
-    if (mode !== "create" && !submitError) {
+    if (mode !== "create") {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />

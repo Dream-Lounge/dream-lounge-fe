@@ -1,3 +1,4 @@
+import { type ReactNode, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ const STATUS_BADGE_CONFIG: Record<
   },
 };
 
-const APPLICATIONS: Application[] = [
+const MOCK_APPLICATIONS: Application[] = [
   {
     id: "1",
     clubName: "코딩 마스터즈",
@@ -62,8 +63,107 @@ const APPLICATIONS: Application[] = [
   },
 ];
 
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: ReactNode;
+  iconBgClass: string;
+  iconColorClass: string;
+}
+
+function StatCard({ title, value, icon, iconBgClass, iconColorClass }: StatCardProps) {
+  return (
+    <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
+      <div className="flex flex-col gap-1">
+        <span className="text-sm font-medium text-muted-foreground">{title}</span>
+        <span className="text-2xl font-bold">{value}개</span>
+      </div>
+      <div className={`p-3 rounded-full ${iconBgClass} ${iconColorClass}`}>
+        {icon}
+      </div>
+    </Card>
+  );
+}
+
+interface ApplicationItemProps {
+  application: Application;
+}
+
+function ApplicationItem({ application }: ApplicationItemProps) {
+  return (
+    <div className="flex flex-col md:flex-row gap-6 p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
+      <div className="shrink-0">
+        <img 
+          src={application.clubImage} 
+          alt={application.clubName} 
+          className="w-full md:w-[160px] h-[160px] rounded-lg object-cover bg-muted"
+        />
+      </div>
+
+      <div className="flex flex-col flex-1 gap-4">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
+            {application.category}
+          </Badge>
+          <Badge {...STATUS_BADGE_CONFIG[application.status]} />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <h3 className="text-xl font-bold text-foreground">{application.clubName}</h3>
+          <p className="text-sm text-muted-foreground">지원일: {application.appliedDate}</p>
+        </div>
+
+        <div className="p-4 border rounded-lg bg-background/50 text-sm text-foreground">
+          {application.message}
+        </div>
+      </div>
+
+      <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
+        {application.status === "pending" ? (
+          <>
+            <Button variant="outline" className="w-full justify-center">
+              <Edit className="w-4 h-4 mr-2" />
+              수정하기
+            </Button>
+            <Button variant="default" className="w-full justify-center">
+              <FileText className="w-4 h-4 mr-2" />
+              지원서 보기
+            </Button>
+          </>
+        ) : (
+          <Button variant="default" className="w-full justify-center mt-auto">
+            <FileText className="w-4 h-4 mr-2" />
+            지원서 보기
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ApplicationStatus() {
-  const stats = APPLICATIONS.reduce(
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      setIsLoading(true);
+      try {
+        // TODO: 실제 API 호출로 대체
+        // const data = await api.get("/my-applications");
+        // setApplications(data);
+        setApplications(MOCK_APPLICATIONS);
+      } catch (error) {
+        console.error("Failed to fetch applications", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, []);
+
+  const stats = applications.reduce(
     (acc, app) => {
       acc.total++;
       if (app.status === "accepted") acc.accepted++;
@@ -74,102 +174,53 @@ export function ApplicationStatus() {
     { total: 0, accepted: 0, rejected: 0, pending: 0 }
   );
 
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
+        <div className="text-muted-foreground">로딩 중...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-muted-foreground">전체 지원</span>
-            <span className="text-2xl font-bold">{stats.total}개</span>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-full text-primary">
-            <FileText className="w-6 h-6" />
-          </div>
-        </Card>
-        
-        <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-muted-foreground">합격</span>
-            <span className="text-2xl font-bold">{stats.accepted}개</span>
-          </div>
-          <div className="p-3 bg-green-50 rounded-full text-green-600">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-muted-foreground">불합격</span>
-            <span className="text-2xl font-bold">{stats.rejected}개</span>
-          </div>
-          <div className="p-3 bg-red-50 rounded-full text-destructive">
-            <XCircle className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-muted-foreground">검토중</span>
-            <span className="text-2xl font-bold">{stats.pending}개</span>
-          </div>
-          <div className="p-3 bg-orange-50 rounded-full text-orange-500">
-            <Clock className="w-6 h-6" />
-          </div>
-        </Card>
+        <StatCard
+          title="전체 지원"
+          value={stats.total}
+          icon={<FileText className="w-6 h-6" />}
+          iconBgClass="bg-blue-50"
+          iconColorClass="text-primary"
+        />
+        <StatCard
+          title="합격"
+          value={stats.accepted}
+          icon={<CheckCircle2 className="w-6 h-6" />}
+          iconBgClass="bg-green-50"
+          iconColorClass="text-green-600"
+        />
+        <StatCard
+          title="불합격"
+          value={stats.rejected}
+          icon={<XCircle className="w-6 h-6" />}
+          iconBgClass="bg-red-50"
+          iconColorClass="text-destructive"
+        />
+        <StatCard
+          title="검토중"
+          value={stats.pending}
+          icon={<Clock className="w-6 h-6" />}
+          iconBgClass="bg-orange-50"
+          iconColorClass="text-orange-500"
+        />
       </div>
 
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold text-foreground">지원 내역</h2>
         
         <div className="flex flex-col gap-4">
-          {APPLICATIONS.map((app) => (
-            <div key={app.id} className="flex flex-col md:flex-row gap-6 p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="shrink-0">
-                <img 
-                  src={app.clubImage} 
-                  alt={app.clubName} 
-                  className="w-full md:w-[160px] h-[160px] rounded-lg object-cover bg-muted"
-                />
-              </div>
-
-              <div className="flex flex-col flex-1 gap-4">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
-                    {app.category}
-                  </Badge>
-                  <Badge {...STATUS_BADGE_CONFIG[app.status]} />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-xl font-bold text-foreground">{app.clubName}</h3>
-                  <p className="text-sm text-muted-foreground">지원일: {app.appliedDate}</p>
-                </div>
-
-                <div className="p-4 border rounded-lg bg-background/50 text-sm text-foreground">
-                  {app.message}
-                </div>
-              </div>
-
-              <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
-                {app.status === "pending" ? (
-                  <>
-                    <Button variant="outline" className="w-full justify-center">
-                      <Edit className="w-4 h-4 mr-2" />
-                      수정하기
-                    </Button>
-                    <Button variant="default" className="w-full justify-center">
-                      <FileText className="w-4 h-4 mr-2" />
-                      지원서 보기
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant="default" className="w-full justify-center mt-auto">
-                    <FileText className="w-4 h-4 mr-2" />
-                    지원서 보기
-                  </Button>
-                )}
-              </div>
-            </div>
+          {applications.map((app) => (
+            <ApplicationItem key={app.id} application={app} />
           ))}
         </div>
       </div>

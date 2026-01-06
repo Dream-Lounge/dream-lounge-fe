@@ -1,6 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+
 export interface User {
+  studentId: number;
+  name: string;
+  department: string | null;
+  phone: string | null;
+}
+
+interface ApiUser {
   student_id: number;
   name: string;
   department: string | null;
@@ -13,6 +21,14 @@ export interface LoginResponse {
   token_type: string;
   expires_in: number;
   user: User;
+}
+
+interface ApiLoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: ApiUser;
 }
 
 export interface ApiError {
@@ -29,11 +45,28 @@ export interface SignupRequest {
 }
 
 export interface SignupResponse {
+  studentId: number;
+  name: string;
+  department: string | null;
+  phone: string | null;
+  registered_at: string;
+}
+
+interface ApiSignupResponse {
   student_id: number;
   name: string;
   department: string | null;
   phone: string | null;
   registered_at: string;
+}
+
+function mapUser(apiUser: ApiUser): User {
+  return {
+    studentId: apiUser.student_id,
+    name: apiUser.name,
+    department: apiUser.department,
+    phone: apiUser.phone,
+  };
 }
 
 class ApiClient {
@@ -78,9 +111,11 @@ class ApiClient {
         return false;
       }
 
-      const data: LoginResponse = await response.json();
+      const data: ApiLoginResponse = await response.json();
+      const user = mapUser(data.user);
+      
       this.setTokens(data.access_token, data.refresh_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(user));
       return true;
     } catch (error) {
       console.error("Access token refresh failed:", error);
@@ -131,15 +166,20 @@ class ApiClient {
   }
 
   async login(studentId: number, password: string): Promise<LoginResponse> {
-    const response = await this.request<LoginResponse>("/members/login", {
+    const response = await this.request<ApiLoginResponse>("/members/login", {
       method: "POST",
       body: JSON.stringify({ student_id: studentId, password }),
     });
 
-    this.setTokens(response.access_token, response.refresh_token);
-    localStorage.setItem("user", JSON.stringify(response.user));
+    const user = mapUser(response.user);
 
-    return response;
+    this.setTokens(response.access_token, response.refresh_token);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    return {
+      ...response,
+      user,
+    };
   }
 
   logout(): void {
@@ -147,7 +187,8 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.request<User>("/members/me");
+    const apiUser = await this.request<ApiUser>("/members/me");
+    return mapUser(apiUser);
   }
 
   async signup(data: SignupRequest): Promise<SignupResponse> {
@@ -160,10 +201,15 @@ class ApiClient {
       password_confirm: data.passwordConfirm,
     };
 
-    return this.request<SignupResponse>("/members/signup", {
+    const response = await this.request<ApiSignupResponse>("/members/signup", {
       method: "POST",
       body: JSON.stringify(requestBody),
     });
+
+    return {
+      ...response,
+      studentId: response.student_id,
+    };
   }
 }
 

@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { MOCK_CLUB_DATA } from "@/data/clubs";
  */
 export function ClubDetail() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
@@ -142,7 +144,14 @@ export function ClubDetail() {
                 <Separator className="my-2" />
 
                 <Button
-                  onClick={() => navigate(`/club/${id}/apply`)}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      alert("로그인이 필요한 서비스입니다.");
+                      navigate("/login");
+                      return;
+                    }
+                    navigate(`/club/${id}/apply`);
+                  }}
                   className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
                   지원하기
                 </Button>

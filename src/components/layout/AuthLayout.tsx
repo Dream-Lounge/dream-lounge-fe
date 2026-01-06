@@ -9,7 +9,11 @@ export function AuthLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null;
+    return (
+      <main className="min-h-screen grid place-items-center">
+        <p>인증 정보를 확인하는 중입니다...</p>
+      </main>
+    );
   }
 
   if (isAuthenticated) {

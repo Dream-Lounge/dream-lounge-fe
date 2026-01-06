@@ -1,12 +1,12 @@
 import { type ReactNode, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle2, XCircle, Clock, Edit, Info } from "lucide-react";
 import { type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
-
+import { useAuth } from "@/hooks/useAuth";
 
 const STATUS_BADGE_CONFIG: Record<
   Application["status"],
@@ -132,8 +132,19 @@ function getStatusMessage(status: string) {
 }
 
 export function ApplicationStatus() {
+  const { studentId } = useParams<{ studentId: string }>();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if (studentId && String(user.studentId) !== studentId) {
+        navigate(`/users/${user.studentId}/applications`, { replace: true });
+      }
+    }
+  }, [studentId, user, isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     const fetchApplications = async () => {

@@ -41,7 +41,7 @@ function App() {
               element={<ClubApplication />}
             />
           </Route>
-          <Route path="/my-applications" element={<ApplicationStatus />} />
+          <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
         </Route>
       </Routes>
     </div>

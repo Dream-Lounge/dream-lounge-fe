@@ -151,7 +151,7 @@ export function ClubApplication() {
       } else {
         await api.updateApplication(parseInt(id, 10), content);
         toast.success("지원서가 성공적으로 수정되었습니다.");
-        navigate("/my-applications");
+        navigate(user ? `/users/${user.studentId}/applications` : '/');
       }
     } catch (error) {
       setSubmitError(
@@ -196,7 +196,13 @@ export function ClubApplication() {
       <div className="container mx-auto px-4 max-w-4xl">
         <Button
           variant="outline"
-          onClick={() => navigate(mode === 'create' ? `/club/${id}` : '/my-applications')}
+          onClick={() => {
+             if (mode === 'create') {
+                navigate(`/club/${id}`);
+             } else {
+                navigate(user ? `/users/${user.studentId}/applications` : '/');
+             }
+          }}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />

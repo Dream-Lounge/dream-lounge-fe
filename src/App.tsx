@@ -4,6 +4,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Home } from "@/pages/Home";
 import { ClubDetail } from "@/pages/ClubDetail";
 import { ClubApplication } from "@/pages/ClubApplication";
+import { ApplicationStatus } from "@/pages/ApplicationStatus";
 import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
           <Route path="/club/:id/apply" element={<ClubApplication />} />
+          <Route path="/my-applications" element={<ApplicationStatus />} />
         </Route>
       </Routes>
     </div>

@@ -86,6 +86,27 @@ export interface ApplicationResponse {
   };
 }
 
+export interface ApplicationListResponseItem {
+  id: number;
+  club_id: number;
+  club_name: string;
+  club_image: string | null;
+  category: string | null;
+  status: "임시저장" | "제출됨" | "합격" | "불합격";
+  submitted_time: string;
+  motivation: string;
+}
+
+export interface ApplicationDetailResponse {
+  id: number;
+  club_id: number;
+  club_name: string;
+  student_id: number;
+  status: "임시저장" | "제출됨" | "합격" | "불합격";
+  content: ApplicationContent;
+  submitted_time: string;
+}
+
 interface ApiSignupResponse {
   student_id: number;
   name: string;
@@ -287,6 +308,24 @@ class ApiClient {
       console.error("Failed to check application status", e);
       throw e;
     }
+  }
+
+  async getMyApplications(): Promise<ApplicationListResponseItem[]> {
+    return this.request<ApplicationListResponseItem[]>("/applications/me");
+  }
+
+  async getApplication(id: number | string): Promise<ApplicationDetailResponse> {
+    return this.request<ApplicationDetailResponse>(`/applications/${id}`);
+  }
+
+  async updateApplication(
+    id: number | string,
+    content: ApplicationContent
+  ): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/applications/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(content),
+    });
   }
 }
 

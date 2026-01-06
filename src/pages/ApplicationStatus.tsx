@@ -1,9 +1,11 @@
 import { type ReactNode, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle2, XCircle, Clock, Edit, Info } from "lucide-react";
-import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
+import { type Application } from "@/data/applications";
+import { api, type ApplicationListResponseItem } from "@/lib/api";
 
 
 const STATUS_BADGE_CONFIG: Record<
@@ -52,6 +54,8 @@ interface ApplicationItemProps {
 }
 
 function ApplicationItem({ application }: ApplicationItemProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col md:flex-row gap-6 p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
       <div className="shrink-0">
@@ -83,17 +87,29 @@ function ApplicationItem({ application }: ApplicationItemProps) {
       <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
         {application.status === "pending" ? (
           <>
-            <Button variant="outline" className="w-full justify-center">
+            <Button 
+              variant="outline" 
+              className="w-full justify-center"
+              onClick={() => navigate(`/applications/${application.id}/edit`)}
+            >
               <Edit className="w-4 h-4 mr-2" />
               수정하기
             </Button>
-            <Button variant="default" className="w-full justify-center">
+            <Button 
+              variant="default" 
+              className="w-full justify-center"
+              onClick={() => navigate(`/applications/${application.id}/view`)}
+            >
               <FileText className="w-4 h-4 mr-2" />
               지원서 보기
             </Button>
           </>
         ) : (
-          <Button variant="default" className="w-full justify-center mt-auto">
+          <Button 
+            variant="default" 
+            className="w-full justify-center mt-auto"
+            onClick={() => navigate(`/applications/${application.id}/view`)}
+          >
             <FileText className="w-4 h-4 mr-2" />
             지원서 보기
           </Button>
@@ -101,6 +117,18 @@ function ApplicationItem({ application }: ApplicationItemProps) {
       </div>
     </div>
   );
+}
+
+function getStatusMessage(status: string) {
+  switch (status) {
+    case "합격":
+      return "축하합니다! 서류 전형에 합격하셨습니다. 향후 면접 일정 및 자세한 안내 사항은 가입하신 이메일로 발송되었습니다.";
+    case "불합격":
+      return "지원해주셔서 감사합니다. 아쉽게도 이번 모집에서는 함께하지 못하게 되었습니다. 귀하의 앞날에 무궁한 발전이 있기를 기원합니다.";
+    case "제출됨":
+    default:
+      return "지원서가 성공적으로 접수되었습니다. 현재 운영진이 서류를 꼼꼼히 검토하고 있습니다. 결과 발표까지 조금만 기다려주세요!";
+  }
 }
 
 export function ApplicationStatus() {
@@ -111,10 +139,30 @@ export function ApplicationStatus() {
     const fetchApplications = async () => {
       setIsLoading(true);
       try {
-        // TODO: 실제 API 호출로 대체
-        // const data = await api.get("/my-applications");
-        // setApplications(data);
-        setApplications(MOCK_APPLICATIONS);
+        const data = await api.getMyApplications();
+        
+        const mappedData: Application[] = data.map((item: ApplicationListResponseItem) => {
+            let status: Application["status"] = "pending";
+            if (item.status === "합격") status = "accepted";
+            else if (item.status === "불합격") status = "rejected";
+            
+            const date = new Date(item.submitted_time);
+            const appliedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+            
+            return {
+                id: String(item.id),
+                studentId: 0,
+                clubId: String(item.club_id),
+                clubName: item.club_name,
+                clubImage: item.club_image || "https://placehold.co/160x160/e2e8f0/1e293b?text=Club",
+                category: item.category || "기타",
+                status: status,
+                appliedDate: appliedDate,
+                message: getStatusMessage(item.status),
+            };
+        });
+        
+        setApplications(mappedData);
       } catch (error) {
         console.error("Failed to fetch applications", error);
       } finally {
@@ -180,11 +228,17 @@ export function ApplicationStatus() {
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold text-foreground">지원 내역</h2>
         
-        <div className="flex flex-col gap-4">
-          {applications.map((app) => (
-            <ApplicationItem key={app.id} application={app} />
-          ))}
-        </div>
+        {applications.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            {applications.map((app) => (
+              <ApplicationItem key={app.id} application={app} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground border rounded-xl bg-muted/20">
+            지원 내역이 없습니다.
+          </div>
+        )}
       </div>
 
       <Card>

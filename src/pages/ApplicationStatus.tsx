@@ -188,7 +188,7 @@ export function ApplicationStatus() {
     };
 
     fetchApplications();
-  }, []);
+  }, [studentId, user, isAuthLoading]);
 
   const stats = applications.reduce(
     (acc, app) => {

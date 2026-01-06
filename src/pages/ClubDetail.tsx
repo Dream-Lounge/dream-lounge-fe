@@ -28,7 +28,11 @@ export function ClubDetail() {
 
   useEffect(() => {
     if (isAuthenticated && id) {
-      api.checkApplicationStatus(id).then(setHasApplied);
+      api.checkApplicationStatus(id)
+        .then(setHasApplied)
+        .catch((error) => {
+          console.error("Failed to check application status:", error);
+        });
     } else {
       setHasApplied(false);
     }

@@ -274,7 +274,7 @@ class ApiClient {
       return response.has_applied;
     } catch (e) {
       console.error("Failed to check application status", e);
-      return false;
+      throw e;
     }
   }
 }

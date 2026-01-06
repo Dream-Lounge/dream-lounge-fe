@@ -13,6 +13,25 @@ interface Application {
   message: string;
 }
 
+const STATUS_BADGE_CONFIG: Record<
+  Application["status"],
+  { children: string; className: string; variant?: "destructive" }
+> = {
+  pending: {
+    children: "검토중",
+    className: "bg-chart-3 text-white border-transparent hover:bg-chart-3/90",
+  },
+  accepted: {
+    children: "합격",
+    className: "bg-primary text-primary-foreground border-transparent hover:bg-primary/90",
+  },
+  rejected: {
+    children: "불합격",
+    variant: "destructive",
+    className: "border-transparent",
+  },
+};
+
 const APPLICATIONS: Application[] = [
   {
     id: "1",
@@ -118,21 +137,7 @@ export function ApplicationStatus() {
                   <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
                     {app.category}
                   </Badge>
-                  {app.status === "pending" && (
-                    <Badge className="bg-chart-3 text-white border-transparent hover:bg-chart-3/90">
-                      검토중
-                    </Badge>
-                  )}
-                  {app.status === "accepted" && (
-                    <Badge className="bg-primary text-primary-foreground border-transparent hover:bg-primary/90">
-                      합격
-                    </Badge>
-                  )}
-                  {app.status === "rejected" && (
-                    <Badge variant="destructive" className="border-transparent">
-                      불합격
-                    </Badge>
-                  )}
+                  <Badge {...STATUS_BADGE_CONFIG[app.status]} />
                 </div>
 
                 <div className="flex flex-col gap-1">

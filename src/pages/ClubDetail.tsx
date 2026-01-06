@@ -7,16 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
 import { useState } from "react";
 
 /**
@@ -175,23 +166,11 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
-      <AlertDialog open={isLoginAlertOpen} onOpenChange={setIsLoginAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>로그인이 필요한 서비스입니다</AlertDialogTitle>
-            <AlertDialogDescription>
-              동아리 지원을 위해서는 로그인이 필요합니다.
-              로그인 페이지로 이동하시겠습니까?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate("/login")}>
-              로그인 하러 가기
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LoginAlertDialog
+        open={isLoginAlertOpen}
+        onOpenChange={setIsLoginAlertOpen}
+        reason="동아리 지원을 위해서는 로그인이 필요합니다."
+      />
     </div>
   );
 }

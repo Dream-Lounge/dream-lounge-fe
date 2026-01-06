@@ -85,7 +85,7 @@ function ApplicationItem({ application }: ApplicationItemProps) {
       </div>
 
       <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
-        {application.status === "pending" ? (
+        {application.rawStatus === "임시저장" ? (
           <>
             <Button 
               variant="outline" 
@@ -119,7 +119,7 @@ function ApplicationItem({ application }: ApplicationItemProps) {
   );
 }
 
-function getStatusMessage(status: string) {
+function getStatusMessage(status: ApplicationListResponseItem["status"]) {
   switch (status) {
     case "합격":
       return "축하합니다! 서류 전형에 합격하셨습니다. 향후 면접 일정 및 자세한 안내 사항은 가입하신 이메일로 발송되었습니다.";
@@ -168,12 +168,13 @@ export function ApplicationStatus() {
             
             return {
                 id: String(item.id),
-                studentId: 0,
+                studentId: user!.studentId,
                 clubId: String(item.club_id),
                 clubName: item.club_name,
                 clubImage: item.club_image || "https://placehold.co/160x160/e2e8f0/1e293b?text=Club",
                 category: item.category || "기타",
                 status: status,
+                rawStatus: item.status,
                 appliedDate: appliedDate,
                 message: getStatusMessage(item.status),
             };

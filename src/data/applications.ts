@@ -6,6 +6,7 @@ export interface Application {
   clubImage: string;
   category: string;
   status: "pending" | "accepted" | "rejected";
+  rawStatus?: string;
   appliedDate: string;
   message: string;
 }

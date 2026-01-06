@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validators, ERROR_MESSAGES } from "@/lib/validators";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * 로그인 페이지 컴포넌트
@@ -15,6 +16,7 @@ import { validators, ERROR_MESSAGES } from "@/lib/validators";
  */
 export function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // 폼 필드 상태
   const [studentId, setStudentId] = useState("");
@@ -22,6 +24,9 @@ export function Login() {
 
   // 비밀번호 표시 상태
   const [showPassword, setShowPassword] = useState(false);
+
+  // 로딩 상태
+  const [isLoading, setIsLoading] = useState(false);
 
   // 에러 상태
   const [errors, setErrors] = useState<{
@@ -36,7 +41,7 @@ export function Login() {
   const [loginError, setLoginError] = useState(false);
 
   // 폼 제출 핸들러
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors = {
@@ -46,24 +51,22 @@ export function Login() {
 
     setErrors(newErrors);
 
-    // 에러가 있으면 제출 중단
     const hasErrors = Object.values(newErrors).some((error) => error);
     if (hasErrors) {
       return;
     }
 
-    // TODO: 실제 로그인 API 호출
-    // 현재는 테스트를 위해 로그인 실패 에러를 표시
-    // 실제 API 연동 시 서버 응답에 따라 loginError 상태 제어
-    console.log("로그인 시도:", {
-      studentId,
-      password,
-    });
+    setIsLoading(true);
+    setLoginError(false);
 
-    // 임시: 로그인 실패 에러 표시 (API 연동 시 제거)
-    // setLoginError(true);
-
-    navigate("/");
+    try {
+      await login(parseInt(studentId, 10), password);
+      navigate("/");
+    } catch {
+      setLoginError(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 실시간 검증 핸들러
@@ -180,9 +183,14 @@ export function Login() {
                 type="submit"
                 size="lg"
                 className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all mt-6"
+                disabled={isLoading}
               >
-                <LogIn className="h-5 w-5 mr-2" />
-                로그인
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <LogIn className="h-5 w-5 mr-2" />
+                )}
+                {isLoading ? "로그인 중..." : "로그인"}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">

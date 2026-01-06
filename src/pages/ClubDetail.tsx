@@ -7,6 +7,17 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 /**
  * 동아리 상세 페이지 컴포넌트
@@ -16,6 +27,7 @@ import { MOCK_CLUB_DATA } from "@/data/clubs";
 export function ClubDetail() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
@@ -146,8 +158,7 @@ export function ClubDetail() {
                 <Button
                   onClick={() => {
                     if (!isAuthenticated) {
-                      alert("로그인이 필요한 서비스입니다.");
-                      navigate("/login");
+                      setIsLoginAlertOpen(true);
                       return;
                     }
                     navigate(`/club/${id}/apply`);
@@ -164,6 +175,23 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
+      <AlertDialog open={isLoginAlertOpen} onOpenChange={setIsLoginAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>로그인이 필요한 서비스입니다</AlertDialogTitle>
+            <AlertDialogDescription>
+              동아리 지원을 위해서는 로그인이 필요합니다.
+              로그인 페이지로 이동하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate("/login")}>
+              로그인 하러 가기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

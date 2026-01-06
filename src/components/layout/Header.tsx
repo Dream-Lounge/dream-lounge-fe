@@ -8,6 +8,18 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 
 const NAV_ITEMS = [
@@ -24,6 +36,8 @@ const NAV_ITEMS = [
  */
 export function Header() {
     const { user, isAuthenticated, logout } = useAuth();
+    const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
+    const navigate = useNavigate();
 
     return (
         <header className="w-full flex justify-center bg-background shadow-sm sticky top-0 z-50">
@@ -105,6 +119,10 @@ export function Header() {
                                             <Link
                                                 to="/my-applications"
                                                 className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setIsLoginAlertOpen(true);
+                                                }}
                                             >
                                                 내 지원 내역
                                             </Link>
@@ -117,6 +135,23 @@ export function Header() {
 
                 </div>
             </div>
+            <AlertDialog open={isLoginAlertOpen} onOpenChange={setIsLoginAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>로그인이 필요한 서비스입니다</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            내 지원 내역을 확인하려면 로그인이 필요합니다.
+                            로그인 페이지로 이동하시겠습니까?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => navigate("/login")}>
+                            로그인 하러 가기
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </header>
     );
 }

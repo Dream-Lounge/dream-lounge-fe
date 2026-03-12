@@ -241,7 +241,7 @@ export function ClubApplication() {
                 navigate(user ? `/users/${user.studentId}/applications` : '/');
              }
           }}
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-start text-left gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm">
@@ -252,12 +252,12 @@ export function ClubApplication() {
         <div className="flex flex-col gap-8">
           <Card>
             <CardContent>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-xl">
                   <Users className="h-8 w-8 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h2 className="text-xl font-bold">
                       {clubData?.title || "동아리"}
                     </h2>

@@ -106,12 +106,12 @@ export function RecruitingSection() {
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
           모집중인 동아리
         </h2>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full mx-auto">
         {/* 좌측 영역 */}
         <div className="flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -168,9 +168,9 @@ export function RecruitingSection() {
         </div>
 
         {/* 우측 사이드바: 분과별 정보 및 태그 탐색 */}
-        <div className="w-full lg:w-96 shrink-0 space-y-8">
+        <div className="w-full lg:w-96 shrink-0 space-y-6 sm:space-y-8">
           <div>
-            <h3 className="text-2xl font-bold text-gray-600 mb-6">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-5 sm:mb-6">
               분과별 모아보기
             </h3>
             <div className="space-y-4">

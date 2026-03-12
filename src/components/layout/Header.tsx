@@ -30,34 +30,17 @@ export function Header() {
 
     return (
         <header className="w-full flex justify-center bg-background shadow-sm sticky top-0 z-50">
-            <div className="container px-8 py-2 flex flex-col items-start">
+            <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-2 flex flex-col items-start gap-2">
                 <div className="w-full flex items-center justify-between relative shrink-0">
-
-                    {/** 좌측 영역: 로고 및 메인 네비게이션 */}
-                    <div className="flex items-center gap-10">
-                        {/** 로고 영역: 클릭 시 홈으로 이동 */}
-                        <Link to="/" className="h-12 shrink-0 flex items-center">
-                            <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" draggable={false} />
-                        </Link>
-
-                        {/** 메인 네비게이션: 메뉴 목록 렌더링 */}
-                        <nav className="h-10 flex items-center gap-4 sm:gap-6">
-                            {NAV_ITEMS.map(({ label, to }) => (
-                                <Link
-                                    key={label}
-                                    to={to}
-                                    className="font-kr text-base font-bold text-foreground hover:text-primary transition-colors px-3 py-1.5"
-                                >
-                                    {label}
-                                </Link>
-                            ))}
-                        </nav>
-                    </div>
+                    {/** 로고 영역: 클릭 시 홈으로 이동 */}
+                    <Link to="/" className="h-10 sm:h-12 shrink-0 flex items-center">
+                        <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" draggable={false} />
+                    </Link>
 
                     {/** 우측 영역: 검색 바 및 사용자 액션 버튼 */}
-                    <div className="flex items-center gap-4">
-                        {/** 검색 바: 동아리 검색 기능 제공 */}
-                        <div className="w-full max-w-sm space-y-2">
+                    <div className="flex items-center gap-2 sm:gap-4 w-full justify-end">
+                        {/** 검색 바: 동아리 검색 기능 제공 (모바일에서는 숨김) */}
+                        <div className="hidden sm:block w-full max-w-sm space-y-2">
                             <div className="relative h-9">
                                 <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
                                 <Input
@@ -123,8 +106,20 @@ export function Header() {
                             </PopoverContent>
                         </Popover>
                     </div>
-
                 </div>
+
+                {/** 메인 네비게이션: 모바일에서는 가로 스크롤로 표시 */}
+                <nav className="w-full h-10 flex items-center gap-2 sm:gap-4 overflow-x-auto whitespace-nowrap">
+                    {NAV_ITEMS.map(({ label, to }) => (
+                        <Link
+                            key={label}
+                            to={to}
+                            className="font-kr text-sm sm:text-base font-bold text-foreground hover:text-primary transition-colors px-3 py-1.5 shrink-0"
+                        >
+                            {label}
+                        </Link>
+                    ))}
+                </nav>
             </div>
             <LoginAlertDialog
                 open={isLoginAlertOpen}

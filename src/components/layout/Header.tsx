@@ -99,7 +99,7 @@ export function Header() {
                                             to="/admin"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
-                                            관리자 페이지
+                                            관리자
                                         </Link>
                                         <button
                                             onClick={logout}
@@ -132,7 +132,7 @@ export function Header() {
                                             to="/admin"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
-                                            관리자 페이지
+                                            관리자
                                         </Link>
                                     </>
                                 )}

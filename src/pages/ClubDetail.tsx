@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
-import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { isMockClubMember } from "@/lib/mockClubMembership";
@@ -20,7 +19,6 @@ import { isMockClubMember } from "@/lib/mockClubMembership";
 export function ClubDetail() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
   const location = useLocation();
 
   const { id } = useParams<{ id: string }>();
@@ -190,11 +188,6 @@ export function ClubDetail() {
                       navigate(`/club/${id}/community`);
                       return;
                     }
-
-                    if (!isAuthenticated) {
-                      setIsLoginAlertOpen(true);
-                      return;
-                    }
                     navigate(`/club/${id}/apply`);
                   }}
                   disabled={!isClubMember && hasApplied}
@@ -213,11 +206,6 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
-      <LoginAlertDialog
-        open={isLoginAlertOpen}
-        onOpenChange={setIsLoginAlertOpen}
-        reason="동아리 지원을 위해서는 로그인이 필요합니다."
-      />
     </div>
   );
 }

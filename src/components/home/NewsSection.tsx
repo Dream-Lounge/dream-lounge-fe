@@ -82,7 +82,6 @@ export function NewsSection() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">동아리 뉴스</h2>
-          <p className="text-gray-500">동아리 관련 최신 소식을 확인하세요</p>
         </div>
         <MoreLink>전체보기</MoreLink>
       </div>

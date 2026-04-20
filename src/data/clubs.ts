@@ -31,7 +31,7 @@ export type ClubApplicationData = Pick<ClubData, "title" | "category" | "descrip
  */
 export const MOCK_CLUB_DATA: Record<string, ClubData> = {
     "6": {
-        title: "CPR (CJU Public Relation)",
+        title: "CPR",
         category: "학술분과",
         tags: ["#코딩", "#취준", "#대학원", "#인공지능"],
         description:

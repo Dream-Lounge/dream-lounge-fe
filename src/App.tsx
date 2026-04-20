@@ -35,6 +35,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
           <Route path="/club/:id/community" element={<ClubCommunity />} />
+          <Route path="/users/:studentId/clubs" element={<MyClubs />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
@@ -50,7 +51,6 @@ function App() {
             />
             <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
-          <Route path="/users/:studentId/clubs" element={<MyClubs />} />
         </Route>
       </Routes>
     </div>

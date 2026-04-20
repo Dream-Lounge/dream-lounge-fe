@@ -87,7 +87,7 @@ export function Header() {
                                             지원 내역
                                         </Link>
                                         <Link
-                                            to={`/users/${user?.studentId}/clubs`}
+                                            to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             내 동아리
@@ -124,6 +124,12 @@ export function Header() {
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             지원 내역
+                                        </Link>
+                                        <Link
+                                            to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
+                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                        >
+                                            내 동아리
                                         </Link>
                                         <Link
                                             to="/admin"

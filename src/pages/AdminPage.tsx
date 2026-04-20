@@ -236,7 +236,7 @@ export function AdminPage() {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-2xl align-bottom font-bold text-foreground">
               모집 신청폼 문항 설정
             </h2>
             <Button className="h-9 rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800">
@@ -244,7 +244,7 @@ export function AdminPage() {
             </Button>
           </div>
 
-          <div className="mt-5 border-t border-slate-200 pt-5">
+          <div className="mt-0 border-t border-slate-200 pt-5">
             <ul className="space-y-4">
               {APPLICATION_QUESTIONS.map((question) => (
                 <li
@@ -303,7 +303,7 @@ export function AdminPage() {
         <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-[30px] font-extrabold leading-none text-foreground">
+              <h2 className="text-2xl align-bottom font-bold text-foreground">
                 지원자 목록
               </h2>
               <span className="rounded-full bg-[#EEF4FF] px-3 py-1 text-lg font-extrabold text-[#1F4F95]">
@@ -440,7 +440,7 @@ export function AdminPage() {
     if (activeTab === "page-tags") {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[32px] font-extrabold leading-none text-foreground">
+          <h2 className="text-2xl align-bottom font-bold text-foreground">
             상세 소개 페이지 구성
           </h2>
 
@@ -553,7 +553,7 @@ export function AdminPage() {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-[32px] font-extrabold leading-none text-foreground">
+            <h2 className="text-2xl align-bottom font-bold text-foreground">
               게시글 관리
             </h2>
             <Button className="h-11 rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b]">
@@ -644,7 +644,7 @@ export function AdminPage() {
 
     return (
       <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-foreground">준비 중인 메뉴</h2>
+        <h2 className="text-2xl align-bottom font-bold text-foreground">준비 중인 메뉴</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           현재 탭은 다음 화면에서 구현 예정입니다.
         </p>

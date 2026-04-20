@@ -53,7 +53,7 @@ const ADMIN_MENU: {
     items: [
       { label: "동아리 신청폼 설정", icon: Settings, tab: "application-form" },
       {
-        label: "제출된 신청서 관리",
+        label: "신청서 관리",
         icon: FileText,
         tab: "submitted-applications",
       },

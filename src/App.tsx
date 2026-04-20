@@ -9,6 +9,8 @@ import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { MyClubs } from "@/pages/MyClubs";
+import { ClubCommunity } from "@/pages/ClubCommunity";
 import { AdminRoute } from "@/components/common/AdminRoute";
 import { AdminPage } from "@/pages/AdminPage";
 
@@ -32,6 +34,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
+          <Route path="/club/:id/community" element={<ClubCommunity />} />
+          <Route path="/users/:studentId/clubs" element={<MyClubs />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>

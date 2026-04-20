@@ -163,7 +163,7 @@ export function AdminPage() {
   const renderMainContent = () => {
     if (activeTab === "club-register") {
       return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
             기본 정보 입력
           </h2>
@@ -222,7 +222,7 @@ export function AdminPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button className="h-10 rounded-lg px-5">
+              <Button className="h-10 w-full rounded-lg px-5 sm:w-auto">
                 <PlusCircle className="mr-1 size-4" />
                 동아리 등록
               </Button>
@@ -234,12 +234,12 @@ export function AdminPage() {
 
     if (activeTab === "application-form") {
       return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
               모집 신청폼 문항 설정
             </h2>
-            <Button className="h-9 rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800">
+            <Button className="h-9 w-full rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800 sm:w-auto">
               <CirclePlus className="mr-1 size-4" />새 문항 추가
             </Button>
           </div>
@@ -251,7 +251,7 @@ export function AdminPage() {
                   key={question.id}
                   className="rounded-xl border border-slate-200 bg-white px-5 py-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
                         <span className="inline-flex size-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
@@ -266,7 +266,7 @@ export function AdminPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 pt-1">
+                    <div className="flex items-center gap-4 pt-1 sm:justify-end">
                       <label className="inline-flex cursor-pointer items-center gap-2 align-bottom text-xs font-semibold text-slate-700">
                         <input
                           type="checkbox"
@@ -288,7 +288,7 @@ export function AdminPage() {
             </ul>
 
             <div className="mt-8 flex justify-end">
-              <Button className="h-10 rounded-lg px-5">
+              <Button className="h-10 w-full rounded-lg px-5 sm:w-auto">
                 <Save className="mr-1 size-4" />
                 변경사항 저장
               </Button>
@@ -300,9 +300,9 @@ export function AdminPage() {
 
     if (activeTab === "submitted-applications") {
       return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl align-bottom font-bold text-foreground">
                 지원자 목록
               </h2>
@@ -311,8 +311,8 @@ export function AdminPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <label className="flex h-11 w-[280px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-slate-500">
+            <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
+              <label className="flex h-11 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-slate-500 sm:flex-1 xl:w-[280px] xl:flex-none">
                 <Search className="size-4 text-slate-400" />
                 <input
                   type="text"
@@ -322,7 +322,7 @@ export function AdminPage() {
               </label>
               <button
                 type="button"
-                className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 sm:w-11"
                 aria-label="필터"
               >
                 <SlidersHorizontal className="size-4" />
@@ -331,7 +331,8 @@ export function AdminPage() {
           </div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full table-fixed">
+            <div className="overflow-x-auto">
+              <table className="min-w-[760px] w-full table-fixed">
               <thead className="bg-[#F8FAFD]">
                 <tr className="h-12 text-left text-sm font-semibold text-slate-500">
                   <th className="w-[72px] px-4">NO.</th>
@@ -395,11 +396,12 @@ export function AdminPage() {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
 
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-medium text-slate-500">전체 12명 중 1-4명</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-400"
@@ -439,7 +441,7 @@ export function AdminPage() {
 
     if (activeTab === "page-tags") {
       return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
             상세 소개 페이지 구성
           </h2>
@@ -491,14 +493,14 @@ export function AdminPage() {
                 {[1, 2, 3].map((photoNo) => (
                   <div
                     key={photoNo}
-                    className="flex h-[116px] w-[116px] items-center justify-center rounded-xl border border-slate-200 bg-[#F4F6FA] text-base font-semibold text-slate-400"
+                    className="flex h-[96px] w-[96px] items-center justify-center rounded-xl border border-slate-200 bg-[#F4F6FA] text-sm font-semibold text-slate-400 sm:h-[116px] sm:w-[116px] sm:text-base"
                   >
                     사진 {photoNo}
                   </div>
                 ))}
                 <button
                   type="button"
-                  className="flex h-[116px] w-[116px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 transition-colors hover:bg-slate-50"
+                  className="flex h-[96px] w-[96px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 transition-colors hover:bg-slate-50 sm:h-[116px] sm:w-[116px]"
                 >
                   <div className="inline-flex size-8 items-center justify-center rounded-full border border-slate-300">
                     <Plus className="size-4" />
@@ -539,7 +541,7 @@ export function AdminPage() {
             </section>
 
             <div className="mt-8 flex justify-end">
-              <Button className="h-10 rounded-lg bg-[#0A5CB5] px-6 text-white hover:bg-[#0A4F9D]">
+              <Button className="h-10 w-full rounded-lg bg-[#0A5CB5] px-6 text-white hover:bg-[#0A4F9D] sm:w-auto">
                 <Save className="mr-1.5 size-4" />
                 페이지 설정 저장
               </Button>
@@ -551,19 +553,20 @@ export function AdminPage() {
 
     if (activeTab === "community-board") {
       return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
               게시글 관리
             </h2>
-            <Button className="h-11 rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b]">
+            <Button className="h-11 w-full rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b] sm:w-auto">
               <SquarePen className="mr-2 size-4" />
               게시글 작성
             </Button>
           </div>
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full table-fixed">
+            <div className="overflow-x-auto">
+              <table className="min-w-[720px] w-full table-fixed">
               <thead className="bg-[#F8FAFD]">
                 <tr className="h-12 border-b border-slate-200 text-left text-sm font-semibold text-slate-500">
                   <th className="w-[72px] px-4">선택</th>
@@ -621,9 +624,10 @@ export function AdminPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
 
-            <div className="flex items-center gap-2 border-t border-slate-200 px-3 py-3">
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-3">
               <button
                 type="button"
                 className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
@@ -643,7 +647,7 @@ export function AdminPage() {
     }
 
     return (
-      <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-2xl align-bottom font-bold text-foreground">준비 중인 메뉴</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           현재 탭은 다음 화면에서 구현 예정입니다.
@@ -654,9 +658,9 @@ export function AdminPage() {
 
   return (
     <section className="w-full rounded-xl border border-border bg-[#F6F8FB]">
-      <div className="flex min-h-[760px]">
-        <aside className="w-[248px] shrink-0 border-r border-border bg-[#F3F5F8]">
-          <div className="border-b border-border px-6 py-5">
+      <div className="flex min-h-[760px] flex-col lg:flex-row">
+        <aside className="w-full shrink-0 border-b border-border bg-[#F3F5F8] lg:w-[248px] lg:border-r lg:border-b-0">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="text-2xl font-extrabold tracking-tight text-[#1B4A8F]">
               Dream Lounge
             </div>
@@ -665,7 +669,7 @@ export function AdminPage() {
             </div>
           </div>
 
-          <nav className="space-y-6 px-4 py-5" aria-label="관리자 메뉴">
+          <nav className="space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-5" aria-label="관리자 메뉴">
             {ADMIN_MENU.map((group) => (
               <div key={group.section}>
                 <p className="mb-2 px-2 text-xs font-semibold text-slate-400">
@@ -700,7 +704,7 @@ export function AdminPage() {
         </aside>
 
         <div className="min-w-0 flex-1 bg-[#F6F8FB]">
-          <div className="p-8">{renderMainContent()}</div>
+          <div className="p-3 sm:p-5 lg:p-8">{renderMainContent()}</div>
         </div>
       </div>
     </section>

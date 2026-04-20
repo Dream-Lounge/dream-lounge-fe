@@ -376,7 +376,7 @@ export function ClubCommunity() {
                                 <td className="px-2 py-3.5 align-top">
                                   <Badge
                                     variant={variant}
-                                    className={cn(className, "max-w-full truncate")}
+                                    className={cn(className, "max-w-full truncate align-bottom")}
                                   >
                                     {p.category}
                                   </Badge>

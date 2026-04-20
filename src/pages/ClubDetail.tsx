@@ -1,5 +1,4 @@
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +6,6 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
-import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
-import { isMockClubMember } from "@/lib/mockClubMembership";
 
 /**
  * 동아리 상세 페이지 컴포넌트
@@ -18,45 +14,9 @@ import { isMockClubMember } from "@/lib/mockClubMembership";
  */
 export function ClubDetail() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const location = useLocation();
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
-
-  const [isMockMemberOverride, setIsMockMemberOverride] = useState(false);
-
-  useEffect(() => {
-    // ClubApplication에서 applicationSuccess=true로 상세로 돌아올 때,
-    // 프로토타입상 “가입된 상태”로 처리하기 위해 오버라이드를 켭니다.
-    const state = location.state as unknown as { applicationSuccess?: boolean };
-    if (state?.applicationSuccess && id) {
-      try {
-        window.localStorage.setItem(`mock_club_member:${id}`, "1");
-        setIsMockMemberOverride(true);
-      } catch {
-        // localStorage 접근 실패 시 조용히 무시
-      }
-    }
-  }, [location.state, id]);
-
-  const isClubMember =
-    isMockMemberOverride ||
-    (id ? isMockClubMember(user?.studentId ?? 0, id) : false);
-
-  const [hasApplied, setHasApplied] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated && id) {
-      api.checkApplicationStatus(id)
-        .then(setHasApplied)
-        .catch((error) => {
-          console.error("Failed to check application status:", error);
-        });
-    } else {
-      setHasApplied(false);
-    }
-  }, [isAuthenticated, id]);
 
   if (!clubData) {
     return <NotFound />;
@@ -184,24 +144,17 @@ export function ClubDetail() {
 
                 <Button
                   onClick={() => {
-                    if (isClubMember) {
-                      navigate(`/club/${id}/community`);
-                      return;
-                    }
                     navigate(`/club/${id}/apply`);
                   }}
-                  disabled={!isClubMember && hasApplied}
                   className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer"
                 >
-                  {isClubMember ? "커뮤니티" : hasApplied ? "지원 완료" : "지원하기"}
+                  지원하기
                 </Button>
               </CardContent>
             </Card>
 
             <div className="bg-muted/50 p-4 rounded-lg text-xs text-muted-foreground">
-              {isClubMember
-                ? "* 동아리 가입 후 커뮤니티를 이용할 수 있습니다."
-                : "* 동아리 지원 관련 문의는 해당 동아리 회장에게 직접 문의 바랍니다."}
+              * 동아리 지원 관련 문의는 해당 동아리 회장에게 직접 문의 바랍니다.
             </div>
           </div>
         </div>

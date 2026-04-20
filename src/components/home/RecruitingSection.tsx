@@ -122,7 +122,7 @@ export function RecruitingSection() {
                   "group cursor-pointer",
                   "transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
                 )}
-                onClick={() => navigate(`/club/${club.id}/community`)}
+                onClick={() => navigate(`/club/${club.id}`)}
               >
                 <div
                   className={cn(

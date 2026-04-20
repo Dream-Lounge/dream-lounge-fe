@@ -40,6 +40,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "Noto Sans KR", sans-serif;
+  --font-kr: "Noto Sans KR", sans-serif;
 }
 
 :root {

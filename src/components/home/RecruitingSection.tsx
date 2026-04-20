@@ -43,7 +43,7 @@ export function RecruitingSection() {
     },
     {
       id: 3,
-      title: "사진 분석 연구회",
+      title: "사진예술연구회",
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",

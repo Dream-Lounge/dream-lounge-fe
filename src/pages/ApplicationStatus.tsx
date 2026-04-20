@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle2, XCircle, Clock, Edit, Info } from "lucide-react";
-import { type Application } from "@/data/applications";
+import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -37,10 +37,10 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, iconBgClass, iconColorClass }: StatCardProps) {
   return (
-    <Card className="flex flex-row items-center justify-between p-6 shadow-sm border rounded-xl bg-card">
+    <Card className="flex flex-row items-center justify-between p-4 sm:p-6 shadow-sm border rounded-xl bg-card">
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium text-muted-foreground">{title}</span>
-        <span className="text-2xl font-bold">{value}개</span>
+        <span className="text-xl sm:text-2xl font-bold">{value}개</span>
       </div>
       <div className={`p-3 rounded-full ${iconBgClass} ${iconColorClass}`}>
         {icon}
@@ -57,12 +57,12 @@ function ApplicationItem({ application }: ApplicationItemProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 sm:p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
       <div className="shrink-0">
         <img 
           src={application.clubImage} 
           alt={application.clubName} 
-          className="w-full md:w-[160px] h-[160px] rounded-lg object-cover bg-muted"
+          className="w-full md:w-[160px] h-[180px] sm:h-[200px] md:h-[160px] rounded-lg object-cover bg-muted"
         />
       </div>
 
@@ -84,12 +84,12 @@ function ApplicationItem({ application }: ApplicationItemProps) {
         </div>
       </div>
 
-      <div className="flex md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
+      <div className="flex flex-col sm:flex-row md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
         {application.status === "pending" ? (
           <>
             <Button 
               variant="outline" 
-              className="w-full justify-center"
+              className="w-full sm:flex-1 md:w-full md:flex-none justify-center"
               onClick={() => navigate(`/applications/${application.id}/edit`)}
             >
               <Edit className="w-4 h-4 mr-2" />
@@ -97,7 +97,7 @@ function ApplicationItem({ application }: ApplicationItemProps) {
             </Button>
             <Button 
               variant="default" 
-              className="w-full justify-center"
+              className="w-full sm:flex-1 md:w-full md:flex-none justify-center"
               onClick={() => navigate(`/applications/${application.id}/view`)}
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -107,7 +107,7 @@ function ApplicationItem({ application }: ApplicationItemProps) {
         ) : (
           <Button 
             variant="default" 
-            className="w-full justify-center mt-auto"
+            className="w-full sm:flex-1 md:w-full md:flex-none justify-center mt-auto"
             onClick={() => navigate(`/applications/${application.id}/view`)}
           >
             <FileText className="w-4 h-4 mr-2" />
@@ -147,6 +147,12 @@ export function ApplicationStatus() {
   }, [studentId, user, isAuthenticated, isAuthLoading, navigate]);
 
   useEffect(() => {
+    if (!isAuthLoading && !user) {
+      setApplications(MOCK_APPLICATIONS);
+      setIsLoading(false);
+      return;
+    }
+
     if (isAuthLoading || !user || (studentId && String(user.studentId) !== studentId)) {
       return;
     }
@@ -244,7 +250,7 @@ export function ApplicationStatus() {
       </div>
 
       <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold text-foreground">지원 내역</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">지원 내역</h2>
         
         {applications.length > 0 ? (
           <div className="flex flex-col gap-4">

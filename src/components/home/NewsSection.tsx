@@ -77,11 +77,11 @@ export function NewsSection() {
   }
 
   return (
-    <div className="flex flex-col gap-12 w-full mx-auto">
+    <div className="flex flex-col gap-8 sm:gap-12 w-full mx-auto">
       {/* 섹션 헤더: 제목 및 전체보기 링크 */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
-          <h2 className="text-3xl font-extrabold text-gray-900">동아리 뉴스</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">동아리 뉴스</h2>
           <p className="text-gray-500">동아리 관련 최신 소식을 확인하세요</p>
         </div>
         <MoreLink>전체보기</MoreLink>
@@ -131,19 +131,19 @@ export function NewsSection() {
           {otherNews.map((item) => (
             <div
               key={item.id}
-              className="group flex gap-4 cursor-pointer"
+              className="group flex gap-3 sm:gap-4 cursor-pointer"
               role="button"
               tabIndex={0}
               onKeyDown={() => {}}
             >
-              <div className="w-32 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+              <div className="w-24 h-20 sm:w-32 sm:h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
                 <img
                   src={item.imageUrl}
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex flex-col justify-between py-1 grow">
+              <div className="flex flex-col justify-between py-1 grow min-w-0">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <Badge

@@ -67,7 +67,7 @@ export function ClubDetail() {
   return (
     <div className="container flex flex-col gap-8 pb-20 mx-auto w-full">
       {/** 히어로 섹션: 동아리 대표 이미지 및 모집 상태 뱃지 */}
-      <div className="relative h-[300px] w-full rounded-2xl overflow-hidden bg-muted">
+      <div className="relative h-[220px] sm:h-[300px] w-full rounded-2xl overflow-hidden bg-muted">
         <img
           src={`https://placehold.co/1200x400/e2e8f0/1e293b?text=${encodeURIComponent(
             clubData.title
@@ -92,10 +92,10 @@ export function ClubDetail() {
                 {clubData.category}
               </span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {clubData.title}
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               {clubData.description}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export function ClubDetail() {
                   <img
                     src={activity.image}
                     alt={activity.title}
-                    className="w-full h-55 object-cover object-bottom"
+                    className="w-full h-48 sm:h-55 object-cover object-bottom"
                   />
                   <div className="p-3">
                     <p className="font-bold text-center text-sm">
@@ -148,7 +148,7 @@ export function ClubDetail() {
 
         {/** 사이드 모집 정보: 모집 기간, 대상, 절차 등 중요 정보 */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-24">
             <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg">모집 정보</CardTitle>

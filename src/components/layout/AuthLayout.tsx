@@ -21,12 +21,10 @@ export function AuthLayout() {
   }
 
   return (
-    <main className="min-h-screen grid grid-rows-[2fr_auto_3fr] justify-items-center px-4">
-      <div />
+    <main className="min-h-screen flex items-start sm:items-center justify-center px-4 py-6 sm:py-10">
       <div className="w-full max-w-md">
         <Outlet />
       </div>
-      <div />
     </main>
   );
 }

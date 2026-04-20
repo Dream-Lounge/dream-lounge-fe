@@ -43,12 +43,12 @@ const FOOTER_SECTIONS = [
 export function Footer() {
     return (
         <footer className="w-full flex justify-center bg-stone-900 text-stone-100">
-            <div className="w-full max-w-7xl px-12 py-10 flex flex-col gap-8 items-start relative box-border">
+            <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8 items-start relative box-border">
                 {/** 상단 영역: 로고, 서비스 소개, 소셜 링크 및 사이트맵 */}
-                <div className="w-full flex gap-13 items-start relative shrink-0">
+                <div className="w-full flex flex-col lg:flex-row gap-8 lg:gap-13 items-start relative shrink-0">
 
                     {/** 좌측 열: 브랜드 로고 및 서비스 간단 소개 */}
-                    <div className="flex flex-col gap-4 items-start relative shrink-0 w-80">
+                    <div className="flex flex-col gap-4 items-start relative shrink-0 w-full sm:w-80">
                         {/** 로고: 클릭 시 메인 페이지로 이동 */}
                         <Link to="/" className="h-24">
                             <img src="/logo.svg" alt="Dream Lounge Logo" className="h-full w-auto" draggable={false} />
@@ -78,7 +78,7 @@ export function Footer() {
                     </div>
 
                     {/** 우측 열: 사이트맵 네비게이션 (소개, 고객지원, 정책 등) */}
-                    <div className="flex-1 flex gap-20 pt-2">
+                    <div className="w-full lg:flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-10 pt-2">
                         {FOOTER_SECTIONS.map(({ title, links }) => (
                             <div key={title} className="flex flex-col gap-3">
                                 <h3 className="font-kr font-bold text-base text-white">{title}</h3>

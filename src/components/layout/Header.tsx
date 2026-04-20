@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator";
-import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
-import { useState } from "react";
 
 
 const NAV_ITEMS = [
@@ -26,7 +24,6 @@ const NAV_ITEMS = [
  */
 export function Header() {
     const { user, isAuthenticated, logout } = useAuth();
-    const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
 
     return (
         <header className="w-full flex justify-center bg-background shadow-sm sticky top-0 z-50">
@@ -87,13 +84,19 @@ export function Header() {
                                             to={`/users/${user?.studentId}/applications`}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
-                                            내 지원 내역
+                                            지원 내역
                                         </Link>
                                         <Link
                                             to={`/users/${user?.studentId}/clubs`}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             내 동아리
+                                        </Link>
+                                        <Link
+                                            to="/admin"
+                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                        >
+                                            관리자
                                         </Link>
                                         <button
                                             onClick={logout}
@@ -117,16 +120,16 @@ export function Header() {
                                             내 동아리
                                         </Link>
                                         <Link
-                                            to={user ? `/users/${user.studentId}/applications` : "/login"}
+                                            to={user ? `/users/${user.studentId}/applications` : "/users/guest/applications"}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                            onClick={(e) => {
-                                                if (!user) {
-                                                    e.preventDefault();
-                                                    setIsLoginAlertOpen(true);
-                                                }
-                                            }}
                                         >
-                                            내 지원 내역
+                                            지원 내역
+                                        </Link>
+                                        <Link
+                                            to="/admin"
+                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                        >
+                                            관리자
                                         </Link>
                                     </>
                                 )}
@@ -135,11 +138,6 @@ export function Header() {
                     </Popover>
                 </div>
             </div>
-            <LoginAlertDialog
-                open={isLoginAlertOpen}
-                onOpenChange={setIsLoginAlertOpen}
-                reason="내 지원 내역을 확인하려면 로그인이 필요합니다."
-            />
         </header>
     );
 }

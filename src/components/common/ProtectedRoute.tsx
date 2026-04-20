@@ -1,16 +1,6 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { Outlet } from "react-router-dom";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  // 프로토타입 단계에서는 모든 페이지 접근을 허용합니다.
   return <Outlet />;
 }

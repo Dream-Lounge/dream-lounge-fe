@@ -9,6 +9,8 @@ import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { AdminRoute } from "@/components/common/AdminRoute";
+import { AdminPage } from "@/pages/AdminPage";
 
 /**
  * 앱의 메인 진입점 컴포넌트
@@ -30,6 +32,9 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/club/:id/apply" element={<ClubApplication />} />
             <Route

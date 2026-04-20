@@ -29,8 +29,7 @@ export function RecruitingSection() {
       category: "공연",
       endDate: "2023.09.26",
       deadlineText: "",
-      imgSize: "88%", // 꽉 차게 (기본)
-      image: "/images/performence.jpg",  // ← 이미지 추가!
+      image: "/images/performence.jpg",
       textColor: "text-white",
     },
     {
@@ -39,8 +38,7 @@ export function RecruitingSection() {
       category: "봉사",
       endDate: "2025.09.26",
       deadlineText: "",
-      imgSize: "92%", // 꽉 차게 (기본)
-      image: "/images/rcy_v1.jpg",  // ← 이미지 추가!
+      image: "/images/rcy_v1.jpg",
       textColor: "text-white",
     },
     {
@@ -75,9 +73,8 @@ export function RecruitingSection() {
       title: "CPR",
       category: "학술",
       endDate: "상시모집",
-      imgSize: "68%", // 꽉 차게 (기본)
       deadlineText: "모집예정",
-      image: "/images/cpr_v1.png",  // ← 이미 있는 이미지!
+      image: "/images/cpr_v1.png",
       textColor: "text-white",
     },
   ];
@@ -106,44 +103,39 @@ export function RecruitingSection() {
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
           모집중인 동아리
         </h2>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12 w-full mx-auto">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 lg:gap-12 w-full mx-auto">
         {/* 좌측 영역 */}
-        <div className="flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {recruitingClubs.map((club) => (
               <Card
                 key={club.id}
                 className={cn(
                   club.textColor,
-                  "overflow-hidden border-none shadow-sm h-64 relative", // h-100 대신 h-64 등 구체적 높이 필요 (h-100은 기본 tailwind에 없음)
+                  // 세로형 카드(2:3보다 낮은 비율 — 약 4:5로 높이 완화)
+                  "relative aspect-[4/5] w-full overflow-hidden border-none py-0 gap-0 shadow-sm",
                   "group cursor-pointer",
-                  "transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  "transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
                 )}
                 onClick={() => navigate(`/club/${club.id}`)}
               >
-                {/* ▼▼▼ [수정된 부분] 배경 이미지 추가 ▼▼▼ */}
                 <div
                   className={cn(
-                    "absolute inset-0 transition-transform duration-500 group-hover:scale-110",
-                    "bg-center bg-no-repeat" // 중요: 이미지가 반복되지 않고 중앙에 오도록 설정
+                    "absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110",
                   )}
-                  style={{ 
+                  style={{
                     backgroundImage: `url(${club.image})`,
-                    // 데이터에 imgSize가 있으면 그걸 쓰고, 없으면 기본값 'cover' 사용
-                    backgroundSize: club.imgSize || 'cover' 
                   }}
                 />
-                
-                {/* 그라데이션 오버레이 (텍스트 잘 보이게) */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                {/* ▲▲▲ [수정 끝] ▲▲▲ */}
 
-                <CardContent className="h-full flex flex-col justify-between relative z-10 p-4">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                <CardContent className="relative z-10 flex h-full min-h-0 flex-col justify-between p-4">
                   <div className="flex justify-between items-start">
                     <Badge className="bg-primary/90 text-primary-foreground border-none py-1 px-3 backdrop-blur-sm">
                       {club.category}
@@ -167,10 +159,10 @@ export function RecruitingSection() {
           </div>
         </div>
 
-        {/* 우측 사이드바: 분과별 정보 및 태그 탐색 */}
-        <div className="w-full lg:w-96 shrink-0 space-y-8">
+        {/* 우측 사이드바: 분과별 정보 및 태그 — lg에서 높이를 포스터 열과 맞추고 태그를 하단 정렬 */}
+        <aside className="flex w-full shrink-0 flex-col gap-6 sm:gap-8 lg:w-96 lg:self-stretch lg:min-h-0">
           <div>
-            <h3 className="text-2xl font-bold text-gray-600 mb-6">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-5 sm:mb-6">
               분과별 모아보기
             </h3>
             <div className="space-y-4">
@@ -196,7 +188,7 @@ export function RecruitingSection() {
           <Button
             variant="outline"
             className={cn(
-              "w-full h-12",
+              "w-full h-12 shrink-0",
               "text-gray-700 border-border",
               "hover:bg-gray-50 hover:text-gray-900",
               "cursor-pointer"
@@ -205,7 +197,7 @@ export function RecruitingSection() {
             전체 동아리
           </Button>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-auto flex flex-wrap gap-3">
             {categories.map((cat) => (
               <div
                 key={cat.name}
@@ -226,7 +218,7 @@ export function RecruitingSection() {
               </div>
             ))}
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

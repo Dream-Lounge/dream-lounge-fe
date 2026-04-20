@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle2, XCircle, Clock, Edit, Info } from "lucide-react";
-import { type Application } from "@/data/applications";
+import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -147,6 +147,12 @@ export function ApplicationStatus() {
   }, [studentId, user, isAuthenticated, isAuthLoading, navigate]);
 
   useEffect(() => {
+    if (!isAuthLoading && !user) {
+      setApplications(MOCK_APPLICATIONS);
+      setIsLoading(false);
+      return;
+    }
+
     if (isAuthLoading || !user || (studentId && String(user.studentId) !== studentId)) {
       return;
     }

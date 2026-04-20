@@ -17,11 +17,14 @@ import {
   ImagePlus,
   Plus,
   X,
+  SquarePen,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type AdminTab =
@@ -118,6 +121,41 @@ const SUBMITTED_APPLICATIONS = [
 ] as const;
 
 const PAGE_TAGS = ["#프로젝트", "#해커톤", "#네트워킹", "#개발스터디"] as const;
+
+const COMMUNITY_POSTS = [
+  {
+    id: 1,
+    isNotice: true,
+    title: "[공지] 2026학년도 1학기 신입 부원 모집 안내",
+    author: "운영진",
+    createdAt: "2026.04.01",
+    views: 342,
+  },
+  {
+    id: 2,
+    isNotice: true,
+    title: "첫 정기 세션 일정 변경의 건",
+    author: "운영진",
+    createdAt: "2026.03.28",
+    views: 156,
+  },
+  {
+    id: 3,
+    isNotice: false,
+    title: "해커톤 팀원 모집합니다~ (프론트엔드 우대)",
+    author: "김철수",
+    createdAt: "2026.03.25",
+    views: 89,
+  },
+  {
+    id: 4,
+    isNotice: false,
+    title: "지난 스터디 자료 공유",
+    author: "이영희",
+    createdAt: "2026.03.20",
+    views: 45,
+  },
+] as const;
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
@@ -505,6 +543,99 @@ export function AdminPage() {
                 <Save className="mr-1.5 size-4" />
                 페이지 설정 저장
               </Button>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    if (activeTab === "community-board") {
+      return (
+        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[32px] font-extrabold leading-none text-foreground">
+              게시글 관리
+            </h2>
+            <Button className="h-11 rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b]">
+              <SquarePen className="mr-2 size-4" />
+              게시글 작성
+            </Button>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
+            <table className="w-full table-fixed">
+              <thead className="bg-[#F8FAFD]">
+                <tr className="h-12 border-b border-slate-200 text-left text-sm font-semibold text-slate-500">
+                  <th className="w-[72px] px-4">선택</th>
+                  <th className="px-4">제목</th>
+                  <th className="w-[96px] px-4">작성자</th>
+                  <th className="w-[108px] px-4">작성일</th>
+                  <th className="w-[72px] px-4">조회</th>
+                  <th className="w-[88px] px-4 text-center">관리</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {COMMUNITY_POSTS.map((post) => (
+                  <tr
+                    key={post.id}
+                    className="h-[56px] border-t border-slate-100 text-sm font-medium text-slate-700 first:border-t-0"
+                  >
+                    <td className="px-4">
+                      <input
+                        type="checkbox"
+                        className="size-5 rounded border-slate-300 align-middle"
+                        aria-label={`${post.title} 선택`}
+                      />
+                    </td>
+                    <td className="px-4">
+                      <div className="flex items-center gap-2">
+                        {post.isNotice ? (
+                          <Badge className="px-2 py-0.5 text-[11px] font-semibold">공지</Badge>
+                        ) : null}
+                        <span className="truncate text-[15px] font-semibold text-slate-800">
+                          {post.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 text-sm text-slate-600">{post.author}</td>
+                    <td className="px-4 text-sm text-slate-500">{post.createdAt}</td>
+                    <td className="px-4 text-sm text-slate-500">{post.views}</td>
+                    <td className="px-4">
+                      <div className="flex items-center justify-center gap-3 text-slate-400">
+                        <button
+                          type="button"
+                          className="transition-colors hover:text-slate-600"
+                          aria-label={`${post.title} 수정`}
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="transition-colors hover:text-slate-600"
+                          aria-label={`${post.title} 삭제`}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="flex items-center gap-2 border-t border-slate-200 px-3 py-3">
+              <button
+                type="button"
+                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                선택 삭제
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                공지로 등록
+              </button>
             </div>
           </div>
         </Card>

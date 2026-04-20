@@ -9,6 +9,8 @@ import {
   Trash2,
   Save,
   CirclePlus,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,6 +73,41 @@ const APPLICATION_QUESTIONS = [
     id: 3,
     title: "해당 분야에 대한 경험이 있으신가요?",
     type: "객관식 (단일선택)",
+  },
+] as const;
+
+const SUBMITTED_APPLICATIONS = [
+  {
+    id: 1,
+    name: "김철수",
+    studentId: "20230001",
+    major: "컴퓨터공학부",
+    submittedAt: "2026.04.01",
+    status: "검토중",
+  },
+  {
+    id: 2,
+    name: "이영희",
+    studentId: "20230015",
+    major: "경영학과",
+    submittedAt: "2026.04.01",
+    status: "합격",
+  },
+  {
+    id: 3,
+    name: "박지민",
+    studentId: "20240102",
+    major: "시각디자인과",
+    submittedAt: "2026.03.31",
+    status: "불합격",
+  },
+  {
+    id: 4,
+    name: "최동현",
+    studentId: "20220304",
+    major: "전자전기공학부",
+    submittedAt: "2026.03.30",
+    status: "검토중",
   },
 ] as const;
 
@@ -209,6 +246,145 @@ export function AdminPage() {
                 <Save className="mr-1 size-4" />
                 변경사항 저장
               </Button>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    if (activeTab === "submitted-applications") {
+      return (
+        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-[30px] font-extrabold leading-none text-foreground">
+                지원자 목록
+              </h2>
+              <span className="rounded-full bg-[#EEF4FF] px-3 py-1 text-lg font-extrabold text-[#1F4F95]">
+                총 12명
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="flex h-11 w-[280px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-slate-500">
+                <Search className="size-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="이름, 학번, 학과 검색"
+                  className="h-full w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                />
+              </label>
+              <button
+                type="button"
+                className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50"
+                aria-label="필터"
+              >
+                <SlidersHorizontal className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+            <table className="w-full table-fixed">
+              <thead className="bg-[#F8FAFD]">
+                <tr className="h-12 text-left text-sm font-semibold text-slate-500">
+                  <th className="w-[72px] px-4">NO.</th>
+                  <th className="w-[160px] px-4">이름 / 학번</th>
+                  <th className="w-[160px] px-4">학과</th>
+                  <th className="w-[130px] px-4">지원일시</th>
+                  <th className="w-[120px] px-4">상태</th>
+                  <th className="w-[130px] px-4 text-center">상세보기</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {SUBMITTED_APPLICATIONS.map((applicant) => {
+                  const statusClassName =
+                    applicant.status === "합격"
+                      ? "bg-[#E8FAEE] text-[#14863F]"
+                      : applicant.status === "불합격"
+                        ? "bg-[#FDECEE] text-[#D7263D]"
+                        : "bg-[#FFF9E8] text-[#B48319]";
+
+                  return (
+                    <tr
+                      key={applicant.id}
+                      className="h-[88px] border-t border-slate-100 text-sm text-slate-700 first:border-t-0"
+                    >
+                      <td className="px-4 text-sm font-semibold text-slate-600">
+                        {applicant.id}
+                      </td>
+                      <td className="px-4">
+                        <div className="text-base font-bold leading-tight text-slate-900">
+                          {applicant.name}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-500">
+                          {applicant.studentId}
+                        </div>
+                      </td>
+                      <td className="px-4 text-sm font-semibold text-slate-700">
+                        {applicant.major}
+                      </td>
+                      <td className="px-4 text-sm font-semibold text-slate-500">
+                        {applicant.submittedAt}
+                      </td>
+                      <td className="px-4">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-3 py-1 text-xs font-bold",
+                            statusClassName,
+                          )}
+                        >
+                          {applicant.status}
+                        </span>
+                      </td>
+                      <td className="px-4 text-center">
+                        <button
+                          type="button"
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-[#EDF3FF] px-4 text-sm font-semibold text-[#2B63B4] transition-colors hover:bg-[#E2EDFF]"
+                        >
+                          지원서 보기
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+              <p className="text-sm font-medium text-slate-500">전체 12명 중 1-4명</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-400"
+                >
+                  이전
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-bold text-[#2B63B4]"
+                >
+                  1
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
+                >
+                  2
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
+                >
+                  3
+                </button>
+                <button
+                  type="button"
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700"
+                >
+                  다음
+                </button>
+              </div>
             </div>
           </div>
         </Card>

@@ -67,7 +67,7 @@ const ADMIN_MENU: {
     section: "커뮤니티",
     items: [
       {
-        label: "동아리 게시판 관리",
+        label: "게시판 관리",
         icon: MessageSquare,
         tab: "community-board",
       },
@@ -165,7 +165,7 @@ export function AdminPage() {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
-            기본 정보 입력
+            동아리 등록하기
           </h2>
           <div className="mt-0 border-t border-slate-200 pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -237,7 +237,7 @@ export function AdminPage() {
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
-              모집 신청폼 문항 설정
+              동아리 신청폼 설정
             </h2>
             <Button className="h-9 w-full rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800 sm:w-auto">
               <CirclePlus className="mr-1 size-4" />새 문항 추가
@@ -304,7 +304,7 @@ export function AdminPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl align-bottom font-bold text-foreground">
-                지원자 목록
+                신청서 관리
               </h2>
               <span className="rounded-full bg-[#EEF4FF] px-3 py-1 text-lg font-extrabold text-[#1F4F95]">
                 총 12명
@@ -443,10 +443,10 @@ export function AdminPage() {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
-            상세 소개 페이지 구성
+            소개페이지 및 태그
           </h2>
 
-          <div className="mt-6 border-t border-slate-200 pt-6">
+          <div className="mt-0 border-t border-slate-200 pt-6">
             <section>
               <h3 className="text-base font-bold text-slate-800">
                 동아리 상세 설명 (에디터)
@@ -556,7 +556,7 @@ export function AdminPage() {
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
-              게시글 관리
+              게시판 관리
             </h2>
             <Button className="h-11 w-full rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b] sm:w-auto">
               <SquarePen className="mr-2 size-4" />

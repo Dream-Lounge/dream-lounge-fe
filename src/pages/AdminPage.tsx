@@ -81,8 +81,10 @@ export function AdminPage() {
     if (activeTab === "club-register") {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-foreground">기본 정보 입력</h2>
-          <div className="mt-5 border-t border-slate-200 pt-5">
+          <h2 className="text-2xl align-bottom font-bold text-foreground">
+            기본 정보 입력
+          </h2>
+          <div className="mt-0 border-t border-slate-200 pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-foreground">
@@ -172,7 +174,7 @@ export function AdminPage() {
                         <span className="inline-flex size-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
                           {question.id}
                         </span>
-                        <p className="text-base font-semibold text-foreground">
+                        <p className="text-sm font-semibold text-foreground">
                           {question.title}
                         </p>
                       </div>
@@ -182,7 +184,7 @@ export function AdminPage() {
                     </div>
 
                     <div className="flex items-center gap-4 pt-1">
-                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
+                      <label className="inline-flex cursor-pointer items-center gap-2 align-bottom text-xs font-semibold text-slate-700">
                         <input
                           type="checkbox"
                           className="size-4 rounded border-slate-300"

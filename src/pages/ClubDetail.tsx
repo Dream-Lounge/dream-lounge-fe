@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { MOCK_CLUB_DATA } from "@/data/clubs";
-import { LoginAlertDialog } from "@/components/common/LoginAlertDialog";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
@@ -19,7 +18,6 @@ import { api } from "@/lib/api";
 export function ClubDetail() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [isLoginAlertOpen, setIsLoginAlertOpen] = useState(false);
 
   const { id } = useParams<{ id: string }>();
   const clubData = id ? MOCK_CLUB_DATA[id] : null;
@@ -164,10 +162,6 @@ export function ClubDetail() {
 
                 <Button
                   onClick={() => {
-                    if (!isAuthenticated) {
-                      setIsLoginAlertOpen(true);
-                      return;
-                    }
                     navigate(`/club/${id}/apply`);
                   }}
                   disabled={hasApplied}
@@ -184,11 +178,6 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
-      <LoginAlertDialog
-        open={isLoginAlertOpen}
-        onOpenChange={setIsLoginAlertOpen}
-        reason="동아리 지원을 위해서는 로그인이 필요합니다."
-      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { MyClubs } from "@/pages/MyClubs";
+import { ClubCommunity } from "@/pages/ClubCommunity";
 
 /**
  * 앱의 메인 진입점 컴포넌트
@@ -30,6 +32,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/club/:id" element={<ClubDetail />} />
+          <Route path="/club/:id/community" element={<ClubCommunity />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/club/:id/apply" element={<ClubApplication />} />
             <Route
@@ -42,6 +45,7 @@ function App() {
             />
             <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
+          <Route path="/users/:studentId/clubs" element={<MyClubs />} />
         </Route>
       </Routes>
     </div>

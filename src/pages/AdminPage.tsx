@@ -11,6 +11,12 @@ import {
   CirclePlus,
   Search,
   SlidersHorizontal,
+  Bold,
+  Italic,
+  Underline,
+  ImagePlus,
+  Plus,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -110,6 +116,8 @@ const SUBMITTED_APPLICATIONS = [
     status: "검토중",
   },
 ] as const;
+
+const PAGE_TAGS = ["#프로젝트", "#해커톤", "#네트워킹", "#개발스터디"] as const;
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
@@ -314,7 +322,7 @@ export function AdminPage() {
                         {applicant.id}
                       </td>
                       <td className="px-4">
-                        <div className="text-base font-bold leading-tight text-slate-900">
+                        <div className="text-sm font-bold leading-tight text-slate-900">
                           {applicant.name}
                         </div>
                         <div className="mt-1 text-sm font-medium text-slate-500">
@@ -385,6 +393,118 @@ export function AdminPage() {
                   다음
                 </button>
               </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    if (activeTab === "page-tags") {
+      return (
+        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-[32px] font-extrabold leading-none text-foreground">
+            상세 소개 페이지 구성
+          </h2>
+
+          <div className="mt-6 border-t border-slate-200 pt-6">
+            <section>
+              <h3 className="text-base font-bold text-slate-800">
+                동아리 상세 설명 (에디터)
+              </h3>
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+                <div className="flex h-11 items-center gap-1 border-b border-slate-200 bg-[#F8FAFD] px-3">
+                  <button
+                    type="button"
+                    className="inline-flex size-7 items-center justify-center rounded text-slate-600 transition-colors hover:bg-slate-200"
+                    aria-label="굵게"
+                  >
+                    <Bold className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex size-7 items-center justify-center rounded text-slate-600 transition-colors hover:bg-slate-200"
+                    aria-label="기울임"
+                  >
+                    <Italic className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex size-7 items-center justify-center rounded text-slate-600 transition-colors hover:bg-slate-200"
+                    aria-label="밑줄"
+                  >
+                    <Underline className="size-4" />
+                  </button>
+                  <div className="mx-1 h-4 w-px bg-slate-300" />
+                  <button
+                    type="button"
+                    className="inline-flex size-7 items-center justify-center rounded text-slate-600 transition-colors hover:bg-slate-200"
+                    aria-label="이미지 삽입"
+                  >
+                    <ImagePlus className="size-4" />
+                  </button>
+                </div>
+                <div className="min-h-[170px] bg-white p-4" />
+              </div>
+            </section>
+
+            <section className="mt-6">
+              <h3 className="text-base font-bold text-slate-800">활동 사진 추가</h3>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {[1, 2, 3].map((photoNo) => (
+                  <div
+                    key={photoNo}
+                    className="flex h-[116px] w-[116px] items-center justify-center rounded-xl border border-slate-200 bg-[#F4F6FA] text-base font-semibold text-slate-400"
+                  >
+                    사진 {photoNo}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="flex h-[116px] w-[116px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 transition-colors hover:bg-slate-50"
+                >
+                  <div className="inline-flex size-8 items-center justify-center rounded-full border border-slate-300">
+                    <Plus className="size-4" />
+                  </div>
+                  <span className="mt-2 text-sm font-semibold">사진 추가</span>
+                </button>
+              </div>
+            </section>
+
+            <section className="mt-6">
+              <h3 className="text-base font-bold text-slate-800">
+                태그 설정 <span className="text-sm font-medium text-slate-400">(최대 5개)</span>
+              </h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {PAGE_TAGS.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#EAF1FC] px-3 py-1.5 text-sm font-semibold text-[#1B4A8F]"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      className="inline-flex size-4 items-center justify-center rounded-full bg-[#D9E6FB] text-[#1B4A8F]"
+                      aria-label={`${tag} 삭제`}
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                >
+                  <Plus className="size-3.5" />
+                  태그 추가
+                </button>
+              </div>
+            </section>
+
+            <div className="mt-8 flex justify-end">
+              <Button className="h-10 rounded-lg bg-[#0A5CB5] px-6 text-white hover:bg-[#0A4F9D]">
+                <Save className="mr-1.5 size-4" />
+                페이지 설정 저장
+              </Button>
             </div>
           </div>
         </Card>

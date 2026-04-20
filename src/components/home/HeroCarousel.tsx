@@ -88,7 +88,7 @@ export function HeroCarousel() {
                             <div className="absolute inset-0 w-full h-full bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-80" />
 
                             {/** 컨텐츠 섹션: 태그, 제목, 설명 문구 표시 */}
-                            <div className="relative z-10 h-full flex flex-col justify-center px-8 py-24 text-white gap-4">
+                            <div className="relative z-10 h-full flex flex-col justify-center px-5 sm:px-8 py-16 sm:py-24 text-white gap-3 sm:gap-4">
                                 <div className="flex gap-2">
                                     {slide.tags.map((tag, idx) => (
                                         <Badge key={idx} variant="secondary" className="bg-background/30 text-white border-0 backdrop-blur-sm">
@@ -96,10 +96,10 @@ export function HeroCarousel() {
                                         </Badge>
                                     ))}
                                 </div>
-                                <h2 className="text-3xl font-bold whitespace-pre-line leading-tight">
+                                <h2 className="text-2xl sm:text-3xl font-bold whitespace-pre-line leading-tight">
                                     {slide.title}
                                 </h2>
-                                <p className="text-white/80 text-lg">
+                                <p className="text-white/80 text-base sm:text-lg">
                                     {slide.description}
                                 </p>
                             </div>
@@ -134,7 +134,7 @@ function CarouselDots({ api, count }: { api: CarouselApi | undefined, count: num
     }, [api]);
 
     return (
-        <div className="absolute bottom-8 right-8 z-20 flex gap-1.5">
+        <div className="absolute bottom-5 right-5 sm:bottom-8 sm:right-8 z-20 flex gap-1.5">
             {Array.from({ length: count }).map((_, index) => (
                 <div
                     key={index}

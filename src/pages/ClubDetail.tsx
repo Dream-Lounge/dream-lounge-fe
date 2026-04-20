@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ interface ClubData {
  */
 const MOCK_CLUB_DATA: Record<string, ClubData> = {
   "6": {
-    title: "CPR (CJU Public Relation)",
+    title: "CPR",
     category: "학술분과",
     tags: ["#코딩", "#취준", "#대학원", "#인공지능"],
     description:
@@ -73,6 +73,7 @@ const MOCK_CLUB_DATA: Record<string, ClubData> = {
  * - MOCK_CLUB_DATA를 활용하여 다양한 동아리 예시를 보여줍니다.
  */
 export function ClubDetail() {
+  const navigate = useNavigate();
   // 1. URL 파라미터에서 id 추출
   const { id } = useParams<{ id: string }>();
 
@@ -205,7 +206,10 @@ export function ClubDetail() {
 
                 <Separator className="my-2" />
 
-                <Button className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all">
+                <Button
+                  onClick={() => navigate(`/club/${id}/apply`)}
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                >
                   지원하기
                 </Button>
               </CardContent>

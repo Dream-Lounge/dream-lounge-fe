@@ -47,7 +47,7 @@ export function RecruitingSection() {
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",
-      image: "/images/photo_exhibition_v1.png",  // ← 이미지 추가!
+      image: "/images/photo_exhibition_v1.png", // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -56,7 +56,7 @@ export function RecruitingSection() {
       category: "체육",
       endDate: "2025.09.28",
       deadlineText: "",
-      image: "/images/smash.jpg",  // ← 이미지 추가!
+      image: "/images/smash.jpg", // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -65,7 +65,7 @@ export function RecruitingSection() {
       category: "교양",
       endDate: "2025.09.26",
       deadlineText: "",
-      image: "/images/hostel.jpg",  // ← 이미지 추가!
+      image: "/images/hostel.jpg", // ← 이미지 추가!
       textColor: "text-white",
     },
     {
@@ -156,8 +156,12 @@ export function RecruitingSection() {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1 drop-shadow-md">{club.title}</h3>
-                    <p className="text-sm opacity-90 drop-shadow-sm">{club.endDate}</p>
+                    <h3 className="text-lg font-bold mb-1 drop-shadow-md">
+                      {club.title}
+                    </h3>
+                    <p className="text-sm opacity-90 drop-shadow-sm">
+                      {club.endDate}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -192,7 +196,7 @@ export function RecruitingSection() {
               "w-full h-12 shrink-0",
               "text-gray-700 border-border",
               "hover:bg-gray-50 hover:text-gray-900",
-              "cursor-pointer"
+              "cursor-pointer",
             )}
           >
             전체 동아리
@@ -206,7 +210,7 @@ export function RecruitingSection() {
                   className={cn(
                     "flex items-center gap-2 px-4 py-2",
                     "bg-white border border-gray-100 rounded-lg shadow-sm",
-                    "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
+                    "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer",
                   )}
                   role="button"
                   tabIndex={0}

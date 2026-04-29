@@ -98,13 +98,19 @@ export function RecruitingSection() {
     { name: "운동", count: 22, icon: Trophy },
     { name: "요리", count: 8, icon: Utensils },
     { name: "사진", count: 14, icon: Camera },
+    { name: "영상편집", count: 10, icon: Camera },
+    { name: "웹개발", count: 16, icon: Laptop },
+    { name: "댄스", count: 17, icon: Music },
   ];
 
   return (
     <div className="flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-12">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
           모집중인 동아리
+        </h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+          분과별 모아보기
         </h2>
       </div>
 
@@ -161,28 +167,23 @@ export function RecruitingSection() {
 
         {/* 우측 사이드바: 분과별 정보 및 태그 — lg에서 높이를 포스터 열과 맞추고 태그를 하단 정렬 */}
         <aside className="flex w-full shrink-0 flex-col gap-6 sm:gap-8 lg:w-96 lg:self-stretch lg:min-h-0">
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-5 sm:mb-6">
-              분과별 모아보기
-            </h3>
-            <div className="space-y-4">
-              {divisions.map((division) => (
-                <div
-                  key={division.name}
-                  className="flex justify-between items-center group cursor-pointer"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={() => {}}
-                >
-                  <span className="text-gray-700 font-medium group-hover:text-gray-900">
-                    {division.name}
-                  </span>
-                  <MoreLink className="text-gray-400 group-hover:text-gray-600">
-                    {division.count}개 동아리
-                  </MoreLink>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-4">
+            {divisions.map((division) => (
+              <div
+                key={division.name}
+                className="flex justify-between items-center group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onKeyDown={() => {}}
+              >
+                <span className="text-gray-700 font-medium group-hover:text-gray-900">
+                  {division.name}
+                </span>
+                <MoreLink className="text-gray-400 group-hover:text-gray-600">
+                  {division.count}개 동아리
+                </MoreLink>
+              </div>
+            ))}
           </div>
 
           <Button
@@ -197,26 +198,33 @@ export function RecruitingSection() {
             전체 동아리
           </Button>
 
-          <div className="mt-auto flex flex-wrap gap-3">
-            {categories.map((cat) => (
-              <div
-                key={cat.name}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2",
-                  "bg-white border border-gray-100 rounded-lg shadow-sm",
-                  "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
-                )}
-                role="button"
-                tabIndex={0}
-                onKeyDown={() => {}}
-              >
-                <cat.icon className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">
-                  {cat.name}
-                </span>
-                <span className="text-xs text-gray-400">{cat.count}</span>
-              </div>
-            ))}
+          <div className="mt-auto flex flex-col gap-3">
+            <div className="flex flex-wrap gap-3">
+              {categories.map((cat) => (
+                <div
+                  key={cat.name}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2",
+                    "bg-white border border-gray-100 rounded-lg shadow-sm",
+                    "hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={() => {}}
+                >
+                  <cat.icon className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {cat.name}
+                  </span>
+                  <span className="text-xs text-gray-400">{cat.count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <MoreLink className="text-gray-400 hover:text-gray-700">
+                모든 태그 보기
+              </MoreLink>
+            </div>
           </div>
         </aside>
       </div>

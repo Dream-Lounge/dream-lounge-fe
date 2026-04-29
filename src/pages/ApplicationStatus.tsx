@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle2, XCircle, Clock, Edit, Info } from "lucide-react";
+import { FileText, CheckCircle2, XCircle, Clock, Edit } from "lucide-react";
 import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,19 +31,18 @@ interface StatCardProps {
   title: string;
   value: number;
   icon: ReactNode;
-  iconBgClass: string;
   iconColorClass: string;
 }
 
-function StatCard({ title, value, icon, iconBgClass, iconColorClass }: StatCardProps) {
+function StatCard({ title, value, icon, iconColorClass }: StatCardProps) {
   return (
-    <Card className="flex flex-row items-center justify-between p-4 sm:p-6 shadow-sm border rounded-xl bg-card">
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-muted-foreground">{title}</span>
-        <span className="text-xl sm:text-2xl font-bold">{value}개</span>
-      </div>
-      <div className={`p-3 rounded-full ${iconBgClass} ${iconColorClass}`}>
+    <Card className="flex flex-row items-center gap-4 p-5 sm:p-6 shadow-sm border rounded-xl bg-card">
+      <div className={`shrink-0 ${iconColorClass}`}>
         {icon}
+      </div>
+      <div className="flex flex-col gap-1 min-w-0">
+        <span className="text-sm font-medium text-muted-foreground">{title}</span>
+        <span className="text-sm font-bold text-foreground">{value}개</span>
       </div>
     </Card>
   );
@@ -57,63 +56,65 @@ function ApplicationItem({ application }: ApplicationItemProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 sm:p-6 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
-      <div className="shrink-0">
-        <img 
-          src={application.clubImage} 
-          alt={application.clubName} 
-          className="w-full md:w-[160px] h-[180px] sm:h-[200px] md:h-[160px] rounded-lg object-cover bg-muted"
+    <div className="flex flex-col md:flex-row gap-4 sm:gap-5 p-5 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
+      <div className="shrink-0 md:self-stretch">
+        <img
+          src={application.clubImage}
+          alt={application.clubName}
+          className="w-full md:w-[130px] h-[160px] sm:h-[160px] md:h-full rounded-lg object-cover bg-muted"
         />
       </div>
 
-      <div className="flex flex-col flex-1 gap-4">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
-            {application.category}
-          </Badge>
-          <Badge {...STATUS_BADGE_CONFIG[application.status]} />
+      <div className="flex flex-col flex-1 gap-3 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
+              {application.category}
+            </Badge>
+            <Badge {...STATUS_BADGE_CONFIG[application.status]} />
+          </div>
+
+          <div className="flex flex-row gap-2 items-center shrink-0">
+            {application.status === "pending" ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="justify-center"
+                  onClick={() => navigate(`/applications/${application.id}/edit`)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  수정하기
+                </Button>
+                <Button
+                  variant="default"
+                  className="justify-center"
+                  onClick={() => navigate(`/applications/${application.id}/view`)}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  지원서 보기
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="default"
+                className="justify-center"
+                onClick={() => navigate(`/applications/${application.id}/view`)}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                지원서 보기
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5">
           <h3 className="text-xl font-bold text-foreground">{application.clubName}</h3>
           <p className="text-sm text-muted-foreground">지원일: {application.appliedDate}</p>
         </div>
 
-        <div className="p-4 border rounded-lg bg-background/50 text-sm text-foreground">
+        <div className="p-3 border rounded-lg bg-background/50 text-sm text-foreground">
           {application.message}
         </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row md:flex-col gap-2 justify-center md:justify-start md:min-w-[140px]">
-        {application.status === "pending" ? (
-          <>
-            <Button 
-              variant="outline" 
-              className="w-full sm:flex-1 md:w-full md:flex-none justify-center"
-              onClick={() => navigate(`/applications/${application.id}/edit`)}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              수정하기
-            </Button>
-            <Button 
-              variant="default" 
-              className="w-full sm:flex-1 md:w-full md:flex-none justify-center"
-              onClick={() => navigate(`/applications/${application.id}/view`)}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              지원서 보기
-            </Button>
-          </>
-        ) : (
-          <Button 
-            variant="default" 
-            className="w-full sm:flex-1 md:w-full md:flex-none justify-center mt-auto"
-            onClick={() => navigate(`/applications/${application.id}/view`)}
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            지원서 보기
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -122,12 +123,12 @@ function ApplicationItem({ application }: ApplicationItemProps) {
 function getStatusMessage(status: ApplicationListResponseItem["status"]) {
   switch (status) {
     case "합격":
-      return "축하합니다! 서류 전형에 합격하셨습니다. 향후 면접 일정 및 자세한 안내 사항은 가입하신 이메일로 발송되었습니다.";
+      return "축하합니다! 합격하셨습니다. OT 일정을 확인해주세요.";
     case "불합격":
-      return "지원해주셔서 감사합니다. 아쉽게도 이번 모집에서는 함께하지 못하게 되었습니다. 귀하의 앞날에 무궁한 발전이 있기를 기원합니다.";
+      return "아쉽지만 이번 모집에서는 선발되지 못했습니다. 다음 기회에 다시 도전해주세요.";
     case "제출됨":
     default:
-      return "지원서가 성공적으로 접수되었습니다. 현재 운영진이 서류를 꼼꼼히 검토하고 있습니다. 결과 발표까지 조금만 기다려주세요!";
+      return "지원서를 검토중입니다. 곧 연락드리겠습니다.";
   }
 }
 
@@ -222,30 +223,26 @@ export function ApplicationStatus() {
         <StatCard
           title="전체 지원"
           value={stats.total}
-          icon={<FileText className="w-6 h-6" />}
-          iconBgClass="bg-blue-50"
-          iconColorClass="text-primary"
+          icon={<FileText className="w-7 h-7" strokeWidth={1.75} />}
+          iconColorClass="text-muted-foreground"
         />
         <StatCard
           title="합격"
           value={stats.accepted}
-          icon={<CheckCircle2 className="w-6 h-6" />}
-          iconBgClass="bg-green-50"
-          iconColorClass="text-green-600"
+          icon={<CheckCircle2 className="w-7 h-7" strokeWidth={1.75} />}
+          iconColorClass="text-primary"
         />
         <StatCard
           title="불합격"
           value={stats.rejected}
-          icon={<XCircle className="w-6 h-6" />}
-          iconBgClass="bg-red-50"
+          icon={<XCircle className="w-7 h-7" strokeWidth={1.75} />}
           iconColorClass="text-destructive"
         />
         <StatCard
           title="검토중"
           value={stats.pending}
-          icon={<Clock className="w-6 h-6" />}
-          iconBgClass="bg-orange-50"
-          iconColorClass="text-orange-500"
+          icon={<Clock className="w-7 h-7" strokeWidth={1.75} />}
+          iconColorClass="text-primary"
         />
       </div>
 
@@ -267,18 +264,13 @@ export function ApplicationStatus() {
 
       <Card>
         <CardContent className="flex flex-col gap-4">
-          <h3 className="text-xl font-medium flex items-center gap-2">
-            <Info className="w-5 h-5 text-primary" /> 도움말
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            💡 도움말
           </h3>
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-              <span>지원서는 <strong>검토중</strong> 상태일 때만 수정이 가능합니다.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-              <span>문의사항은 각 동아리 페이지의 연락처를 통해 문의해주세요.</span>
-            </li>
+          <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+            <li>지원서는 <strong>검토중</strong> 상태일 때만 수정이 가능합니다.</li>
+            <li>합격/불합격 결과는 지원일로부터 7일 이내에 개별 연락드립니다.</li>
+            <li>문의사항은 각 동아리 페이지의 연락처를 통해 문의해주세요.</li>
           </ul>
         </CardContent>
       </Card>

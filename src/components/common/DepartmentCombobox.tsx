@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, GraduationCap, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEPARTMENTS } from "@/data/departments";
 
@@ -30,6 +30,8 @@ interface DepartmentComboboxProps {
   searchPlaceholder?: string;
   /** 검색 결과 없음 텍스트 */
   emptyText?: string;
+  /** 회원가입 시안: 좌측 학위모자·우측 검색 아이콘·플레이스홀더 문구 */
+  variant?: "default" | "signup";
 }
 
 /**
@@ -45,6 +47,7 @@ export function DepartmentCombobox({
   placeholder = "학과를 선택하세요",
   searchPlaceholder = "학과 검색...",
   emptyText = "검색 결과가 없습니다.",
+  variant = "default",
 }: DepartmentComboboxProps) {
   const [open, setOpen] = useState(false);
 
@@ -62,13 +65,31 @@ export function DepartmentCombobox({
           aria-expanded={open}
           className={cn(
             "w-full justify-between font-normal",
+            variant === "signup" && "h-11 gap-2 px-3",
             hasError && "border-destructive focus-visible:ring-destructive",
           )}
         >
-          <span className={cn(!value && "text-muted-foreground")}>
-            {value || placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          {variant === "signup" ? (
+            <>
+              <GraduationCap className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span
+                className={cn(
+                  "min-w-0 flex-1 truncate text-left",
+                  !value && "text-muted-foreground",
+                )}
+              >
+                {value || placeholder}
+              </span>
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </>
+          ) : (
+            <>
+              <span className={cn(!value && "text-muted-foreground")}>
+                {value || placeholder}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">

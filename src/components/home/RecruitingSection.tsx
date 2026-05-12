@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -198,8 +199,9 @@ export function RecruitingSection() {
               "hover:bg-gray-50 hover:text-gray-900",
               "cursor-pointer",
             )}
+            asChild
           >
-            전체 동아리
+            <Link to="/clubs">전체 동아리</Link>
           </Button>
 
           <div className="mt-auto flex flex-col gap-3">

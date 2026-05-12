@@ -18,7 +18,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     clubId: "6",
     clubName: "CPR (CJU Public Relation)",
     clubImage: "https://placehold.co/160x160/e2e8f0/1e293b?text=CPR",
-    category: "학술분과",
+    category: "학술",
     status: "pending",
     appliedDate: "2025.10.01",
     message: "지원서가 성공적으로 접수되었습니다. 현재 운영진이 서류를 꼼꼼히 검토하고 있습니다. 결과 발표까지 조금만 기다려주세요!",

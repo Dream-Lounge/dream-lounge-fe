@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   Users,
   Loader2,
   Edit,
+  Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getClubApplicationData, type ClubApplicationData } from "@/data/clubs";
@@ -24,6 +25,36 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 type ApplicationMode = "create" | "edit" | "view";
+
+const DRAFT_STORAGE_PREFIX = "dl-club-application-draft";
+
+function getDraftStorageKey(mode: ApplicationMode, routeId: string | undefined): string | null {
+  if (!routeId) return null;
+  if (mode === "create") return `${DRAFT_STORAGE_PREFIX}:club:${routeId}`;
+  if (mode === "edit") return `${DRAFT_STORAGE_PREFIX}:app:${routeId}`;
+  return null;
+}
+
+function readApplicationDraft(key: string): {
+  motivation: string;
+  experience: string;
+  questions: string;
+} | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as unknown;
+    if (!data || typeof data !== "object") return null;
+    const o = data as Record<string, unknown>;
+    return {
+      motivation: typeof o.motivation === "string" ? o.motivation : "",
+      experience: typeof o.experience === "string" ? o.experience : "",
+      questions: typeof o.questions === "string" ? o.questions : "",
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +75,7 @@ export function ClubApplication() {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const draftRestoredRef = useRef(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -124,6 +156,19 @@ export function ClubApplication() {
     }
   }, [isAuthenticated, user]);
 
+  useEffect(() => {
+    if (mode === "view" || isDataLoading || !id || draftRestoredRef.current) return;
+    const key = getDraftStorageKey(mode, id);
+    if (!key) return;
+    const draft = readApplicationDraft(key);
+    if (!draft) return;
+    draftRestoredRef.current = true;
+    setMotivation(draft.motivation);
+    setExperience(draft.experience);
+    setQuestions(draft.questions);
+    toast.info("임시저장된 내용을 불러왔습니다.");
+  }, [mode, isDataLoading, id]);
+
   const [errors, setErrors] = useState<{
     name: boolean;
     studentId: boolean;
@@ -176,6 +221,9 @@ export function ClubApplication() {
         questions: questions || undefined,
       };
 
+      const draftKey = getDraftStorageKey(mode, id);
+      if (draftKey) localStorage.removeItem(draftKey);
+
       if (mode === "create") {
         await api.submitMemberApplication({
           clubId: parseInt(id, 10),
@@ -195,6 +243,27 @@ export function ClubApplication() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSaveDraft = () => {
+    if (mode === "view") return;
+
+    const draftKey = getDraftStorageKey(mode, id);
+    if (!draftKey) {
+      toast.error("임시저장할 지원서 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    localStorage.setItem(
+      draftKey,
+      JSON.stringify({
+        motivation,
+        experience,
+        questions,
+        savedAt: new Date().toISOString(),
+      }),
+    );
+    toast.success("지원서가 임시저장되었습니다.");
   };
 
   const validateFieldOnBlur = (field: keyof typeof errors, value: string) => {
@@ -442,24 +511,37 @@ export function ClubApplication() {
           )}
 
           {!isReadOnly && (
-            <Button
-              size="lg"
-              className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  {isEdit ? "수정 중..." : "제출 중..."}
-                </>
-              ) : (
-                <>
-                  {isEdit ? <Edit className="h-5 w-5 mr-2" /> : <Send className="h-5 w-5 mr-2" />}
-                  {isEdit ? "수정 완료" : "지원서 제출"}
-                </>
-              )}
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                onClick={handleSaveDraft}
+                disabled={isSubmitting}
+              >
+                <Save className="h-5 w-5 mr-2" />
+                임시저장
+              </Button>
+              <Button
+                size="lg"
+                className="w-full py-6 text-base font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    {isEdit ? "수정 중..." : "제출 중..."}
+                  </>
+                ) : (
+                  <>
+                    {isEdit ? <Edit className="h-5 w-5 mr-2" /> : <Send className="h-5 w-5 mr-2" />}
+                    {isEdit ? "수정 완료" : "지원서 제출"}
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
       </div>

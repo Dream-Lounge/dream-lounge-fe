@@ -67,7 +67,7 @@ export function ApplicationDrafts() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">임시저장함</h1>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">임시저장함</h2>
       </div>
 
       {drafts.length > 0 ? (

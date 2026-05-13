@@ -4,6 +4,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Home } from "@/pages/Home";
 import { ClubDetail } from "@/pages/ClubDetail";
 import { ClubApplication } from "@/pages/ClubApplication";
+import { ApplicationDrafts } from "@/pages/ApplicationDrafts";
 import { ApplicationStatus } from "@/pages/ApplicationStatus";
 import { Signup } from "@/pages/Signup";
 import { Login } from "@/pages/Login";
@@ -51,6 +52,7 @@ function App() {
               path="/applications/:id/view"
               element={<ClubApplication />}
             />
+            <Route path="/users/:studentId/drafts" element={<ApplicationDrafts />} />
             <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
         </Route>

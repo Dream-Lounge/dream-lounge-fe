@@ -22,39 +22,13 @@ import { getClubApplicationData, type ClubApplicationData } from "@/data/clubs";
 import { NotFound } from "@/pages/error/NotFound";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import {
+  getApplicationDraftStorageKey,
+  readApplicationDraft,
+} from "@/lib/applicationDrafts";
 import { toast } from "sonner";
 
 type ApplicationMode = "create" | "edit" | "view";
-
-const DRAFT_STORAGE_PREFIX = "dl-club-application-draft";
-
-function getDraftStorageKey(mode: ApplicationMode, routeId: string | undefined): string | null {
-  if (!routeId) return null;
-  if (mode === "create") return `${DRAFT_STORAGE_PREFIX}:club:${routeId}`;
-  if (mode === "edit") return `${DRAFT_STORAGE_PREFIX}:app:${routeId}`;
-  return null;
-}
-
-function readApplicationDraft(key: string): {
-  motivation: string;
-  experience: string;
-  questions: string;
-} | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as unknown;
-    if (!data || typeof data !== "object") return null;
-    const o = data as Record<string, unknown>;
-    return {
-      motivation: typeof o.motivation === "string" ? o.motivation : "",
-      experience: typeof o.experience === "string" ? o.experience : "",
-      questions: typeof o.questions === "string" ? o.questions : "",
-    };
-  } catch {
-    return null;
-  }
-}
 
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
@@ -158,7 +132,7 @@ export function ClubApplication() {
 
   useEffect(() => {
     if (mode === "view" || isDataLoading || !id || draftRestoredRef.current) return;
-    const key = getDraftStorageKey(mode, id);
+    const key = getApplicationDraftStorageKey(mode, id);
     if (!key) return;
     const draft = readApplicationDraft(key);
     if (!draft) return;
@@ -221,7 +195,7 @@ export function ClubApplication() {
         questions: questions || undefined,
       };
 
-      const draftKey = getDraftStorageKey(mode, id);
+      const draftKey = getApplicationDraftStorageKey(mode, id);
       if (draftKey) localStorage.removeItem(draftKey);
 
       if (mode === "create") {
@@ -248,7 +222,7 @@ export function ClubApplication() {
   const handleSaveDraft = () => {
     if (mode === "view") return;
 
-    const draftKey = getDraftStorageKey(mode, id);
+    const draftKey = getApplicationDraftStorageKey(mode, id);
     if (!draftKey) {
       toast.error("임시저장할 지원서 정보를 찾을 수 없습니다.");
       return;
@@ -260,6 +234,11 @@ export function ClubApplication() {
         motivation,
         experience,
         questions,
+        mode: isEdit ? "edit" : "create",
+        routeId: id,
+        clubId: isEdit ? undefined : id,
+        clubName: clubData?.title,
+        category: clubData?.category,
         savedAt: new Date().toISOString(),
       }),
     );

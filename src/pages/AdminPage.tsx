@@ -19,7 +19,9 @@ import {
   X,
   SquarePen,
   Pencil,
+  ChevronDown,
 } from "lucide-react";
+import { CLUB_DIVISION_KEYS } from "@/data/clubDirectoryMeta";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -156,40 +158,63 @@ const COMMUNITY_POSTS = [
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
+  const [clubCategory, setClubCategory] = useState("");
 
   const renderMainContent = () => {
     if (activeTab === "club-register") {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
-            동아리 등록하기
+            동아리 정보
           </h2>
           <div className="mt-0 border-t border-slate-200 pt-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">
+                <h3 className="text-base font-bold text-slate-800">
                   동아리명 <span className="text-red-500">*</span>
-                </label>
-                <Input placeholder="예: CPR" className="h-10 bg-white" />
+                </h3>
+                <Input placeholder="예: CPR" className="mt-3 h-10 bg-white" />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">
+                <h3 id="club-category-label" className="text-base font-bold text-slate-800">
                   카테고리 <span className="text-red-500">*</span>
-                </label>
-                <Input placeholder="학술" className="h-10 bg-white" />
+                </h3>
+                <div className="relative mt-3">
+                  <select
+                    id="club-category"
+                    aria-labelledby="club-category-label"
+                    value={clubCategory}
+                    onChange={(e) => setClubCategory(e.target.value)}
+                    className={cn(
+                      "h-10 w-full appearance-none rounded-md border border-input bg-white px-3 pr-10 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      !clubCategory && "text-muted-foreground",
+                    )}
+                  >
+                    <option value="" disabled>
+                      분과를 선택해주세요
+                    </option>
+                    {CLUB_DIVISION_KEYS.map((division) => (
+                      <option key={division} value={division} className="text-foreground">
+                        {division}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden
+                  />
+                </div>
               </div>
             </div>
 
             <div className="mt-5">
-              <label className="mb-2 block text-sm font-semibold text-foreground">
+              <h3 className="text-base font-bold text-slate-800">
                 대표 이미지{" "}
-                <span className="text-xs font-normal text-muted-foreground">
-                  (권장: 1920×1080px)
-                </span>
-              </label>
+                <span className="text-sm font-medium text-slate-400">(권장: 1920×1080px)</span>
+              </h3>
               <button
                 type="button"
-                className="flex h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100"
+                className="mt-3 flex h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100"
               >
                 <ImageIcon className="mb-2 size-8 text-slate-400" />
                 <span className="text-sm font-medium">
@@ -199,29 +224,49 @@ export function AdminPage() {
             </div>
 
             <div className="mt-5">
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                한 줄 소개 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                placeholder="동아리를 가장 잘 표현하는 한 줄을 작성해주세요."
-                className="h-10 bg-white"
+              <h3 className="text-base font-bold text-slate-800">
+                모집 대상 및 자격 요건 <span className="text-red-500">*</span>
+              </h3>
+              <Textarea
+                placeholder="지원 가능한 대상과 자격 요건을 입력해주세요."
+                className="mt-3 min-h-[84px] resize-none bg-white"
               />
             </div>
 
-            <div className="mt-5">
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                모집 대상 및 자격 요건
-              </label>
-              <Textarea
-                placeholder="지원 가능한 대상과 자격 요건을 입력해주세요."
-                className="min-h-[84px] resize-none bg-white"
-              />
-            </div>
+            <section className="mt-5">
+              <h3 className="text-base font-bold text-slate-800">
+                태그 설정 <span className="text-sm font-medium text-slate-400">(최대 5개)</span>
+              </h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {PAGE_TAGS.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#EAF1FC] px-3 py-1.5 text-sm font-semibold text-[#1B4A8F]"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      className="inline-flex size-4 items-center justify-center rounded-full bg-[#D9E6FB] text-[#1B4A8F]"
+                      aria-label={`${tag} 삭제`}
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                >
+                  <Plus className="size-3.5" />
+                  태그 추가
+                </button>
+              </div>
+            </section>
 
             <div className="mt-8 flex justify-end">
               <Button className="h-10 w-full rounded-lg px-5 sm:w-auto">
-                <PlusCircle className="mr-1 size-4" />
-                동아리 등록
+                <Save className="mr-1 size-4" />
+                저장
               </Button>
             </div>
           </div>

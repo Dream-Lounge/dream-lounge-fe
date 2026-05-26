@@ -45,23 +45,20 @@ const ADMIN_MENU: {
   {
     section: "동아리 관리",
     items: [
-      { label: "동아리 등록하기", icon: PlusCircle, tab: "club-register" },
+      { label: "동아리 정보", icon: PlusCircle, tab: "club-register" },
+      { label: "상세페이지 설정", icon: Tag, tab: "page-tags" },
     ],
   },
   {
     section: "신청서 관리",
     items: [
-      { label: "동아리 신청폼 설정", icon: Settings, tab: "application-form" },
+      { label: "신청폼 설정", icon: Settings, tab: "application-form" },
       {
         label: "신청서 관리",
         icon: FileText,
         tab: "submitted-applications",
       },
     ],
-  },
-  {
-    section: "페이지 설정",
-    items: [{ label: "소개페이지 및 태그", icon: Tag, tab: "page-tags" }],
   },
   {
     section: "커뮤니티",
@@ -237,7 +234,7 @@ export function AdminPage() {
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
-              동아리 신청폼 설정
+              신청폼 설정
             </h2>
             <Button className="h-9 w-full rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800 sm:w-auto">
               <CirclePlus className="mr-1 size-4" />새 문항 추가
@@ -443,7 +440,7 @@ export function AdminPage() {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-2xl align-bottom font-bold text-foreground">
-            소개페이지 및 태그
+            상세페이지 설정
           </h2>
 
           <div className="mt-0 border-t border-slate-200 pt-6">

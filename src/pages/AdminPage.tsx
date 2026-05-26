@@ -156,9 +156,13 @@ const COMMUNITY_POSTS = [
   },
 ] as const;
 
+const CLUB_DETAIL_DESCRIPTION_PLACEHOLDER =
+  "예: 코딩 스터디, 프로젝트, 세미나 등을 통해 함께 성장하는 학술 동아리입니다.";
+
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
   const [clubCategory, setClubCategory] = useState("");
+  const [clubDetailDescription, setClubDetailDescription] = useState("");
 
   const renderMainContent = () => {
     if (activeTab === "club-register") {
@@ -491,7 +495,7 @@ export function AdminPage() {
           <div className="mt-0 border-t border-slate-200 pt-6">
             <section>
               <h3 className="text-base font-bold text-slate-800">
-                동아리 상세 설명 (에디터)
+                동아리 상세 설명
               </h3>
               <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
                 <div className="flex h-11 items-center gap-1 border-b border-slate-200 bg-[#F8FAFD] px-3">
@@ -525,7 +529,14 @@ export function AdminPage() {
                     <ImagePlus className="size-4" />
                   </button>
                 </div>
-                <div className="min-h-[170px] bg-white p-4" />
+                <Textarea
+                  id="club-detail-description"
+                  value={clubDetailDescription}
+                  onChange={(e) => setClubDetailDescription(e.target.value)}
+                  placeholder={CLUB_DETAIL_DESCRIPTION_PLACEHOLDER}
+                  className="min-h-[170px] w-full resize-y rounded-none border-0 bg-white p-4 text-sm leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="동아리 상세 설명"
+                />
               </div>
             </section>
 
@@ -548,36 +559,6 @@ export function AdminPage() {
                     <Plus className="size-4" />
                   </div>
                   <span className="mt-2 text-sm font-semibold">사진 추가</span>
-                </button>
-              </div>
-            </section>
-
-            <section className="mt-6">
-              <h3 className="text-base font-bold text-slate-800">
-                태그 설정 <span className="text-sm font-medium text-slate-400">(최대 5개)</span>
-              </h3>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {PAGE_TAGS.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#EAF1FC] px-3 py-1.5 text-sm font-semibold text-[#1B4A8F]"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      className="inline-flex size-4 items-center justify-center rounded-full bg-[#D9E6FB] text-[#1B4A8F]"
-                      aria-label={`${tag} 삭제`}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-                <button
-                  type="button"
-                  className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-                >
-                  <Plus className="size-3.5" />
-                  태그 추가
                 </button>
               </div>
             </section>

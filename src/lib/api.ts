@@ -92,7 +92,7 @@ export interface ApplicationListResponseItem {
   club_name: string;
   club_image: string | null;
   category: string | null;
-  status: "임시저장" | "제출됨" | "합격" | "불합격";
+  status: "임시저장" | "제출됨" | "합격" | "불합격" | "보류";
   submitted_time: string;
   motivation: string;
 }
@@ -102,7 +102,7 @@ export interface ApplicationDetailResponse {
   club_id: number;
   club_name: string;
   student_id: number;
-  status: "임시저장" | "제출됨" | "합격" | "불합격";
+  status: "임시저장" | "제출됨" | "합격" | "불합격" | "보류";
   content: ApplicationContent;
   submitted_time: string;
 }

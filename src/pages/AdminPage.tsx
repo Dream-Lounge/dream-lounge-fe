@@ -84,7 +84,19 @@ const APPLICATION_QUESTIONS = [
   },
 ] as const;
 
-const SUBMITTED_APPLICATIONS = [
+const APPLICATION_STATUSES = ["검토중", "합격", "불합격", "보류"] as const;
+type ApplicationStatusValue = (typeof APPLICATION_STATUSES)[number];
+
+interface SubmittedApplication {
+  id: number;
+  name: string;
+  studentId: string;
+  major: string;
+  submittedAt: string;
+  status: ApplicationStatusValue;
+}
+
+const SUBMITTED_APPLICATIONS: SubmittedApplication[] = [
   {
     id: 1,
     name: "김철수",
@@ -117,7 +129,14 @@ const SUBMITTED_APPLICATIONS = [
     submittedAt: "2026.03.30",
     status: "검토중",
   },
-] as const;
+];
+
+const STATUS_SELECT_CLASS: Record<ApplicationStatusValue, string> = {
+  합격: "bg-[#E8FAEE] text-[#14863F]",
+  불합격: "bg-[#FDECEE] text-[#D7263D]",
+  보류: "bg-[#EEF1F6] text-[#5A6B86]",
+  검토중: "bg-[#FFF9E8] text-[#B48319]",
+};
 
 const PAGE_TAGS = ["#프로젝트", "#해커톤", "#네트워킹", "#개발스터디"] as const;
 
@@ -163,6 +182,17 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
   const [clubCategory, setClubCategory] = useState("");
   const [clubDetailDescription, setClubDetailDescription] = useState("");
+  const [applicants, setApplicants] = useState<SubmittedApplication[]>(
+    () => SUBMITTED_APPLICATIONS.map((applicant) => ({ ...applicant })),
+  );
+
+  const handleStatusChange = (id: number, status: ApplicationStatusValue) => {
+    setApplicants((prev) =>
+      prev.map((applicant) =>
+        applicant.id === id ? { ...applicant, status } : applicant,
+      ),
+    );
+  };
 
   const renderMainContent = () => {
     if (activeTab === "club-register") {
@@ -390,14 +420,7 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {SUBMITTED_APPLICATIONS.map((applicant) => {
-                  const statusClassName =
-                    applicant.status === "합격"
-                      ? "bg-[#E8FAEE] text-[#14863F]"
-                      : applicant.status === "불합격"
-                        ? "bg-[#FDECEE] text-[#D7263D]"
-                        : "bg-[#FFF9E8] text-[#B48319]";
-
+                {applicants.map((applicant) => {
                   return (
                     <tr
                       key={applicant.id}
@@ -421,14 +444,32 @@ export function AdminPage() {
                         {applicant.submittedAt}
                       </td>
                       <td className="px-4">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-                            statusClassName,
-                          )}
-                        >
-                          {applicant.status}
-                        </span>
+                        <div className="relative inline-flex">
+                          <select
+                            value={applicant.status}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                applicant.id,
+                                e.target.value as ApplicationStatusValue,
+                              )
+                            }
+                            aria-label={`${applicant.name} 상태 변경`}
+                            className={cn(
+                              "h-7 cursor-pointer appearance-none rounded-full border-transparent pl-3 pr-7 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                              STATUS_SELECT_CLASS[applicant.status],
+                            )}
+                          >
+                            {APPLICATION_STATUSES.map((status) => (
+                              <option key={status} value={status} className="bg-white text-slate-700">
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2"
+                            aria-hidden
+                          />
+                        </div>
                       </td>
                       <td className="px-4 text-center">
                         <button

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle2, XCircle, Clock, Edit } from "lucide-react";
+import { FileText, CheckCircle2, XCircle, Clock, PauseCircle, Edit } from "lucide-react";
 import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +24,10 @@ const STATUS_BADGE_CONFIG: Record<
     children: "불합격",
     variant: "destructive",
     className: "border-transparent",
+  },
+  held: {
+    children: "보류",
+    className: "bg-amber-500 text-white border-transparent hover:bg-amber-500/90",
   },
 };
 
@@ -126,6 +130,8 @@ function getStatusMessage(status: ApplicationListResponseItem["status"]) {
       return "축하합니다! 합격하셨습니다. OT 일정을 확인해주세요.";
     case "불합격":
       return "아쉽지만 이번 모집에서는 선발되지 못했습니다. 다음 기회에 다시 도전해주세요.";
+    case "보류":
+      return "지원서를 검토한 결과 추가 확인이 필요하여 보류 처리되었습니다. 결과가 확정되면 별도로 안내드리겠습니다.";
     case "제출됨":
     default:
       return "지원서를 검토중입니다. 곧 연락드리겠습니다.";
@@ -169,6 +175,7 @@ export function ApplicationStatus() {
             let status: Application["status"] = "pending";
             if (item.status === "합격") status = "accepted";
             else if (item.status === "불합격") status = "rejected";
+            else if (item.status === "보류") status = "held";
             
             const date = new Date(item.submitted_time);
             const appliedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -203,10 +210,11 @@ export function ApplicationStatus() {
       acc.total++;
       if (app.status === "accepted") acc.accepted++;
       else if (app.status === "rejected") acc.rejected++;
+      else if (app.status === "held") acc.held++;
       else if (app.status === "pending") acc.pending++;
       return acc;
     },
-    { total: 0, accepted: 0, rejected: 0, pending: 0 }
+    { total: 0, accepted: 0, rejected: 0, held: 0, pending: 0 }
   );
 
   if (isLoading) {
@@ -219,7 +227,7 @@ export function ApplicationStatus() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="전체 지원"
           value={stats.total}
@@ -237,6 +245,12 @@ export function ApplicationStatus() {
           value={stats.rejected}
           icon={<XCircle className="w-7 h-7" strokeWidth={1.75} />}
           iconColorClass="text-destructive"
+        />
+        <StatCard
+          title="보류"
+          value={stats.held}
+          icon={<PauseCircle className="w-7 h-7" strokeWidth={1.75} />}
+          iconColorClass="text-amber-500"
         />
         <StatCard
           title="검토중"

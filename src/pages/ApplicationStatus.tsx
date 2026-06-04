@@ -1,9 +1,9 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle2, XCircle, Clock, PauseCircle, Edit } from "lucide-react";
+import { FileText, CheckCircle2, XCircle, Clock, PauseCircle } from "lucide-react";
 import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,35 +85,14 @@ function ApplicationItem({ application }: ApplicationItemProps) {
           </div>
 
           <div className="flex flex-row gap-2 items-center shrink-0">
-            {application.status === "pending" ? (
-              <>
-                <Button
-                  variant="outline"
-                  className="justify-center"
-                  onClick={() => navigate(`/applications/${application.id}/edit`)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  수정하기
-                </Button>
-                <Button
-                  variant="default"
-                  className="justify-center"
-                  onClick={() => navigate(`/applications/${application.id}/view`)}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  지원서 보기
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="default"
-                className="justify-center"
-                onClick={() => navigate(`/applications/${application.id}/view`)}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                지원서 보기
-              </Button>
-            )}
+            <Button
+              variant="default"
+              className="justify-center"
+              onClick={() => navigate(`/applications/${application.id}/view`)}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              지원서 보기
+            </Button>
           </div>
         </div>
 
@@ -286,18 +265,6 @@ export function ApplicationStatus() {
         )}
       </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            💡 도움말
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-            <li>지원서는 <strong>검토중</strong> 상태일 때만 수정이 가능합니다.</li>
-            <li>합격/불합격 결과는 지원일로부터 7일 이내에 개별 연락드립니다.</li>
-            <li>문의사항은 각 동아리 페이지의 연락처를 통해 문의해주세요.</li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 }

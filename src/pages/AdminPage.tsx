@@ -328,21 +328,19 @@ export function AdminPage() {
                   className="rounded-xl border border-slate-200 bg-white px-5 py-4"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex size-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
-                          {question.id}
-                        </span>
-                        <p className="text-sm font-semibold text-foreground">
-                          {question.title}
-                        </p>
-                      </div>
-                      <span className="mt-2 ml-10 inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
-                        {question.type}
+                    <div className="min-w-0 flex items-center gap-3">
+                      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
+                        {question.id}
                       </span>
+                      <p className="text-sm font-semibold text-foreground">
+                        {question.title}
+                      </p>
                     </div>
 
-                    <div className="flex items-center gap-4 pt-1 sm:justify-end">
+                    <div className="flex items-center gap-3 pt-1 sm:justify-end shrink-0">
+                      <span className="inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
+                        {question.type}
+                      </span>
                       <label className="inline-flex cursor-pointer items-center gap-2 align-bottom text-xs font-semibold text-slate-700">
                         <input
                           type="checkbox"

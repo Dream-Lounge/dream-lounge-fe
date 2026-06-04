@@ -35,18 +35,24 @@ interface StatCardProps {
   title: string;
   value: number;
   icon: ReactNode;
-  iconColorClass: string;
+  iconWrapClass: string;
+  valueClass?: string;
 }
 
-function StatCard({ title, value, icon, iconColorClass }: StatCardProps) {
+function StatCard({ title, value, icon, iconWrapClass, valueClass }: StatCardProps) {
   return (
-    <Card className="flex flex-row items-center gap-4 p-5 sm:p-6 shadow-sm border rounded-xl bg-card">
-      <div className={`shrink-0 ${iconColorClass}`}>
+    <Card className="group flex flex-row items-center gap-2.5 p-3.5 shadow-sm border rounded-2xl bg-card transition-all hover:shadow-md hover:-translate-y-0.5">
+      <div className={`shrink-0 flex items-center justify-center size-9 rounded-xl transition-transform group-hover:scale-105 ${iconWrapClass}`}>
         {icon}
       </div>
-      <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-sm font-medium text-muted-foreground">{title}</span>
-        <span className="text-sm font-bold text-foreground">{value}개</span>
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-xs font-medium text-muted-foreground truncate">{title}</span>
+        <span className="flex items-baseline gap-0.5">
+          <span className={`text-xl font-extrabold leading-none ${valueClass ?? "text-foreground"}`}>
+            {value}
+          </span>
+          <span className="text-xs font-semibold text-muted-foreground">개</span>
+        </span>
       </div>
     </Card>
   );
@@ -227,36 +233,40 @@ export function ApplicationStatus() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-3">
         <StatCard
           title="전체 지원"
           value={stats.total}
-          icon={<FileText className="w-7 h-7" strokeWidth={1.75} />}
-          iconColorClass="text-muted-foreground"
+          icon={<FileText className="w-4 h-4" strokeWidth={2} />}
+          iconWrapClass="bg-slate-100 text-slate-500"
         />
         <StatCard
           title="합격"
           value={stats.accepted}
-          icon={<CheckCircle2 className="w-7 h-7" strokeWidth={1.75} />}
-          iconColorClass="text-primary"
+          icon={<CheckCircle2 className="w-4 h-4" strokeWidth={2} />}
+          iconWrapClass="bg-primary/10 text-primary"
+          valueClass="text-primary"
         />
         <StatCard
           title="불합격"
           value={stats.rejected}
-          icon={<XCircle className="w-7 h-7" strokeWidth={1.75} />}
-          iconColorClass="text-destructive"
+          icon={<XCircle className="w-4 h-4" strokeWidth={2} />}
+          iconWrapClass="bg-destructive/10 text-destructive"
+          valueClass="text-destructive"
         />
         <StatCard
           title="보류"
           value={stats.held}
-          icon={<PauseCircle className="w-7 h-7" strokeWidth={1.75} />}
-          iconColorClass="text-amber-500"
+          icon={<PauseCircle className="w-4 h-4" strokeWidth={2} />}
+          iconWrapClass="bg-amber-100 text-amber-600"
+          valueClass="text-amber-600"
         />
         <StatCard
           title="검토중"
           value={stats.pending}
-          icon={<Clock className="w-7 h-7" strokeWidth={1.75} />}
-          iconColorClass="text-primary"
+          icon={<Clock className="w-4 h-4" strokeWidth={2} />}
+          iconWrapClass="bg-sky-100 text-sky-600"
+          valueClass="text-sky-600"
         />
       </div>
 

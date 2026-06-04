@@ -476,7 +476,7 @@ export function AdminPage() {
                           type="button"
                           className="inline-flex h-9 items-center justify-center rounded-lg bg-[#EDF3FF] px-4 text-sm font-semibold text-[#2B63B4] transition-colors hover:bg-[#E2EDFF]"
                         >
-                          지원서 보기
+                          보기
                         </button>
                       </td>
                     </tr>

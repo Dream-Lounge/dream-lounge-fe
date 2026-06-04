@@ -212,6 +212,7 @@ export function ApplicationStatus() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-foreground">지원 내역</h2>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-3">
         <StatCard
           title="전체 지원"
@@ -250,8 +251,6 @@ export function ApplicationStatus() {
       </div>
 
       <div className="flex flex-col gap-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground">지원 내역</h2>
-        
         {applications.length > 0 ? (
           <div className="flex flex-col gap-4">
             {applications.map((app) => (

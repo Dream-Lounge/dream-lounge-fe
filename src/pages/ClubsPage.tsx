@@ -4,6 +4,7 @@ import { Users, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatRecruitmentLabel } from "@/lib/date";
 import { MOCK_CLUB_DATA, type ClubData } from "@/data/clubs";
 import {
   CLUB_CATEGORY_FILTERS,
@@ -243,7 +244,7 @@ function ClubCard({
             <span className="tabular-nums">{club.memberCount}명</span>
           </span>
           <span className="shrink-0 font-semibold text-primary">
-            {club.recruitmentLabel}
+            {formatRecruitmentLabel(club.recruitmentLabel)}
           </span>
         </div>
       </div>
@@ -291,7 +292,7 @@ function ClubListRow({
             {club.memberCount}명
           </span>
           <span className="font-semibold text-primary">
-            {club.recruitmentLabel}
+            {formatRecruitmentLabel(club.recruitmentLabel)}
           </span>
         </div>
       </div>

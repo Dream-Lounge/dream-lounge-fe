@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatEndDateLabel } from "@/lib/date";
 
 /**
  * 모집중인 동아리 및 분과별 소개 섹션 컴포넌트
@@ -17,6 +18,16 @@ export function RecruitingSection() {
   // 모집중인 동아리 임시 데이터
   const recruitingClubs = [
     {
+      id: 6,
+      title: "CPR",
+      category: "학술",
+      endDate: "상시모집",
+      deadlineText: "모집예정",
+      image: "/images/cpr_v1.png",
+      textColor: "text-white",
+      aiRecommended: true,
+    },
+    {
       id: 1,
       title: "디스토션",
       category: "공연",
@@ -24,15 +35,7 @@ export function RecruitingSection() {
       deadlineText: "",
       image: "/images/performence.jpg",
       textColor: "text-white",
-    },
-    {
-      id: 2,
-      title: "RCY",
-      category: "봉사",
-      endDate: "2025.09.26",
-      deadlineText: "",
-      image: "/images/rcy_v1.jpg",
-      textColor: "text-white",
+      aiRecommended: true,
     },
     {
       id: 3,
@@ -42,6 +45,17 @@ export function RecruitingSection() {
       deadlineText: "",
       image: "/images/photo_exhibition_v1.png",
       textColor: "text-white",
+      aiRecommended: true,
+    },
+    {
+      id: 2,
+      title: "RCY",
+      category: "봉사",
+      endDate: "2025.09.26",
+      deadlineText: "",
+      image: "/images/rcy_v1.jpg",
+      textColor: "text-white",
+      aiRecommended: false,
     },
     {
       id: 4,
@@ -51,6 +65,7 @@ export function RecruitingSection() {
       deadlineText: "",
       image: "/images/smash.jpg",
       textColor: "text-white",
+      aiRecommended: false,
     },
     {
       id: 5,
@@ -60,15 +75,7 @@ export function RecruitingSection() {
       deadlineText: "",
       image: "/images/hostel.jpg",
       textColor: "text-white",
-    },
-    {
-      id: 6,
-      title: "CPR",
-      category: "학술",
-      endDate: "상시모집",
-      deadlineText: "모집예정",
-      image: "/images/cpr_v1.png",
-      textColor: "text-white",
+      aiRecommended: false,
     },
   ];
 
@@ -123,6 +130,7 @@ export function RecruitingSection() {
           <button
             type="button"
             aria-label="모집 동아리 전체보기"
+            onClick={() => navigate("/clubs")}
             className="flex size-8 shrink-0 items-center justify-center text-gray-900 transition-colors hover:text-gray-500"
           >
             <Plus className="size-6" />
@@ -160,16 +168,14 @@ export function RecruitingSection() {
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                 <CardContent className="relative z-10 flex h-full min-h-0 flex-col justify-between p-3.5">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <Badge className="border-none bg-primary/90 px-2.5 py-0.5 text-xs text-primary-foreground backdrop-blur-sm">
                       {club.category}
                     </Badge>
-                    {club.deadlineText && (
-                      <Badge
-                        variant="secondary"
-                        className="border-none bg-secondary/90 px-2 py-0.5 text-xs text-secondary-foreground backdrop-blur-sm"
-                      >
-                        {club.deadlineText}
+                    {club.aiRecommended && (
+                      <Badge className="gap-1 border-none bg-white/85 px-2 py-0.5 text-xs font-semibold text-primary backdrop-blur-sm">
+                        <Sparkles className="size-3" />
+                        AI추천
                       </Badge>
                     )}
                   </div>
@@ -178,7 +184,7 @@ export function RecruitingSection() {
                       {club.title}
                     </h3>
                     <p className="text-xs opacity-90 drop-shadow-sm">
-                      {club.endDate}
+                      {formatEndDateLabel(club.endDate)}
                     </p>
                   </div>
                 </CardContent>

@@ -139,17 +139,17 @@ export function RecruitingSection() {
         </div>
 
         {/* 가로 스크롤 동아리 카드 */}
-        <div className="relative min-w-0">
+        <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
           <div
             ref={scrollRef}
-            className="flex h-full items-stretch gap-3 overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex items-stretch gap-3 overflow-x-auto scroll-smooth lg:h-full [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {recruitingClubs.map((club) => (
               <Card
                 key={club.id}
                 className={cn(
                   club.textColor,
-                  "relative aspect-[3/4] h-full w-auto shrink-0 overflow-hidden border-none py-0 gap-0 shadow-sm",
+                  "relative aspect-[3/4] h-36 w-auto shrink-0 overflow-hidden border-none py-0 gap-0 shadow-sm sm:h-56 lg:h-full",
                   "group cursor-pointer",
                   "transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
                 )}

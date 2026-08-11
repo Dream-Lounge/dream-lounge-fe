@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator";
+import { FEATURES } from "@/config/features";
 
 
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
-    { label: "동아리 뉴스", to: "/news" },
+    ...(FEATURES.clubNews ? [{ label: "동아리 뉴스", to: "/news" }] : []),
     { label: "Dream Lounge", to: "/about" },
     { label: "고객센터", to: "/support" },
 ];
@@ -92,12 +93,14 @@ export function Header() {
                                         >
                                             임시저장함
                                         </Link>
-                                        <Link
-                                            to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
-                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                        >
-                                            내 동아리
-                                        </Link>
+                                        {FEATURES.myClubs && (
+                                            <Link
+                                                to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
+                                                className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                            >
+                                                내 동아리
+                                            </Link>
+                                        )}
                                         <Link
                                             to="/admin"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
@@ -131,12 +134,14 @@ export function Header() {
                                         >
                                             임시저장함
                                         </Link>
-                                        <Link
-                                            to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
-                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                        >
-                                            내 동아리
-                                        </Link>
+                                        {FEATURES.myClubs && (
+                                            <Link
+                                                to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
+                                                className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                            >
+                                                내 동아리
+                                            </Link>
+                                        )}
                                         <Link
                                             to="/admin"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"

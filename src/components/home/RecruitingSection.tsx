@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatEndDateLabel } from "@/lib/date";
+import { FEATURES } from "@/config/features";
 
 /**
  * 모집중인 동아리 및 분과별 소개 섹션 컴포넌트
@@ -167,7 +168,7 @@ export function RecruitingSection() {
                     <Badge className="border-none bg-primary/90 font-semibold text-primary-foreground backdrop-blur-sm">
                       {club.category}
                     </Badge>
-                    {club.aiRecommended && (
+                    {FEATURES.aiRecommend && club.aiRecommended && (
                       <Badge className="gap-1 border-none bg-white/85 font-semibold text-primary backdrop-blur-sm">
                         <Sparkles className="size-3" />
                         AI추천

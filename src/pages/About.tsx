@@ -1,37 +1,54 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, FileText, Newspaper, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FEATURES } from "@/config/features";
 
-const FEATURES = [
+const ALL_FEATURE_CARDS = [
   {
     icon: Search,
     title: "동아리 찾기",
     description:
       "분과별로 동아리를 둘러보고, 카드형·리스트형 중 편한 방식으로 살펴보세요.",
+    show: true,
   },
   {
     icon: FileText,
     title: "지원서 관리",
     description:
       "지원서를 작성·임시저장하고, 지원 내역과 진행 상태를 한곳에서 확인하세요.",
+    show: true,
   },
   {
     icon: Sparkles,
     title: "관심사 기반 추천",
     description: "관심 있는 분야를 선택하면 취향에 맞는 동아리를 추천해드려요.",
+    show: FEATURES.aiRecommend,
   },
   {
     icon: Newspaper,
     title: "동아리 뉴스",
     description: "공지사항부터 행사 소식까지, 동아리 관련 소식을 놓치지 마세요.",
+    show: FEATURES.clubNews,
   },
 ] as const;
 
-const STEPS = [
-  { title: "회원가입", description: "학교 이메일로 간편하게 가입하세요." },
-  { title: "관심사 선택", description: "관심 있는 분야를 골라주세요." },
-  { title: "동아리 지원", description: "마음에 드는 동아리에 지원서를 제출하세요." },
+const FEATURE_CARDS = ALL_FEATURE_CARDS.filter((feature) => feature.show);
+
+const ALL_STEPS = [
+  { title: "회원가입", description: "학교 이메일로 간편하게 가입하세요.", show: true },
+  {
+    title: "관심사 선택",
+    description: "관심 있는 분야를 골라주세요.",
+    show: FEATURES.onboarding,
+  },
+  {
+    title: "동아리 지원",
+    description: "마음에 드는 동아리에 지원서를 제출하세요.",
+    show: true,
+  },
 ] as const;
+
+const STEPS = ALL_STEPS.filter((step) => step.show);
 
 /**
  * 서비스 소개 페이지
@@ -58,7 +75,7 @@ export function About() {
             이런 걸 할 수 있어요
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, title, description }) => (
+            {FEATURE_CARDS.map(({ icon: Icon, title, description }) => (
               <div
                 key={title}
                 className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5"

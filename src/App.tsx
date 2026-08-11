@@ -19,6 +19,8 @@ import { ClubsPage } from "@/pages/ClubsPage";
 import { ClubNews } from "@/pages/ClubNews";
 import { Support } from "@/pages/Support";
 import { About } from "@/pages/About";
+import { NotFound } from "@/pages/error/NotFound";
+import { FEATURES } from "@/config/features";
 
 /**
  * 앱의 메인 진입점 컴포넌트
@@ -37,18 +39,24 @@ function App() {
         </Route>
 
         {/* 최초 로그인 후 관심사 선택(온보딩) — 전체화면 */}
-        <Route path="/onboarding/interests" element={<InterestSelection />} />
+        {FEATURES.onboarding && (
+          <Route path="/onboarding/interests" element={<InterestSelection />} />
+        )}
 
         {/* 헤더/푸터 있는 일반 페이지 */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/clubs" element={<ClubsPage />} />
-          <Route path="/news" element={<ClubNews />} />
+          {FEATURES.clubNews && <Route path="/news" element={<ClubNews />} />}
           <Route path="/support" element={<Support />} />
           <Route path="/about" element={<About />} />
           <Route path="/club/:id" element={<ClubDetail />} />
-          <Route path="/club/:id/community" element={<ClubCommunity />} />
-          <Route path="/users/:studentId/clubs" element={<MyClubs />} />
+          {FEATURES.clubCommunity && (
+            <Route path="/club/:id/community" element={<ClubCommunity />} />
+          )}
+          {FEATURES.myClubs && (
+            <Route path="/users/:studentId/clubs" element={<MyClubs />} />
+          )}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
@@ -65,6 +73,9 @@ function App() {
             <Route path="/users/:studentId/drafts" element={<ApplicationDrafts />} />
             <Route path="/users/:studentId/applications" element={<ApplicationStatus />} />
           </Route>
+
+          {/* 배포에서 제외된 경로 등 매칭되지 않는 경로 */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </div>

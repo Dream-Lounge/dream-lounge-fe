@@ -1,6 +1,7 @@
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { RecruitingSection } from "@/components/home/RecruitingSection";
 import { NewsSection } from "@/components/home/NewsSection";
+import { FEATURES } from "@/config/features";
 
 /**
  * 메인 홈 페이지 컴포넌트
@@ -16,7 +17,7 @@ export function Home() {
       <RecruitingSection />
 
       {/** 동아리 뉴스 섹션 */}
-      <NewsSection />
+      {FEATURES.clubNews && <NewsSection />}
     </div>
   );
 }

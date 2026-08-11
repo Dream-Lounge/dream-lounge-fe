@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { validators, ERROR_MESSAGES } from "@/lib/validators";
 import { useAuth } from "@/hooks/useAuth";
 import { hasCompletedInterests } from "@/lib/interests";
+import { FEATURES } from "@/config/features";
 
 /**
  * 로그인 페이지 컴포넌트
@@ -64,7 +65,8 @@ export function Login() {
       const id = parseInt(studentId, 10);
       await login(id, password);
       // 최초 로그인(관심사 미선택) 시 온보딩으로, 이후에는 홈으로 이동
-      navigate(hasCompletedInterests(id) ? "/" : "/onboarding/interests");
+      const goToOnboarding = FEATURES.onboarding && !hasCompletedInterests(id);
+      navigate(goToOnboarding ? "/onboarding/interests" : "/");
     } catch {
       setLoginError(true);
     } finally {

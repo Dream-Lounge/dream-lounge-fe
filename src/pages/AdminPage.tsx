@@ -41,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { FEATURES } from "@/config/features";
 
 type AdminTab =
   | "club-register"
@@ -75,16 +76,20 @@ const ADMIN_MENU: {
       },
     ],
   },
-  {
-    section: "커뮤니티",
-    items: [
-      {
-        label: "게시판 관리",
-        icon: MessageSquare,
-        tab: "community-board",
-      },
-    ],
-  },
+  ...(FEATURES.clubCommunity
+    ? [
+        {
+          section: "커뮤니티",
+          items: [
+            {
+              label: "게시판 관리",
+              icon: MessageSquare,
+              tab: "community-board" as const,
+            },
+          ],
+        },
+      ]
+    : []),
 ];
 
 const QUESTION_TYPES = [

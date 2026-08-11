@@ -164,11 +164,11 @@ export function RecruitingSection() {
 
                 <CardContent className="relative z-10 flex h-full min-h-0 flex-col justify-between p-3.5">
                   <div className="flex items-start justify-between gap-2">
-                    <Badge className="border-none bg-primary/90 px-2.5 py-0.5 text-xs text-primary-foreground backdrop-blur-sm">
+                    <Badge className="border-none bg-primary/90 font-semibold text-primary-foreground backdrop-blur-sm">
                       {club.category}
                     </Badge>
                     {club.aiRecommended && (
-                      <Badge className="gap-1 border-none bg-white/85 px-2 py-0.5 text-xs font-semibold text-primary backdrop-blur-sm">
+                      <Badge className="gap-1 border-none bg-white/85 font-semibold text-primary backdrop-blur-sm">
                         <Sparkles className="size-3" />
                         AI추천
                       </Badge>

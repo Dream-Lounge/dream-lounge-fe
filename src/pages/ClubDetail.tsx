@@ -34,7 +34,7 @@ export function ClubDetail() {
           className="object-cover w-full h-full"
         />
         <div className="absolute top-4 right-4">
-          <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
+          <Badge size="detail" className="bg-primary font-semibold text-primary-foreground">
             {clubData.recruitment.status}
           </Badge>
         </div>
@@ -61,7 +61,8 @@ export function ClubDetail() {
                 <Badge
                   key={tag}
                   variant="secondary"
-                  className="px-3 py-1 text-secondary-foreground text-sm font-normal"
+                  size="detail"
+                  className="font-normal text-secondary-foreground"
                 >
                   {tag}
                 </Badge>

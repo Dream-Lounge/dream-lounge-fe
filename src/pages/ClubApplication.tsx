@@ -309,7 +309,7 @@ export function ClubApplication() {
                     <h2 className="text-xl font-bold">
                       {clubData?.title || "동아리"}
                     </h2>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="font-semibold">
                       {clubData?.category || "분과"}
                     </Badge>
                   </div>

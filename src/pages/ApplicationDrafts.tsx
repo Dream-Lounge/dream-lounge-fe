@@ -80,10 +80,13 @@ export function ApplicationDrafts() {
                 <CardContent className="flex flex-col md:flex-row md:items-center gap-4">
                   <div className="flex-1 min-w-0 flex flex-col gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200">
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-50 font-semibold text-primary border-blue-200"
+                      >
                         {clubInfo.category}
                       </Badge>
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="font-semibold">
                         임시저장
                       </Badge>
                     </div>

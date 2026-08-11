@@ -132,15 +132,15 @@ const MOCK_POSTS: CommunityPost[] = [
 function categoryBadgeVariant(category: CommunityPost["category"]) {
   switch (category) {
     case "공지사항":
-      return { variant: "secondary" as const, className: "bg-blue-50 text-primary border-blue-200" };
+      return { variant: "secondary" as const, className: "bg-blue-50 text-primary border-blue-200 font-semibold" };
     case "자유게시판":
-      return { variant: "outline" as const, className: "border-primary/20 text-foreground" };
+      return { variant: "outline" as const, className: "border-primary/20 text-foreground font-semibold" };
     case "질문/답변":
-      return { variant: "outline" as const, className: "border-chart-3/40 text-foreground" };
+      return { variant: "outline" as const, className: "border-chart-3/40 text-foreground font-semibold" };
     case "팀모집":
-      return { variant: "outline" as const, className: "border-chart-2/40 text-foreground" };
+      return { variant: "outline" as const, className: "border-chart-2/40 text-foreground font-semibold" };
     default:
-      return { variant: "secondary" as const, className: "" };
+      return { variant: "secondary" as const, className: "font-semibold" };
   }
 }
 

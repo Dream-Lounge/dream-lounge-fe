@@ -85,7 +85,7 @@ function CategoryBadge({ category }: { category: string }) {
   return (
     <Badge
       className={cn(
-        "shrink-0 border-0 px-2.5 py-0.5 text-xs font-bold",
+        "shrink-0 border-0 font-semibold",
         NEWS_BADGE_CLASS[category] ?? "bg-gray-100 text-gray-600",
       )}
     >

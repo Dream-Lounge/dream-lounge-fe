@@ -91,9 +91,11 @@ export function MyClubs() {
                     <CardHeader className="p-4">
                       <CardTitle className="text-lg">{club.title}</CardTitle>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Badge variant="secondary">{club.category}</Badge>
+                        <Badge variant="secondary" className="font-semibold">
+                          {club.category}
+                        </Badge>
                         {club.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge key={tag} variant="outline" className="font-normal">
                             {tag}
                           </Badge>
                         ))}

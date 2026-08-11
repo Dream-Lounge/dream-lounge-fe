@@ -78,7 +78,7 @@ export function NewsSection() {
                 <span className="flex min-w-0 items-center gap-2.5">
                   <Badge
                     className={cn(
-                      "shrink-0 border-0 px-2 py-0.5 text-xs font-bold",
+                      "shrink-0 border-0 font-semibold",
                       NEWS_BADGE_CLASS[item.category] ?? "bg-gray-100 text-gray-600",
                     )}
                   >

@@ -148,9 +148,12 @@ export function ClubsPage() {
             ))}
           </div>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {filtered.map((club) => (
-              <li key={club.id}>
+          <ul className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
+            {filtered.map((club, index) => (
+              <li
+                key={club.id}
+                className={cn(index !== 0 && "border-t border-border/60")}
+              >
                 <ClubListRow
                   club={club}
                   onOpen={() => navigate(`/club/${club.id}`)}
@@ -262,40 +265,36 @@ function ClubListRow({
   const tagLine = club.tags.slice(0, 3).join(" ");
 
   return (
-    <Card
-      role="link"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-      className={cn(
-        "flex cursor-pointer flex-col gap-4 overflow-hidden rounded-2xl border border-border/70 p-4 shadow-sm transition-shadow sm:flex-row sm:items-stretch",
-        "hover:border-primary/35 hover:shadow-md",
-      )}
+      className="group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 sm:gap-4"
     >
-      <ClubThumb
-        club={club}
-        aspectClass="h-36 w-full shrink-0 overflow-hidden rounded-xl sm:h-40 sm:w-48 sm:shrink-0"
-      />
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">{club.title}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{tagLine}</p>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3 text-sm">
-          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-4 w-4 opacity-80" aria-hidden />
-            {club.memberCount}명
-          </span>
-          <span className="font-semibold text-primary">
-            {formatRecruitmentLabel(club.recruitmentLabel)}
-          </span>
-        </div>
-      </div>
-    </Card>
+      {/* 분과 */}
+      <Badge className="w-16 shrink-0 justify-center border-0 bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+        {club.division}
+      </Badge>
+
+      {/* 동아리명 + 태그 */}
+      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="truncate font-bold text-foreground transition-colors group-hover:text-primary">
+          {club.title}
+        </span>
+        <span className="truncate text-xs text-muted-foreground">{tagLine}</span>
+      </span>
+
+      {/* 인원 */}
+      <span className="hidden shrink-0 items-center gap-1.5 text-sm text-muted-foreground sm:inline-flex">
+        <Users className="h-4 w-4 opacity-80" aria-hidden />
+        <span className="tabular-nums">{club.memberCount}명</span>
+      </span>
+
+      {/* 마감 */}
+      <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
+        {club.deadlineToday
+          ? "오늘까지"
+          : formatRecruitmentLabel(club.recruitmentLabel)}
+      </span>
+    </button>
   );
 }

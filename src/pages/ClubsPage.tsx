@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -32,8 +32,12 @@ function buildClubRows(): ClubRow[] {
 const thumbShellClass =
   "relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-800 to-slate-950";
 
-const thumbOverlayClass =
-  "pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent";
+/** 모집 상태별 표시 색상 (포스터 위에 얹히는 점 + 텍스트) */
+const RECRUITMENT_STATUS_DOT_CLASS: Record<string, string> = {
+  모집중: "bg-emerald-400",
+  모집예정: "bg-amber-400",
+  모집마감: "bg-slate-400",
+};
 
 /**
  * 동아리 찾기 — 분과 필터, 카드/리스트 전환, 동아리 그리드
@@ -137,7 +141,11 @@ export function ClubsPage() {
           )}
         </div>
 
-        {view === "card" ? (
+        {filtered.length === 0 ? (
+          <p className="py-16 text-center text-sm text-muted-foreground">
+            아직 {activeFilterLabel} 분과에 등록된 동아리가 없습니다.
+          </p>
+        ) : view === "card" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {filtered.map((club) => (
               <ClubCard
@@ -170,41 +178,56 @@ export function ClubsPage() {
 function ClubThumb({
   club,
   aspectClass,
+  children,
 }: {
   club: ClubRow;
   aspectClass: string;
+  /** 포스터 하단 불투명 영역에 얹을 내용 (카드형 정보 오버레이) */
+  children?: ReactNode;
 }) {
   return (
     <div className={cn(thumbShellClass, aspectClass)}>
       {club.coverImage ? (
-        <>
-          <img
-            src={club.coverImage}
-            alt=""
-            className="h-full w-full object-cover opacity-[0.88]"
-            loading="lazy"
-          />
-          <div className={thumbOverlayClass} aria-hidden />
-        </>
+        <img
+          src={club.coverImage}
+          alt=""
+          className="h-full w-full object-cover opacity-[0.88]"
+          loading="lazy"
+        />
       ) : (
-        <>
-          <div className={thumbOverlayClass} aria-hidden />
-          <div className="relative z-[1] flex h-full w-full items-center justify-center text-xs font-medium text-white/45">
-            CLUB
-          </div>
-        </>
+        <div className="relative z-[1] flex h-full w-full items-center justify-center text-xs font-medium text-white/45">
+          CLUB
+        </div>
       )}
+
+      {/* 상단 배지 대비용 얕은 그라디언트 */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent"
+        aria-hidden
+      />
+
       <div className="absolute left-3 top-3 z-[2] flex flex-wrap items-start gap-2">
-        <Badge className="border-0 bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground shadow-sm">
+        <Badge className="border-0 bg-primary font-semibold text-primary-foreground shadow-sm">
           {club.division}
         </Badge>
       </div>
       {club.deadlineToday && (
         <div className="absolute right-3 top-3 z-[2]">
-          <Badge className="border-0 bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground shadow-sm">
+          <Badge className="border-0 bg-primary font-semibold text-primary-foreground shadow-sm">
             오늘까지
           </Badge>
         </div>
+      )}
+
+      {children && (
+        <>
+          {/* 하단 정보가 얹히는 불투명 배경 */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/95 via-black/70 to-transparent"
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 bottom-0 z-[2] p-4">{children}</div>
+        </>
       )}
     </div>
   );
@@ -217,7 +240,7 @@ function ClubCard({
   club: ClubRow;
   onOpen: () => void;
 }) {
-  const tagLine = club.tags.slice(0, 3).join(" ");
+  const visibleTags = club.tags.slice(0, 3);
 
   return (
     <Card
@@ -231,26 +254,42 @@ function ClubCard({
         }
       }}
       className={cn(
-        "cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card py-0 shadow-sm transition-shadow",
-        "hover:border-primary/35 hover:shadow-md",
+        "group cursor-pointer overflow-hidden rounded-2xl border-none py-0 shadow-sm transition-shadow",
+        "hover:shadow-md",
       )}
     >
-      <ClubThumb club={club} aspectClass="aspect-[5/3] w-full" />
-      <div className="space-y-2 bg-card p-4">
-        <h2 className="text-lg font-bold leading-snug text-foreground">
-          {club.title}
-        </h2>
-        <p className="line-clamp-1 text-sm text-muted-foreground">{tagLine}</p>
-        <div className="flex items-center justify-between border-t border-border/50 pt-3 text-sm">
-          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
-            <span className="tabular-nums">{club.memberCount}명</span>
-          </span>
-          <span className="shrink-0 font-semibold text-primary">
-            {formatRecruitmentLabel(club.recruitmentLabel)}
-          </span>
+      <ClubThumb club={club} aspectClass="aspect-[3/4] w-full">
+        <div className="flex flex-col gap-2 text-white">
+          <h2 className="line-clamp-1 text-lg font-bold leading-snug drop-shadow-md">
+            {club.title}
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {visibleTags.map((tag) => (
+              <Badge
+                key={tag}
+                className="border-0 bg-white/15 font-normal text-white backdrop-blur-sm"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex items-center justify-between pt-1 text-sm">
+            <span className="inline-flex items-center gap-1.5 text-white/85">
+              <span
+                className={cn(
+                  "size-1.5 shrink-0 rounded-full",
+                  RECRUITMENT_STATUS_DOT_CLASS[club.recruitment.status] ?? "bg-white/70",
+                )}
+                aria-hidden
+              />
+              {club.recruitment.status}
+            </span>
+            <span className="shrink-0 font-semibold drop-shadow-sm">
+              {formatRecruitmentLabel(club.recruitmentLabel)}
+            </span>
+          </div>
         </div>
-      </div>
+      </ClubThumb>
     </Card>
   );
 }
@@ -262,39 +301,57 @@ function ClubListRow({
   club: ClubRow;
   onOpen: () => void;
 }) {
-  const tagLine = club.tags.slice(0, 3).join(" ");
+  const visibleTags = club.tags.slice(0, 3);
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 sm:gap-4"
+      className="group flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
     >
-      {/* 분과 */}
-      <Badge className="w-16 shrink-0 justify-center border-0 bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-        {club.division}
-      </Badge>
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* 분과 */}
+        <Badge className="w-16 shrink-0 justify-center border-0 bg-muted font-semibold text-muted-foreground">
+          {club.division}
+        </Badge>
 
-      {/* 동아리명 + 태그 */}
-      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="truncate font-bold text-foreground transition-colors group-hover:text-primary">
+        {/* 동아리명 */}
+        <span className="min-w-0 flex-1 truncate font-bold text-foreground transition-colors group-hover:text-primary">
           {club.title}
         </span>
-        <span className="truncate text-xs text-muted-foreground">{tagLine}</span>
-      </span>
 
-      {/* 인원 */}
-      <span className="hidden shrink-0 items-center gap-1.5 text-sm text-muted-foreground sm:inline-flex">
-        <Users className="h-4 w-4 opacity-80" aria-hidden />
-        <span className="tabular-nums">{club.memberCount}명</span>
-      </span>
+        {/* 모집 상태 */}
+        <span className="hidden shrink-0 items-center gap-1.5 text-sm text-muted-foreground sm:inline-flex">
+          <span
+            className={cn(
+              "size-1.5 shrink-0 rounded-full",
+              RECRUITMENT_STATUS_DOT_CLASS[club.recruitment.status] ?? "bg-muted-foreground/50",
+            )}
+            aria-hidden
+          />
+          {club.recruitment.status}
+        </span>
 
-      {/* 마감 */}
-      <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
-        {club.deadlineToday
-          ? "오늘까지"
-          : formatRecruitmentLabel(club.recruitmentLabel)}
-      </span>
+        {/* 마감 */}
+        <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
+          {club.deadlineToday
+            ? "오늘까지"
+            : formatRecruitmentLabel(club.recruitmentLabel)}
+        </span>
+      </div>
+
+      {/* 태그 */}
+      <div className="flex flex-wrap gap-1.5">
+        {visibleTags.map((tag) => (
+          <Badge
+            key={tag}
+            variant="secondary"
+            className="font-normal text-secondary-foreground"
+          >
+            {tag}
+          </Badge>
+        ))}
+      </div>
     </button>
   );
 }

@@ -8,6 +8,7 @@ import { LogIn, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validators, ERROR_MESSAGES } from "@/lib/validators";
 import { useAuth } from "@/hooks/useAuth";
+import { hasCompletedInterests } from "@/lib/interests";
 
 /**
  * 로그인 페이지 컴포넌트
@@ -60,8 +61,10 @@ export function Login() {
     setLoginError(false);
 
     try {
-      await login(parseInt(studentId, 10), password);
-      navigate("/");
+      const id = parseInt(studentId, 10);
+      await login(id, password);
+      // 최초 로그인(관심사 미선택) 시 온보딩으로, 이후에는 홈으로 이동
+      navigate(hasCompletedInterests(id) ? "/" : "/onboarding/interests");
     } catch {
       setLoginError(true);
     } finally {

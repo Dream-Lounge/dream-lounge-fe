@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
     { label: "동아리 뉴스", to: "/news" },
+    { label: "Dream Lounge", to: "/about" },
     { label: "고객센터", to: "/support" },
 ];
 

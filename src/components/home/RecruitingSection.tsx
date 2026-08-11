@@ -87,6 +87,7 @@ export function RecruitingSection() {
     { name: "종교사회", count: 4 },
     { name: "체육", count: 15 },
     { name: "학술", count: 9 },
+    { name: "학과", count: 7 },
   ];
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);

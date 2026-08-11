@@ -59,39 +59,6 @@ export function ClubsPage() {
   return (
     <div className="mx-auto w-full max-w-7xl pb-16 sm:pb-20">
       <div className="flex flex-col gap-6 rounded-2xl bg-muted/45 px-3 py-6 sm:gap-8 sm:px-6 sm:py-8">
-        {/* 분과 필터 바 */}
-        <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {CLUB_CATEGORY_FILTERS.map(
-            ({ key, label, icon: Icon, inactiveIconClass }) => {
-              const isActive = division === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setDivision(key)}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors",
-                    isActive
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-border bg-card text-foreground shadow-xs hover:bg-muted/60",
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      "h-4 w-4 shrink-0",
-                      isActive
-                        ? "text-primary-foreground"
-                        : inactiveIconClass,
-                    )}
-                    aria-hidden
-                  />
-                  {label}
-                </button>
-              );
-            },
-          )}
-        </div>
-
         {/* 섹션 헤더 + 뷰 전환 */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -135,6 +102,39 @@ export function ClubsPage() {
               리스트형
             </button>
           </div>
+        </div>
+
+        {/* 분과 필터 바 */}
+        <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {CLUB_CATEGORY_FILTERS.map(
+            ({ key, label, icon: Icon, inactiveIconClass }) => {
+              const isActive = division === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setDivision(key)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors",
+                    isActive
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                      : "border-border bg-card text-foreground shadow-xs hover:bg-muted/60",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive
+                        ? "text-primary-foreground"
+                        : inactiveIconClass,
+                    )}
+                    aria-hidden
+                  />
+                  {label}
+                </button>
+              );
+            },
+          )}
         </div>
 
         {view === "card" ? (

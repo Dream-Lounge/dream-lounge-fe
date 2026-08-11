@@ -169,9 +169,9 @@ export function RecruitingSection() {
                       {club.category}
                     </Badge>
                     {FEATURES.aiRecommend && club.aiRecommended && (
-                      <Badge className="gap-1 border-none bg-white/85 font-semibold text-primary backdrop-blur-sm">
+                      <Badge className="shrink-0 gap-1 border-none bg-white/85 px-1.5 font-semibold text-primary backdrop-blur-sm sm:px-2.5">
                         <Sparkles className="size-3" />
-                        AI추천
+                        <span className="hidden sm:inline">AI추천</span>
                       </Badge>
                     )}
                   </div>

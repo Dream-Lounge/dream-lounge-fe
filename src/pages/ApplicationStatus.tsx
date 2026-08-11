@@ -1,9 +1,8 @@
-import { type ReactNode, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle2, XCircle, Clock, PauseCircle } from "lucide-react";
+import { FileText } from "lucide-react";
 import { MOCK_APPLICATIONS, type Application } from "@/data/applications";
 import { api, type ApplicationListResponseItem } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,47 +13,37 @@ const STATUS_BADGE_CONFIG: Record<
 > = {
   pending: {
     children: "검토중",
-    className: "bg-chart-3 text-white border-transparent hover:bg-chart-3/90",
+    className: "bg-chart-3 text-white border-transparent hover:bg-chart-3/90 font-semibold",
   },
   accepted: {
     children: "합격",
-    className: "bg-primary text-primary-foreground border-transparent hover:bg-primary/90",
+    className: "bg-primary text-primary-foreground border-transparent hover:bg-primary/90 font-semibold",
   },
   rejected: {
     children: "불합격",
     variant: "destructive",
-    className: "border-transparent",
+    className: "border-transparent font-semibold",
   },
   held: {
     children: "보류",
-    className: "bg-amber-500 text-white border-transparent hover:bg-amber-500/90",
+    className: "bg-amber-500 text-white border-transparent hover:bg-amber-500/90 font-semibold",
   },
 };
 
-interface StatCardProps {
+interface StatItemProps {
   title: string;
   value: number;
-  icon: ReactNode;
-  iconWrapClass: string;
   valueClass?: string;
 }
 
-function StatCard({ title, value, icon, iconWrapClass, valueClass }: StatCardProps) {
+function StatItem({ title, value, valueClass }: StatItemProps) {
   return (
-    <Card className="group flex flex-row items-center gap-2.5 p-3.5 shadow-sm border rounded-2xl bg-card transition-all hover:shadow-md hover:-translate-y-0.5">
-      <div className={`shrink-0 flex items-center justify-center size-9 rounded-xl transition-transform group-hover:scale-105 ${iconWrapClass}`}>
-        {icon}
-      </div>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-xs font-medium text-muted-foreground truncate">{title}</span>
-        <span className="flex items-baseline gap-0.5">
-          <span className={`text-xl font-extrabold leading-none ${valueClass ?? "text-foreground"}`}>
-            {value}
-          </span>
-          <span className="text-xs font-semibold text-muted-foreground">개</span>
-        </span>
-      </div>
-    </Card>
+    <div className="flex min-w-[92px] flex-1 flex-col items-center gap-1.5 px-3 py-4">
+      <span className="text-sm font-medium text-muted-foreground">{title}</span>
+      <span className={`text-xl font-extrabold leading-none ${valueClass ?? "text-foreground"}`}>
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -78,7 +67,10 @@ function ApplicationItem({ application }: ApplicationItemProps) {
       <div className="flex flex-col flex-1 gap-3 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="bg-blue-50 text-primary border-blue-200 hover:bg-blue-50">
+            <Badge
+              variant="outline"
+              className="bg-blue-50 font-semibold text-primary border-blue-200 hover:bg-blue-50"
+            >
               {application.category}
             </Badge>
             <Badge {...STATUS_BADGE_CONFIG[application.status]} />
@@ -213,39 +205,18 @@ export function ApplicationStatus() {
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
       <h2 className="text-xl sm:text-2xl font-bold text-foreground">지원 내역</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-3">
-        <StatCard
-          title="전체 지원"
-          value={stats.total}
-          icon={<FileText className="w-4 h-4" strokeWidth={2} />}
-          iconWrapClass="bg-slate-100 text-slate-500"
-        />
-        <StatCard
-          title="합격"
-          value={stats.accepted}
-          icon={<CheckCircle2 className="w-4 h-4" strokeWidth={2} />}
-          iconWrapClass="bg-primary/10 text-primary"
-          valueClass="text-primary"
-        />
-        <StatCard
+      <div className="flex divide-x divide-border overflow-x-auto rounded-2xl border bg-card shadow-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <StatItem title="전체" value={stats.total} />
+        <StatItem title="합격" value={stats.accepted} valueClass="text-primary" />
+        <StatItem
           title="불합격"
           value={stats.rejected}
-          icon={<XCircle className="w-4 h-4" strokeWidth={2} />}
-          iconWrapClass="bg-destructive/10 text-destructive"
           valueClass="text-destructive"
         />
-        <StatCard
-          title="보류"
-          value={stats.held}
-          icon={<PauseCircle className="w-4 h-4" strokeWidth={2} />}
-          iconWrapClass="bg-amber-100 text-amber-600"
-          valueClass="text-amber-600"
-        />
-        <StatCard
+        <StatItem title="보류" value={stats.held} valueClass="text-amber-600" />
+        <StatItem
           title="검토중"
           value={stats.pending}
-          icon={<Clock className="w-4 h-4" strokeWidth={2} />}
-          iconWrapClass="bg-sky-100 text-sky-600"
           valueClass="text-sky-600"
         />
       </div>

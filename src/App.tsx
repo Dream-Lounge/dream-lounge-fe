@@ -15,6 +15,8 @@ import { ClubCommunity } from "@/pages/ClubCommunity";
 import { AdminRoute } from "@/components/common/AdminRoute";
 import { AdminPage } from "@/pages/AdminPage";
 import { ClubsPage } from "@/pages/ClubsPage";
+import { ClubNews } from "@/pages/ClubNews";
+import { Support } from "@/pages/Support";
 
 /**
  * 앱의 메인 진입점 컴포넌트
@@ -36,6 +38,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/clubs" element={<ClubsPage />} />
+          <Route path="/news" element={<ClubNews />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/club/:id" element={<ClubDetail />} />
           <Route path="/club/:id/community" element={<ClubCommunity />} />
           <Route path="/users/:studentId/clubs" element={<MyClubs />} />

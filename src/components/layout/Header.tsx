@@ -12,8 +12,7 @@ import { Separator } from "@/components/ui/separator";
 
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
-    { label: "커뮤니티", to: "/community" },
-    { label: "이벤트", to: "/events" },
+    { label: "동아리 뉴스", to: "/news" },
     { label: "고객센터", to: "/support" },
 ];
 

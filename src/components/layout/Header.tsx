@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, User } from "lucide-react";
 import { Input } from "../ui/input";
 import {
@@ -25,6 +26,13 @@ const NAV_ITEMS = [
  */
 export function Header() {
     const { user, isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const submitSearch = () => {
+        const query = searchTerm.trim();
+        navigate(query ? `/clubs?search=${encodeURIComponent(query)}` : "/clubs");
+    };
 
     return (
         <header className="w-full flex justify-center bg-background shadow-sm sticky top-0 z-50">
@@ -62,6 +70,11 @@ export function Header() {
                                 id="search-input"
                                 placeholder="동아리 검색"
                                 type="search"
+                                value={searchTerm}
+                                onChange={(event) => setSearchTerm(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter") submitSearch();
+                                }}
                             />
                         </div>
                     </div>
@@ -81,6 +94,12 @@ export function Header() {
                                             {user?.name}님 반갑습니다.
                                         </div>
                                         <Separator className="my-1" />
+                                        <Link
+                                            to="/mypage"
+                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                        >
+                                            마이페이지
+                                        </Link>
                                         <Link
                                             to={`/users/${user?.studentId}/applications`}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"

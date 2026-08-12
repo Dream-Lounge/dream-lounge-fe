@@ -157,6 +157,7 @@ export function AdminPage() {
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newQuestionType, setNewQuestionType] = useState("단답형");
   const [newQuestionRequired, setNewQuestionRequired] = useState(true);
+  const [newQuestionOptions, setNewQuestionOptions] = useState(["", ""]);
   const [isSavingForm, setIsSavingForm] = useState(false);
 
   // Applications state
@@ -402,17 +403,31 @@ export function AdminPage() {
       toast.error("먼저 신청폼을 생성해주세요.");
       return;
     }
+    const isMultipleChoice = newQuestionType.includes("객관식");
+    const normalizedOptions = newQuestionOptions
+      .map((option) => option.trim())
+      .filter(Boolean);
+    if (isMultipleChoice && normalizedOptions.length < 2) {
+      toast.error("객관식 문항에는 선택지를 2개 이상 입력해주세요.");
+      return;
+    }
+    if (isMultipleChoice && new Set(normalizedOptions).size !== normalizedOptions.length) {
+      toast.error("객관식 선택지는 서로 다르게 입력해주세요.");
+      return;
+    }
     setIsSavingForm(true);
     try {
       const q = await api.addFormQuestion(presidentClub.id, {
         question_text: newQuestionText.trim(),
         question_type: newQuestionType,
         is_required: newQuestionRequired,
+        options: isMultipleChoice ? normalizedOptions : null,
       });
       setFormQuestions(prev => [...prev, q]);
       setNewQuestionText("");
       setNewQuestionType("단답형");
       setNewQuestionRequired(true);
+      setNewQuestionOptions(["", ""]);
       setIsAddQuestionOpen(false);
       toast.success("문항이 추가되었습니다.");
     } catch (error) {
@@ -1454,6 +1469,56 @@ export function AdminPage() {
                 </PopoverContent>
               </Popover>
             </div>
+            {newQuestionType.includes("객관식") && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">선택지</label>
+                  <span className="text-xs text-slate-500">최소 2개</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {newQuestionOptions.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-500">
+                        {index + 1}
+                      </span>
+                      <Input
+                        value={option}
+                        placeholder={`선택지 ${index + 1}`}
+                        onChange={(event) => {
+                          const nextOptions = [...newQuestionOptions];
+                          nextOptions[index] = event.target.value;
+                          setNewQuestionOptions(nextOptions);
+                        }}
+                        className="h-9 bg-white"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 shrink-0 text-slate-400 hover:text-destructive"
+                        disabled={newQuestionOptions.length <= 2}
+                        onClick={() => {
+                          setNewQuestionOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
+                        }}
+                        aria-label={`선택지 ${index + 1} 삭제`}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full border-dashed bg-white"
+                  onClick={() => setNewQuestionOptions((prev) => [...prev, ""])}
+                >
+                  <Plus className="mr-1 size-4" />
+                  선택지 추가
+                </Button>
+              </div>
+            )}
             <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
               <input
                 type="checkbox"

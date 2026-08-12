@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { NotFound } from "@/pages/error/NotFound";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { api, type ClubForm, type FormQuestion } from "@/lib/api";
 
 interface ClubInfo {
   title: string;
@@ -29,6 +29,16 @@ interface ClubInfo {
 import { toast } from "sonner";
 
 type ApplicationMode = "create" | "edit" | "view";
+
+function isLongAnswerQuestion(question: FormQuestion) {
+  const type = question.question_type.toLowerCase();
+  return type.includes("장문") || type.includes("long") || type.includes("textarea");
+}
+
+function isMultipleChoiceQuestion(question: FormQuestion) {
+  const type = question.question_type.toLowerCase();
+  return type.includes("객관식") || type.includes("single") || type.includes("radio") || type.includes("choice");
+}
 
 export function ClubApplication() {
   const { id } = useParams<{ id: string }>();
@@ -43,9 +53,9 @@ export function ClubApplication() {
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
   const [phone, setPhone] = useState("");
-  const [motivation, setMotivation] = useState("");
-  const [experience, setExperience] = useState("");
-  const [questions, setQuestions] = useState("");
+  const [applicationForm, setApplicationForm] = useState<ClubForm | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [questionErrors, setQuestionErrors] = useState<Record<string, boolean>>({});
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -89,7 +99,10 @@ export function ClubApplication() {
         if (ignore) return;
         try {
           const club = await api.getClub(id);
+          const form = await api.getClubForm(id);
           if (!ignore) {
+            setApplicationForm(form);
+            setAnswers(Object.fromEntries(form.questions.map((question) => [question.id, ""])));
             setClubData({
               title: club.name,
               category: club.division || "",
@@ -101,17 +114,23 @@ export function ClubApplication() {
         }
       } else {
         try {
-          const appData = await api.getApplication(id, currentMode === "edit");
+          const appData = currentMode === "edit"
+            ? await api.getMyDraft(id)
+            : await api.getMySubmittedDetail(id);
 
           if (!ignore) {
-            setMotivation(appData.content.motivation);
-            setExperience(appData.content.experience || "");
-            setQuestions(appData.content.questions || "");
+            setAnswers(Object.fromEntries(
+              appData.answers.map((answer) => [answer.question_id, answer.answer_text || ""]),
+            ));
 
             if (appData.club_id) {
               try {
-                const club = await api.getClub(appData.club_id);
+                const [club, form] = await Promise.all([
+                  api.getClub(appData.club_id),
+                  api.getClubForm(appData.club_id),
+                ]);
                 if (!ignore) {
+                  setApplicationForm(form);
                   setClubData({
                     title: club.name,
                     category: club.division || "",
@@ -165,14 +184,21 @@ export function ClubApplication() {
     studentId: boolean;
     department: boolean;
     phone: boolean;
-    motivation: boolean;
   }>({
     name: false,
     studentId: false,
     department: false,
     phone: false,
-    motivation: false,
   });
+
+  const orderedQuestions = [...(applicationForm?.questions ?? [])].sort(
+    (first, second) => first.order_index - second.order_index,
+  );
+
+  const buildAnswerPayload = () => orderedQuestions.map((question) => ({
+    question_id: question.id,
+    answer_text: answers[question.id] ?? "",
+  }));
 
   const handleSubmit = async () => {
     if (mode === "view") return;
@@ -182,13 +208,21 @@ export function ClubApplication() {
       studentId: !studentId.trim(),
       department: !selectedDepartment,
       phone: !phone.trim(),
-      motivation: !motivation.trim(),
     };
 
+    const nextQuestionErrors = Object.fromEntries(
+      orderedQuestions.map((question) => [
+        question.id,
+        question.is_required && !(answers[question.id] ?? "").trim(),
+      ]),
+    );
+
     setErrors(newErrors);
+    setQuestionErrors(nextQuestionErrors);
     setSubmitError(null);
 
-    const hasErrors = Object.values(newErrors).some((error) => error);
+    const hasErrors = Object.values(newErrors).some((error) => error)
+      || Object.values(nextQuestionErrors).some((error) => error);
     if (hasErrors) {
       return;
     }
@@ -198,7 +232,7 @@ export function ClubApplication() {
       return;
     }
 
-    if (!id || !clubData) {
+    if (!id || !clubData || !applicationForm) {
       setSubmitError("동아리 정보를 찾을 수 없습니다.");
       return;
     }
@@ -206,22 +240,22 @@ export function ClubApplication() {
     setIsSubmitting(true);
 
     try {
-      const content = {
-        motivation,
-        experience: experience || undefined,
-        questions: questions || undefined,
-      };
+      const answerPayload = buildAnswerPayload();
 
       if (mode === "create") {
         if (draftId) {
-          await api.updateApplication(draftId, content, false);
+          await api.updateApplicationAnswers(draftId, answerPayload, false);
         } else {
-          await api.submitMemberApplication({ clubId: id, content }, false);
+          await api.submitApplication({
+            form_id: applicationForm.id,
+            answers: answerPayload,
+            is_draft: false,
+          });
         }
         toast.success("지원서가 성공적으로 제출되었습니다.");
         navigate(`/club/${id}`, { state: { applicationSuccess: true } });
       } else {
-        await api.updateApplication(id, content, false);
+        await api.updateApplicationAnswers(id, answerPayload, false);
         toast.success("지원서가 성공적으로 수정되었습니다.");
         navigate(user ? `/users/${user.studentId}/applications` : "/");
       }
@@ -235,25 +269,25 @@ export function ClubApplication() {
   };
 
   const handleSaveDraft = async () => {
-    if (mode === "view" || !id) return;
+    if (mode === "view" || !id || !applicationForm) return;
 
-    const content = {
-      motivation,
-      experience: experience || undefined,
-      questions: questions || undefined,
-    };
+    const answerPayload = buildAnswerPayload();
 
     setIsSavingDraft(true);
     try {
       if (mode === "create") {
         if (draftId) {
-          await api.updateApplication(draftId, content, true);
+          await api.updateApplicationAnswers(draftId, answerPayload, true);
         } else {
-          const result = await api.submitMemberApplication({ clubId: id, content }, true);
+          const result = await api.submitApplication({
+            form_id: applicationForm.id,
+            answers: answerPayload,
+            is_draft: true,
+          });
           setDraftId(result.id);
         }
       } else {
-        await api.updateApplication(id, content, true);
+        await api.updateApplicationAnswers(id, answerPayload, true);
       }
       toast.success("지원서가 임시저장되었습니다.");
     } catch {
@@ -443,59 +477,129 @@ export function ClubApplication() {
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <HelpCircle className="h-5 w-5 text-primary" />
                 </div>
-                지원 동기
+                {applicationForm?.title || "지원서 문항"}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="motivation" className="gap-1">
-                    동아리에 지원하게 된 동기를 작성해주세요.
-                    <span className="text-destructive">*</span>
-                  </FieldLabel>
-                  <Textarea
-                    id="motivation"
-                    placeholder="동아리 활동을 통해 이루고 싶은 목표, 관심 분야 등을 자유롭게 작성해주세요."
-                    className={cn(
-                      "min-h-[120px] resize-none",
-                      errors.motivation &&
-                        "border-destructive focus-visible:ring-destructive",
-                      isReadOnly && "bg-muted cursor-not-allowed"
-                    )}
-                    value={motivation}
-                    onChange={(e) => setMotivation(e.target.value)}
-                    onBlur={() => validateFieldOnBlur("motivation", motivation)}
-                    required
-                    readOnly={isReadOnly}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="experience" className="gap-1">
-                    관련 경험이나 활동 이력이 있다면 작성해주세요.
-                  </FieldLabel>
-                  <Textarea
-                    id="experience"
-                    placeholder="프로젝트 경험, 스터디 참여, 수강 과목 등 관련 경험을 자유롭게 작성해주세요."
-                    className={cn("min-h-[120px] resize-none", isReadOnly && "bg-muted cursor-not-allowed")}
-                    value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                    readOnly={isReadOnly}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="questions">
-                    동아리에 궁금한 점이 있다면 작성해주세요.
-                  </FieldLabel>
-                  <Textarea
-                    id="questions"
-                    placeholder="궁금한 점을 자유롭게 작성해주세요."
-                    className={cn("min-h-[80px] resize-none", isReadOnly && "bg-muted cursor-not-allowed")}
-                    value={questions}
-                    onChange={(e) => setQuestions(e.target.value)}
-                    readOnly={isReadOnly}
-                  />
-                </Field>
-              </FieldGroup>
+              {orderedQuestions.length > 0 ? (
+                <FieldGroup className="gap-7">
+                  {orderedQuestions.map((question, index) => {
+                    const fieldId = `question-${question.id}`;
+                    const value = answers[question.id] ?? "";
+                    const hasError = questionErrors[question.id] ?? false;
+                    const options = (question.options ?? []).filter(
+                      (option): option is string => typeof option === "string" && option.trim().length > 0,
+                    );
+
+                    return (
+                      <Field key={question.id} className="gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0 pt-0.5">
+                            <FieldLabel htmlFor={fieldId} className="flex flex-wrap gap-1 text-base leading-6">
+                              {question.question_text}
+                              {question.is_required && <span className="text-destructive">*</span>}
+                            </FieldLabel>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {question.is_required ? "필수 응답" : "선택 응답"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {isMultipleChoiceQuestion(question) ? (
+                          options.length > 0 ? (
+                            <div
+                              id={fieldId}
+                              role="radiogroup"
+                              aria-label={question.question_text}
+                              className={cn(
+                                "grid gap-2 rounded-xl border bg-muted/20 p-3",
+                                hasError && "border-destructive",
+                              )}
+                            >
+                              {options.map((option) => (
+                                <label
+                                  key={option}
+                                  className={cn(
+                                    "flex items-center gap-3 rounded-lg border bg-background px-4 py-3 text-sm transition-colors",
+                                    !isReadOnly && "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
+                                    value === option && "border-primary bg-primary/5 ring-1 ring-primary/20",
+                                  )}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={fieldId}
+                                    value={option}
+                                    checked={value === option}
+                                    disabled={isReadOnly}
+                                    onChange={() => {
+                                      setAnswers((prev) => ({ ...prev, [question.id]: option }));
+                                      setQuestionErrors((prev) => ({ ...prev, [question.id]: false }));
+                                    }}
+                                    className="size-4 accent-primary"
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                              관리자가 객관식 선택지를 아직 설정하지 않았습니다.
+                            </p>
+                          )
+                        ) : isLongAnswerQuestion(question) ? (
+                          <Textarea
+                            id={fieldId}
+                            value={value}
+                            placeholder="답변을 입력해주세요."
+                            readOnly={isReadOnly}
+                            onChange={(event) => {
+                              setAnswers((prev) => ({ ...prev, [question.id]: event.target.value }));
+                              if (event.target.value.trim()) {
+                                setQuestionErrors((prev) => ({ ...prev, [question.id]: false }));
+                              }
+                            }}
+                            className={cn(
+                              "min-h-[140px] resize-y",
+                              hasError && "border-destructive focus-visible:ring-destructive",
+                              isReadOnly && "cursor-not-allowed bg-muted",
+                            )}
+                          />
+                        ) : (
+                          <Input
+                            id={fieldId}
+                            value={value}
+                            placeholder="답변을 입력해주세요."
+                            readOnly={isReadOnly}
+                            onChange={(event) => {
+                              setAnswers((prev) => ({ ...prev, [question.id]: event.target.value }));
+                              if (event.target.value.trim()) {
+                                setQuestionErrors((prev) => ({ ...prev, [question.id]: false }));
+                              }
+                            }}
+                            className={cn(
+                              "h-11",
+                              hasError && "border-destructive focus-visible:ring-destructive",
+                              isReadOnly && "cursor-not-allowed bg-muted",
+                            )}
+                          />
+                        )}
+
+                        {hasError && (
+                          <p className="ml-10 text-sm text-destructive">필수 문항에 답변해주세요.</p>
+                        )}
+                      </Field>
+                    );
+                  })}
+                </FieldGroup>
+              ) : (
+                <div className="rounded-xl border border-dashed bg-muted/20 px-6 py-10 text-center">
+                  <p className="font-medium text-foreground">등록된 지원 문항이 없습니다.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">동아리 관리자에게 문의해주세요.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -128,7 +128,7 @@ export interface FormQuestion {
   question_type: string;
   is_required: boolean;
   order_index: number;
-  options?: unknown[] | null;
+  options?: string[] | null;
 }
 
 export interface ClubForm {
@@ -521,7 +521,13 @@ class ApiClient {
 
   async addFormQuestion(
     clubId: string,
-    question: { question_text: string; question_type: string; is_required: boolean; order_index?: number }
+    question: {
+      question_text: string;
+      question_type: string;
+      is_required: boolean;
+      order_index?: number;
+      options?: string[] | null;
+    }
   ): Promise<FormQuestion> {
     return this.request<FormQuestion>(`/clubs/${clubId}/form/questions`, {
       method: "POST",
@@ -532,7 +538,7 @@ class ApiClient {
   async updateFormQuestion(
     clubId: string,
     questionId: string,
-    data: Partial<{ question_text: string; question_type: string; is_required: boolean; order_index: number; options: unknown[] | null }>
+    data: Partial<{ question_text: string; question_type: string; is_required: boolean; order_index: number; options: string[] | null }>
   ): Promise<FormQuestion> {
     return this.request<FormQuestion>(`/clubs/${clubId}/form/questions/${questionId}`, {
       method: "PATCH",
@@ -623,6 +629,17 @@ class ApiClient {
       : [{ question_id: "", answer_text: content.motivation }];
 
     return this.request<{ message: string }>(`/applications/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ answers, is_draft: isDraft }),
+    });
+  }
+
+  async updateApplicationAnswers(
+    id: string,
+    answers: Array<{ question_id: string; answer_text: string }>,
+    isDraft = false,
+  ): Promise<MyApplicationDetail> {
+    return this.request<MyApplicationDetail>(`/applications/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ answers, is_draft: isDraft }),
     });

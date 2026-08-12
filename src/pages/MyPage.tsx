@@ -90,15 +90,16 @@ export function MyPage() {
             <div>
               <CardTitle>회원탈퇴</CardTitle>
               <CardDescription>
-                탈퇴하면 즉시 로그아웃되며 다시 로그인할 수 없습니다.
+                탈퇴 후 동일한 학번과 이메일로 다시 가입할 수 있습니다.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            신청서와 게시글 등 기존 활동 기록은 서비스 운영을 위해 보존됩니다.
-            동아리 회장은 다른 부원에게 회장 권한을 이전한 후 탈퇴할 수 있습니다.
+            개인정보는 익명화되며 신청서와 게시글 등 기존 활동 기록은 서비스
+            운영을 위해 보존됩니다. 동아리 회장은 다른 부원에게 회장 권한을
+            이전한 후 탈퇴할 수 있습니다.
           </p>
 
           {withdrawalError && (
@@ -115,8 +116,9 @@ export function MyPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>정말 회원탈퇴하시겠습니까?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  계정이 비활성화되고 모든 기기에서 더 이상 Dream Lounge를
-                  이용할 수 없습니다. 이 작업은 화면에서 되돌릴 수 없습니다.
+                  현재 계정의 개인정보가 익명화되고 즉시 로그아웃됩니다. 같은
+                  학번과 이메일로 다시 가입할 수 있지만, 기존 활동 기록은 새
+                  계정으로 복구되지 않습니다. 이 작업은 되돌릴 수 없습니다.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -147,4 +149,3 @@ function Info({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

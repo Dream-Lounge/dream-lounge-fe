@@ -32,7 +32,7 @@ type EmailVerificationStage = "idle" | "pending" | "verified";
 /**
  * 회원가입 페이지
  * - 시안 순서: 이름 → 전화번호 → 학과 → 학번 → 학교 이메일(인증 플로우) → 비밀번호 → 비밀번호 확인
- * - 학교 이메일은 청주대 @cju.ac.kr, 인증요청 → 인증번호(테스트 123456) 확인 → 인증완료
+ * - 학교 이메일은 청주대 @cju.ac.kr, 인증요청 → 인증번호 확인 → 인증완료
  */
 export function Signup() {
   const navigate = useNavigate();
@@ -466,7 +466,7 @@ export function Signup() {
                 {emailStage === "pending" && (
                   <div className="flex gap-2 pt-1">
                     <Input
-                      placeholder="인증번호 6자리 입력 (테스트: 123456)"
+                      placeholder="인증번호 6자리 입력"
                       value={verifyCode}
                       onChange={(e) => {
                         setVerifyCode(e.target.value.replace(/\D/g, ""));
@@ -491,7 +491,7 @@ export function Signup() {
                 )}
                 {verifyCodeError && (
                   <p className="text-sm text-destructive">
-                    인증번호가 올바르지 않습니다. 테스트 코드는 123456 입니다.
+                    인증번호가 올바르지 않거나 만료되었습니다.
                   </p>
                 )}
                 {errors.emailVerification && (

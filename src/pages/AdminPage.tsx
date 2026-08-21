@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { api, type Club, type FormQuestion, type AdminApplicationListItem, type PostListItem, type AdminApplicationDetail } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { FEATURES } from "@/config/features";
 
 type AdminTab =
   | "club-register"
@@ -79,16 +80,20 @@ const ADMIN_MENU: {
       },
     ],
   },
-  {
-    section: "커뮤니티",
-    items: [
-      {
-        label: "게시판 관리",
-        icon: MessageSquare,
-        tab: "community-board",
-      },
-    ],
-  },
+  ...(FEATURES.clubCommunity
+    ? [
+        {
+          section: "커뮤니티",
+          items: [
+            {
+              label: "게시판 관리",
+              icon: MessageSquare,
+              tab: "community-board" as const,
+            },
+          ],
+        },
+      ]
+    : []),
 ];
 
 const STATUS_LABEL: Record<string, string> = {

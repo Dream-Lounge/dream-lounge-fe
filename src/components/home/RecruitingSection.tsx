@@ -9,6 +9,7 @@ import { api, type Club } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { CLUB_DIVISION_KEYS } from "@/data/clubDirectoryMeta";
 import { formatEndDateLabel } from "@/lib/date";
+import { FEATURES } from "@/config/features";
 
 const AI_RECOMMENDED_NAMES = ["셀레멘더스", "어센틱", "트라이앵글", "디스토션"];
 const LOGGED_OUT_EXCLUDED_NAMES = ["어센틱", "셀레멘더스", "트라이앵글"];
@@ -29,8 +30,14 @@ export function RecruitingSection() {
 
   // 로그인 시: AI 추천 4개를 앞에 고정, 나머지 모집중 클럽으로 채움 (최대 6개)
   // 비로그인 시: 모집중 클럽만 표시 (최대 6개)
+  // AI 추천 기능이 꺼져 있으면(FEATURES.aiRecommend=false) 추천 순서·제외 목록을
+  // 적용하지 않고 로그인 여부와 상관없이 모집중 클럽을 그대로 보여줍니다.
+  const showAiRecommend = FEATURES.aiRecommend && isAuthenticated;
   const recruitingClubs = (() => {
-    if (isAuthenticated) {
+    if (!FEATURES.aiRecommend) {
+      return allClubs.filter((c) => c.is_recruiting).slice(0, 6);
+    }
+    if (showAiRecommend) {
       const recommended = AI_RECOMMENDED_NAMES
         .map((name) => allClubs.find((c) => c.name === name))
         .filter((c): c is Club => c !== undefined);
@@ -79,7 +86,7 @@ export function RecruitingSection() {
         {/* 섹션 헤더 */}
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
-            {isAuthenticated ? "AI 추천 동아리" : "모집중인 동아리"}
+            {showAiRecommend ? "AI 추천 동아리" : "모집중인 동아리"}
           </h2>
           <button
             type="button"
@@ -95,7 +102,7 @@ export function RecruitingSection() {
         <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
           {recruitingClubs.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
-              {isAuthenticated ? "추천 동아리 정보를 불러오는 중입니다." : "현재 모집중인 동아리가 없습니다."}
+              {showAiRecommend ? "추천 동아리 정보를 불러오는 중입니다." : "현재 모집중인 동아리가 없습니다."}
             </div>
           ) : (
             <div
@@ -125,10 +132,10 @@ export function RecruitingSection() {
                           {club.division}
                         </Badge>
                       )}
-                      {isAuthenticated && idx < 4 && (
-                        <Badge className="border-none bg-amber-400/90 px-2 py-0.5 text-xs text-white backdrop-blur-sm flex items-center gap-0.5">
+                      {showAiRecommend && idx < 4 && (
+                        <Badge className="shrink-0 gap-0.5 border-none bg-amber-400/90 px-1.5 text-xs text-white backdrop-blur-sm flex items-center sm:px-2">
                           <Sparkles className="size-3" />
-                          AI추천
+                          <span className="hidden sm:inline">AI추천</span>
                         </Badge>
                       )}
                     </div>

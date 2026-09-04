@@ -14,7 +14,6 @@ import { FEATURES } from "@/config/features";
 
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
-    ...(FEATURES.clubNews ? [{ label: "동아리 뉴스", to: "/news" }] : []),
     { label: "Dream Lounge", to: "/about" },
     { label: "고객센터", to: "/support" },
 ];
@@ -124,7 +123,10 @@ export function Header() {
                                             </Link>
                                         )}
                                         <button
-                                            onClick={logout}
+                                            onClick={() => {
+                                                logout();
+                                                navigate("/", { replace: true });
+                                            }}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             로그아웃

@@ -79,6 +79,7 @@ export interface ClubResponse {
   contact_email: string | null;
   contact_phone: string | null;
   open_chat_url: string | null;
+  contact_links: ClubContactLink[];
   image_url: string | null;
   activity_images: string[];
   division: string | null;
@@ -90,6 +91,14 @@ export interface ClubResponse {
   is_recruiting: boolean;
   member_count: number;
   tags: Array<{ tag_key: string; tag_value: string }>;
+}
+
+export type ClubContactLinkType = "email" | "phone" | "url";
+
+export interface ClubContactLink {
+  type: ClubContactLinkType;
+  label: string;
+  value: string;
 }
 
 export type FormQuestionType = "text" | "textarea" | "choice" | "multiselect";
@@ -130,6 +139,7 @@ export interface ClubWriteRequest {
   contact_email?: string | null;
   contact_phone?: string | null;
   open_chat_url?: string | null;
+  contact_links?: ClubContactLink[];
   image_url?: string | null;
   activity_images?: string[];
   division?: string | null;

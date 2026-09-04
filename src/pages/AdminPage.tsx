@@ -23,6 +23,7 @@ import {
   Eye,
   Info,
   Mail,
+  Phone,
   Link2,
 } from "lucide-react";
 import { CLUB_DIVISION_KEYS } from "@/data/clubDirectoryMeta";
@@ -43,7 +44,14 @@ import {
 import { cn } from "@/lib/utils";
 import { FEATURES } from "@/config/features";
 import { useAuth } from "@/hooks/useAuth";
-import { api, ApiRequestError, type AdminApplicationDetail, type PostListItem } from "@/lib/api";
+import {
+  api,
+  ApiRequestError,
+  type AdminApplicationDetail,
+  type ClubContactLink,
+  type ClubContactLinkType,
+  type PostListItem,
+} from "@/lib/api";
 
 type AdminTab =
   | "club-register"
@@ -165,63 +173,108 @@ const STATUS_SELECT_CLASS: Record<ApplicationStatusValue, string> = {
 
 /** 상세페이지에 노출할 태그 최대 개수 */
 const MAX_TAGS = 5;
+const APPLICANTS_PER_PAGE = 8;
 
 const CLUB_DETAIL_DESCRIPTION_PLACEHOLDER =
   "예: 코딩 스터디, 프로젝트, 세미나 등을 통해 함께 성장하는 학술 동아리입니다.";
 
+type EditableContactLink = ClubContactLink & { id: number };
+
+function detectContactType(value: string): ClubContactLinkType {
+  const trimmed = value.trim();
+  if (/^mailto:/i.test(trimmed) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return "email";
+  if (/^tel:/i.test(trimmed)) return "phone";
+  if (/^\+?[\d\s().-]+$/.test(trimmed) && trimmed.replace(/\D/g, "").length >= 7) return "phone";
+  return "url";
+}
+
+function normalizeContactValue(value: string, type = detectContactType(value)): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (type === "email") return trimmed.replace(/^mailto:/i, "");
+  if (type === "phone") return trimmed.replace(/^tel:/i, "");
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function defaultContactLabel(type: ClubContactLinkType): string {
+  if (type === "email") return "이메일";
+  if (type === "phone") return "전화번호";
+  return "SNS 링크";
+}
+
+function contactHref(link: ClubContactLink): string {
+  if (link.type === "email") return `mailto:${link.value}`;
+  if (link.type === "phone") return `tel:${link.value.replace(/[^\d+]/g, "")}`;
+  return normalizeContactValue(link.value, "url");
+}
+
 export function AdminPage() {
   const { managedClubs } = useAuth();
   const [selectedClubId, setSelectedClubId] = useState(managedClubs[0]?.club_id ?? "");
-  const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
+  const [activeTab, setActiveTab] = useState<AdminTab>("club-register");
   const [clubName, setClubName] = useState("");
   const [clubCategory, setClubCategory] = useState("");
   const [clubTagline, setClubTagline] = useState("");
   const [clubDetailDescription, setClubDetailDescription] = useState("");
-  const [clubContact, setClubContact] = useState("");
+  const [newContactValue, setNewContactValue] = useState("");
   const [clubImageUrl, setClubImageUrl] = useState("");
   const [formExists, setFormExists] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const activityInputRef = useRef<HTMLInputElement>(null);
 
-  /** 연락처·SNS 링크 (라벨 + URL) */
-  const [snsLinks, setSnsLinks] = useState<
-    { id: number; label: string; url: string }[]
-  >([]);
+  /** 연락처·SNS 링크 (유형 + 라벨 + 값) */
+  const [contactLinks, setContactLinks] = useState<EditableContactLink[]>([]);
 
-  const addSnsLink = () => {
-    setSnsLinks((prev) => [
+  const addContactLink = () => {
+    const rawValue = newContactValue.trim();
+    if (!rawValue) {
+      toast.error("추가할 연락처 또는 링크를 입력해주세요.");
+      return;
+    }
+    if (contactLinks.length >= 10) {
+      toast.error("연락처와 SNS 링크는 최대 10개까지 추가할 수 있습니다.");
+      return;
+    }
+    const type = detectContactType(rawValue);
+    setContactLinks((prev) => [
       ...prev,
-      { id: prev.reduce((max, l) => Math.max(max, l.id), 0) + 1, label: "", url: "" },
+      {
+        id: prev.reduce((max, link) => Math.max(max, link.id), 0) + 1,
+        type,
+        label: defaultContactLabel(type),
+        value: normalizeContactValue(rawValue, type),
+      },
     ]);
+    setNewContactValue("");
   };
 
-  const updateSnsLink = (
+  const updateContactLink = (
     id: number,
-    field: "label" | "url",
+    field: "label" | "value",
     value: string,
   ) => {
-    setSnsLinks((prev) =>
-      prev.map((link) => (link.id === id ? { ...link, [field]: value } : link)),
+    setContactLinks((prev) =>
+      prev.map((link) =>
+        link.id === id
+          ? { ...link, [field]: value, ...(field === "value" ? { type: detectContactType(value) } : {}) }
+          : link,
+      ),
     );
   };
 
-  /** 링크 입력을 벗어나면 스킴이 없는 주소에 https://를 붙여줍니다. */
-  const normalizeSnsLinkUrl = (id: number) => {
-    setSnsLinks((prev) =>
+  const normalizeContactLink = (id: number) => {
+    setContactLinks((prev) =>
       prev.map((link) => {
         if (link.id !== id) return link;
-        const trimmed = link.url.trim();
-        if (!trimmed || /^https?:\/\//i.test(trimmed)) {
-          return { ...link, url: trimmed };
-        }
-        return { ...link, url: `https://${trimmed}` };
+        const type = detectContactType(link.value);
+        return { ...link, type, value: normalizeContactValue(link.value, type) };
       }),
     );
   };
 
-  const removeSnsLink = (id: number) => {
-    setSnsLinks((prev) => prev.filter((link) => link.id !== id));
+  const removeContactLink = (id: number) => {
+    setContactLinks((prev) => prev.filter((link) => link.id !== id));
   };
 
   /** 활동 사진 — 설명은 선택 입력 */
@@ -281,6 +334,7 @@ export function AdminPage() {
   };
   const [applicants, setApplicants] = useState<SubmittedApplication[]>([]);
   const [applicantQuery, setApplicantQuery] = useState("");
+  const [applicantPage, setApplicantPage] = useState(1);
   const [selectedApplication, setSelectedApplication] = useState<AdminApplicationDetail | null>(null);
   const [communityPosts, setCommunityPosts] = useState<PostListItem[]>([]);
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
@@ -325,9 +379,15 @@ export function AdminPage() {
         setClubCategory(club.division ?? "");
         setClubTagline(club.description ?? "");
         setClubDetailDescription(club.description ?? "");
-        setClubContact(club.contact_email ?? club.contact_phone ?? "");
         setClubImageUrl(club.image_url ?? "");
-        setSnsLinks(club.open_chat_url ? [{ id: 1, label: "오픈채팅", url: club.open_chat_url }] : []);
+        const savedContactLinks = club.contact_links?.length
+          ? club.contact_links
+          : [
+              ...(club.contact_email ? [{ type: "email" as const, label: "이메일", value: club.contact_email }] : []),
+              ...(club.contact_phone ? [{ type: "phone" as const, label: "전화번호", value: club.contact_phone }] : []),
+              ...(club.open_chat_url ? [{ type: "url" as const, label: "오픈채팅", value: club.open_chat_url }] : []),
+            ];
+        setContactLinks(savedContactLinks.map((link, index) => ({ ...link, id: index + 1 })));
         setTags(club.tags.map((tag) => `#${tag.tag_value.replace(/^#/, "")}`));
         setActivityPhotos(club.activity_images.map((url, index) => ({ id: index + 1, caption: "", url })));
         setApplicants(applicationRows.map((row) => ({
@@ -374,6 +434,24 @@ export function AdminPage() {
       `${applicant.name} ${applicant.studentId} ${applicant.major}`.toLowerCase().includes(query),
     );
   }, [applicantQuery, applicants]);
+
+  const applicantTotalPages = Math.max(
+    1,
+    Math.ceil(filteredApplicants.length / APPLICANTS_PER_PAGE),
+  );
+  const safeApplicantPage = Math.min(applicantPage, applicantTotalPages);
+  const pagedApplicants = filteredApplicants.slice(
+    (safeApplicantPage - 1) * APPLICANTS_PER_PAGE,
+    safeApplicantPage * APPLICANTS_PER_PAGE,
+  );
+  const applicantPageNumbers = useMemo(() => {
+    const visibleCount = Math.min(applicantTotalPages, 5);
+    const start = Math.max(
+      1,
+      Math.min(safeApplicantPage - 2, applicantTotalPages - visibleCount + 1),
+    );
+    return Array.from({ length: visibleCount }, (_, index) => start + index);
+  }, [applicantTotalPages, safeApplicantPage]);
 
   const openAddQuestion = () => {
     setNewTitle("");
@@ -488,19 +566,36 @@ export function AdminPage() {
       toast.error("동아리명과 카테고리를 입력해주세요.");
       return;
     }
-    const contact = clubContact.trim();
+    const normalizedContactLinks = contactLinks.map(({ label, value }) => ({
+      type: detectContactType(value),
+      label: label.trim(),
+      value: normalizeContactValue(value),
+    }));
+    if (normalizedContactLinks.some((link) => !link.label || !link.value)) {
+      toast.error("연락처와 SNS 링크의 이름과 내용을 모두 입력해주세요.");
+      return;
+    }
+    const firstEmail = normalizedContactLinks.find((link) => link.type === "email")?.value ?? null;
+    const firstPhone = normalizedContactLinks.find((link) => link.type === "phone")?.value ?? null;
+    const firstUrl = normalizedContactLinks.find((link) => link.type === "url")?.value ?? null;
     try {
-      await api.updateClub(selectedClubId, {
+      const updatedClub = await api.updateClub(selectedClubId, {
         name: clubName.trim(),
         division: clubCategory,
         description: clubDetailDescription.trim() || clubTagline.trim(),
-        contact_email: contact.includes("@") ? contact : null,
-        contact_phone: contact && !contact.includes("@") ? contact : null,
-        open_chat_url: snsLinks.find((link) => link.url.trim())?.url.trim() ?? null,
+        contact_email: firstEmail,
+        contact_phone: firstPhone,
+        open_chat_url: firstUrl,
+        contact_links: normalizedContactLinks,
         image_url: clubImageUrl || null,
         activity_images: activityPhotos.map((photo) => photo.url).filter(Boolean),
         tags: tags.map((tag) => ({ tag_key: "custom", tag_value: tag.replace(/^#/, "") })),
       });
+      setClubImageUrl(updatedClub.image_url ?? "");
+      const persistedContactLinks = updatedClub.contact_links?.length
+        ? updatedClub.contact_links
+        : normalizedContactLinks;
+      setContactLinks(persistedContactLinks.map((link, index) => ({ ...link, id: index + 1 })));
       toast.success("동아리 정보를 저장했습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "동아리 정보 저장에 실패했습니다.");
@@ -705,15 +800,21 @@ export function AdminPage() {
 
               <div className="mt-3 flex items-center gap-2">
                 <Input
-                  value={clubContact}
-                  onChange={(e) => setClubContact(e.target.value)}
-                  placeholder="이메일 또는 전화번호 (예: dreamlounge@cju.ac.kr)"
+                  value={newContactValue}
+                  onChange={(e) => setNewContactValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addContactLink();
+                    }
+                  }}
+                  placeholder="이메일, 전화번호 또는 SNS 주소"
                   className="h-10 flex-1 bg-white"
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={addSnsLink}
+                  onClick={addContactLink}
                   className="h-10 shrink-0"
                 >
                   <Plus className="mr-1 size-4" />
@@ -722,31 +823,31 @@ export function AdminPage() {
               </div>
 
               <div className="mt-3 flex flex-col gap-2">
-                {snsLinks.map((link) => (
+                {contactLinks.map((link) => (
                   <div key={link.id} className="flex items-center gap-2">
                     <Input
                       value={link.label}
                       onChange={(e) =>
-                        updateSnsLink(link.id, "label", e.target.value)
+                        updateContactLink(link.id, "label", e.target.value)
                       }
-                      placeholder="예: 인스타그램"
-                      aria-label="링크 이름"
+                      placeholder="예: 인스타그램 또는 회장 연락처"
+                      aria-label="연락처 이름"
                       className="h-10 w-32 shrink-0 bg-white sm:w-40"
                     />
                     <Input
-                      value={link.url}
+                      value={link.value}
                       onChange={(e) =>
-                        updateSnsLink(link.id, "url", e.target.value)
+                        updateContactLink(link.id, "value", e.target.value)
                       }
-                      onBlur={() => normalizeSnsLinkUrl(link.id)}
-                      placeholder="instagram.com/dreamlounge"
-                      aria-label="링크 주소"
+                      onBlur={() => normalizeContactLink(link.id)}
+                      placeholder="이메일, 전화번호 또는 링크"
+                      aria-label="연락처 내용"
                       className="h-10 flex-1 bg-white"
                     />
                     <button
                       type="button"
-                      onClick={() => removeSnsLink(link.id)}
-                      aria-label="링크 삭제"
+                      onClick={() => removeContactLink(link.id)}
+                      aria-label="연락처 삭제"
                       className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:text-destructive"
                     >
                       <Trash2 className="size-4" />
@@ -867,7 +968,10 @@ export function AdminPage() {
                   type="text"
                   placeholder="이름, 학번, 학과 검색"
                   value={applicantQuery}
-                  onChange={(event) => setApplicantQuery(event.target.value)}
+                  onChange={(event) => {
+                    setApplicantQuery(event.target.value);
+                    setApplicantPage(1);
+                  }}
                   className="h-full w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </label>
@@ -895,14 +999,14 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {filteredApplicants.map((applicant, index) => {
+                {pagedApplicants.map((applicant, index) => {
                   return (
                     <tr
                       key={applicant.id}
                       className="h-[88px] border-t border-slate-100 text-sm text-slate-700 first:border-t-0"
                     >
                       <td className="px-4 text-sm font-semibold text-slate-600">
-                        {index + 1}
+                        {(safeApplicantPage - 1) * APPLICANTS_PER_PAGE + index + 1}
                       </td>
                       <td className="px-4">
                         <div className="text-sm font-bold leading-tight text-slate-900">
@@ -968,31 +1072,33 @@ export function AdminPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-400"
+                  onClick={() => setApplicantPage((page) => Math.max(1, page - 1))}
+                  disabled={safeApplicantPage <= 1}
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
                 >
                   이전
                 </button>
+                {applicantPageNumbers.map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    onClick={() => setApplicantPage(pageNumber)}
+                    aria-current={pageNumber === safeApplicantPage ? "page" : undefined}
+                    className={cn(
+                      "inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm",
+                      pageNumber === safeApplicantPage
+                        ? "font-bold text-[#2B63B4]"
+                        : "font-semibold text-slate-500",
+                    )}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
                 <button
                   type="button"
-                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-bold text-[#2B63B4]"
-                >
-                  1
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
-                >
-                  2
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
-                >
-                  3
-                </button>
-                <button
-                  type="button"
-                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700"
+                  onClick={() => setApplicantPage((page) => Math.min(applicantTotalPages, page + 1))}
+                  disabled={safeApplicantPage >= applicantTotalPages}
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:text-slate-300"
                 >
                   다음
                 </button>
@@ -1313,7 +1419,7 @@ export function AdminPage() {
           <div className="p-3 sm:p-5 lg:p-8">
             {managedClubs.length > 1 && (
               <div className="mb-4 flex justify-end">
-                <select value={selectedClubId} onChange={(event) => setSelectedClubId(event.target.value)} aria-label="관리할 동아리 선택" className="h-10 rounded-md border border-input bg-white px-3 text-sm">
+                <select value={selectedClubId} onChange={(event) => { setSelectedClubId(event.target.value); setApplicantPage(1); }} aria-label="관리할 동아리 선택" className="h-10 rounded-md border border-input bg-white px-3 text-sm">
                   {managedClubs.map((club) => <option key={club.club_id} value={club.club_id}>{club.club_name}</option>)}
                 </select>
               </div>
@@ -1655,29 +1761,27 @@ export function AdminPage() {
             </section>
 
             {/* 연락처 · SNS — 입력된 것이 하나라도 있을 때만 노출 */}
-            {(clubContact.trim() ||
-              snsLinks.some((link) => link.label.trim() && link.url.trim())) && (
+            {contactLinks.some((link) => link.label.trim() && link.value.trim()) && (
               <section className="space-y-4">
                 <h4 className="text-xl font-bold">연락처</h4>
                 <div className="flex flex-col gap-3">
-                  {clubContact.trim() && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="size-4 shrink-0 text-primary" aria-hidden />
-                      {clubContact}
-                    </div>
-                  )}
-                  {snsLinks
-                    .filter((link) => link.label.trim() && link.url.trim())
+                  {contactLinks
+                    .filter((link) => link.label.trim() && link.value.trim())
                     .map((link) => (
                       <a
                         key={link.id}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={contactHref(link)}
+                        {...(link.type === "url" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                         className="flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
                       >
-                        <Link2 className="size-4 shrink-0" aria-hidden />
-                        {link.label}
+                        {link.type === "email" ? (
+                          <Mail className="size-4 shrink-0" aria-hidden />
+                        ) : link.type === "phone" ? (
+                          <Phone className="size-4 shrink-0" aria-hidden />
+                        ) : (
+                          <Link2 className="size-4 shrink-0" aria-hidden />
+                        )}
+                        <span>{link.label}: {link.value}</span>
                       </a>
                     ))}
                 </div>

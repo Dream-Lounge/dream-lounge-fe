@@ -181,13 +181,10 @@ export function ClubCommunity() {
           <CardContent className="p-0">
             <div className="p-4 sm:p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0">
                   <h1 className="text-xl font-bold text-foreground">
                     {activeCategory === "전체글" ? "전체글" : activeCategory}
                   </h1>
-                  <div className="text-sm text-muted-foreground">
-                    동아리 ID: {clubId}
-                  </div>
                 </div>
 
                 <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
@@ -231,9 +228,6 @@ export function ClubCommunity() {
                           className="rounded-lg border border-border bg-card/40 px-4 py-3 transition-colors hover:bg-muted/25"
                         >
                           <div className="flex flex-wrap items-center gap-2 gap-y-2">
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {p.id}
-                            </span>
                             <Badge variant={variant} className={className}>
                               {p.category}
                             </Badge>
@@ -277,12 +271,12 @@ export function ClubCommunity() {
                           </tr>
                         </thead>
                         <tbody>
-                          {pagedPosts.map((p) => {
+                          {pagedPosts.map((p, index) => {
                             const { variant, className } = categoryBadgeVariant(p.category);
                             return (
                               <tr key={p.id} className="border-t hover:bg-muted/30">
                                 <td className="px-2 py-3.5 text-center text-xs text-muted-foreground">
-                                  {p.id}
+                                  {(safePage - 1) * pageSize + index + 1}
                                 </td>
                                 <td className="px-2 py-3.5 align-top">
                                   <Badge

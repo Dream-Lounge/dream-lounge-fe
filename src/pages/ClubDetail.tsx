@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, User, CheckCircle2 } from "lucide-react";
+import { Calendar, User, CheckCircle2, Link2, Mail, Phone } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
 import { mapClubResponse, type ClubData } from "@/data/clubs";
 import { api } from "@/lib/api";
@@ -173,6 +173,35 @@ export function ClubDetail() {
                 </Button>
               </CardContent>
             </Card>
+
+            {clubData.contacts.length > 0 && (
+              <Card className="border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">연락처 · SNS</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  {clubData.contacts.map((contact, index) => {
+                    const href = contact.type === "email"
+                      ? `mailto:${contact.value}`
+                      : contact.type === "phone"
+                        ? `tel:${contact.value.replace(/[^\d+]/g, "")}`
+                        : contact.value;
+                    const Icon = contact.type === "email" ? Mail : contact.type === "phone" ? Phone : Link2;
+                    return (
+                      <a
+                        key={`${contact.type}-${contact.label}-${index}`}
+                        href={href}
+                        {...(contact.type === "url" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        className="flex items-start gap-3 text-sm text-primary underline-offset-4 hover:underline"
+                      >
+                        <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                        <span className="break-all">{contact.label}: {contact.value}</span>
+                      </a>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
 
             <div className="bg-muted/50 p-4 rounded-lg text-xs text-muted-foreground">
               * 동아리 지원 관련 문의는 해당 동아리 회장에게 직접 문의 바랍니다.

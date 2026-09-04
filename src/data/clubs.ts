@@ -1,4 +1,4 @@
-import type { ClubResponse } from "@/lib/api";
+import type { ClubContactLink, ClubResponse } from "@/lib/api";
 
 /**
  * 동아리 데이터 타입 정의
@@ -12,6 +12,7 @@ export interface ClubData {
   longDescription: string;
   coverImage?: string;
   activities: { id: number; title: string; image: string }[];
+  contacts: ClubContactLink[];
   recruitment: {
     status: string;
     period: string;
@@ -46,6 +47,13 @@ export function mapClubResponse(club: ClubResponse): ClubData {
       title: `${club.name} 활동 ${index + 1}`,
       image,
     })),
+    contacts: club.contact_links?.length
+      ? club.contact_links
+      : [
+          ...(club.contact_email ? [{ type: "email" as const, label: "이메일", value: club.contact_email }] : []),
+          ...(club.contact_phone ? [{ type: "phone" as const, label: "전화번호", value: club.contact_phone }] : []),
+          ...(club.open_chat_url ? [{ type: "url" as const, label: "오픈채팅", value: club.open_chat_url }] : []),
+        ],
     recruitment: {
       status: club.is_recruiting ? "모집중" : "모집마감",
       period,
@@ -68,6 +76,7 @@ function stubClub(
     description: `${title} 동아리입니다.`,
     longDescription: `${title} 활동에 관심 있는 학우들의 참여를 기다립니다.`,
     activities: [],
+    contacts: [],
     recruitment,
   };
 }
@@ -161,6 +170,7 @@ export const MOCK_CLUB_DATA: Record<string, ClubData> = {
         image: "/images/lecture.png",
       },
     ],
+    contacts: [],
     recruitment: {
       status: "모집예정",
       period: "2026.03.01 ~ 2026.03.14",

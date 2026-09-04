@@ -3,74 +3,72 @@ import { api } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { AuthContext } from "./auth";
 import { SessionExpiredDialog } from "@/components/common/SessionExpiredDialog";
-import { supabase } from "@/lib/supabase";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const [managedClubs, setManagedClubs] = useState<Awaited<ReturnType<typeof api.getMyClubs>>>([]);
 
   useEffect(() => {
-    const initializeSession = async () => {
-      const accessToken = localStorage.getItem("access_token");
-      const refreshToken = localStorage.getItem("refresh_token");
+    const storedUser = getStoredUser();
+    let active = true;
 
-      if (accessToken && refreshToken) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        if (!error && data.session) {
-          localStorage.setItem("access_token", data.session.access_token);
-          localStorage.setItem("refresh_token", data.session.refresh_token);
-          setUser(getStoredUser());
-        } else {
-          api.clearTokens();
-        }
-      } else {
-        setUser(getStoredUser());
-      }
+    api.setSessionExpiredHandler(() => {
+      if (!active) return;
+      setUser(null);
+      setManagedClubs([]);
+      setIsSessionExpired(true);
+    });
+
+    if (!storedUser) {
       setIsLoading(false);
-    };
+      return () => {
+        active = false;
+        api.setSessionExpiredHandler(null);
+      };
+    }
 
-    void initializeSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session) {
-          localStorage.setItem("access_token", session.access_token);
-          localStorage.setItem("refresh_token", session.refresh_token);
-        } else if (event === "SIGNED_OUT") {
-          api.clearTokens();
-          setUser(null);
+    Promise.all([api.getCurrentUser(), api.getMyClubs().catch(() => [])])
+      .then(([currentUser, clubs]) => {
+        if (active) {
+          setUser(currentUser);
+          setManagedClubs(clubs.filter((club) => club.role === "president"));
         }
-      },
-    );
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null);
+          setManagedClubs([]);
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      api.setSessionExpiredHandler(null);
+    };
   }, []);
 
-  const login = useCallback(async (studentId: number, password: string) => {
+  const login = useCallback(async (studentId: string, password: string) => {
     const response = await api.login(studentId, password);
-    if (response.refresh_token) {
-      const { error } = await supabase.auth.setSession({
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
-      });
-      if (error) throw error;
-    }
+    const clubs = await api.getMyClubs().catch(() => []);
     setUser(response.user);
+    setManagedClubs(clubs.filter((club) => club.role === "president"));
   }, []);
 
   const logout = useCallback(() => {
-    void supabase.auth.signOut();
     api.logout();
     setUser(null);
+    setManagedClubs([]);
   }, []);
 
   const handleSessionExpired = useCallback(() => {
     api.clearTokens();
     setUser(null);
+    setManagedClubs([]);
     setIsSessionExpired(true);
   }, []);
 
@@ -85,6 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: user !== null,
         isLoading,
         isSessionExpired,
+        managedClubs,
+        isClubAdmin: managedClubs.length > 0,
         login,
         logout,
         handleSessionExpired,

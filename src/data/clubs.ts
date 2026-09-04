@@ -1,3 +1,5 @@
+import type { ClubResponse } from "@/lib/api";
+
 /**
  * 동아리 데이터 타입 정의
  * - 백엔드 API 응답을 시뮬레이션하기 위한 공유 타입
@@ -8,6 +10,7 @@ export interface ClubData {
   tags: string[];
   description: string;
   longDescription: string;
+  coverImage?: string;
   activities: { id: number; title: string; image: string }[];
   recruitment: {
     status: string;
@@ -25,6 +28,32 @@ export type ClubApplicationData = Pick<
   ClubData,
   "title" | "category" | "description"
 >;
+
+export function mapClubResponse(club: ClubResponse): ClubData {
+  const period = club.recruit_start && club.recruit_end
+    ? `${club.recruit_start} ~ ${club.recruit_end}`
+    : club.activity_period || "상시";
+
+  return {
+    title: club.name,
+    category: club.division || club.club_type || "기타",
+    tags: club.tags.map((tag) => `#${tag.tag_value.replace(/^#/, "")}`),
+    description: club.description || `${club.name} 동아리입니다.`,
+    longDescription: club.description || `${club.name} 활동을 소개합니다.`,
+    coverImage: club.image_url ?? undefined,
+    activities: club.activity_images.map((image, index) => ({
+      id: index + 1,
+      title: `${club.name} 활동 ${index + 1}`,
+      image,
+    })),
+    recruitment: {
+      status: club.is_recruiting ? "모집중" : "모집마감",
+      period,
+      target: "재학생",
+      process: club.activity_purpose || "서류 심사",
+    },
+  };
+}
 
 function stubClub(
   title: string,

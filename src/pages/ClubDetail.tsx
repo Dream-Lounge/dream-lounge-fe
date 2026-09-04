@@ -1,241 +1,131 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Calendar, User, CheckCircle2 } from "lucide-react";
 import { NotFound } from "@/pages/error/NotFound";
-import { api, type Club } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { mapClubResponse, type ClubData } from "@/data/clubs";
+import { api } from "@/lib/api";
 
-function formatDateRange(start: string | null, end: string | null): string {
-  const fmt = (d: string) => {
-    const date = new Date(d);
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-  };
-  if (start && end) return `${fmt(start)} ~ ${fmt(end)}`;
-  if (end) return `~ ${fmt(end)}`;
-  if (start) return `${fmt(start)} ~`;
-  return "상시모집";
-}
+/**
+ * 동아리 상세 페이지 컴포넌트
+ * - URL 파라미터(id)를 통해 동아리 정보를 동적으로 불러옵니다.
+ * - 백엔드 API에서 동아리 정보를 불러옵니다.
+ */
 export function ClubDetail() {
   const navigate = useNavigate();
+
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated } = useAuth();
-  const [club, setClub] = useState<Club | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [hasApplied, setHasApplied] = useState(false);
-  const [isPresident, setIsPresident] = useState(false);
-  const [isPresidentCheckLoading, setIsPresidentCheckLoading] = useState(false);
-  const [isPresidentAlertOpen, setIsPresidentAlertOpen] = useState(false);
+  const [clubData, setClubData] = useState<ClubData | null | undefined>(undefined);
 
   useEffect(() => {
-    if (!id) return;
-    setIsLoading(true);
-    api.getClub(id)
-      .then((data) => setClub(data))
-      .catch(() => setNotFound(true))
-      .finally(() => setIsLoading(false));
-  }, [id]);
-
-  useEffect(() => {
-    if (!id || !isAuthenticated) return;
-    api.checkApplicationStatus(id).then(setHasApplied).catch(() => {});
-  }, [id, isAuthenticated]);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    setIsPresident(false);
-    if (!id || !isAuthenticated) {
-      setIsPresidentCheckLoading(false);
+    let active = true;
+    if (!id) {
+      setClubData(null);
       return;
     }
-
-    setIsPresidentCheckLoading(true);
-    api.getMyClubs()
-      .then((memberships) => {
-        if (isCancelled) return;
-        setIsPresident(
-          memberships.some(
-            (membership) =>
-              String(membership.club_id) === String(id) &&
-              membership.role === "president",
-          ),
-        );
+    api.getClub(id)
+      .then((club) => {
+        if (active) setClubData(mapClubResponse(club));
       })
       .catch(() => {
-        if (!isCancelled) {
-          setIsPresident(false);
-        }
-      })
-      .finally(() => {
-        if (!isCancelled) {
-          setIsPresidentCheckLoading(false);
-        }
+        if (active) setClubData(null);
       });
-
     return () => {
-      isCancelled = true;
+      active = false;
     };
-  }, [id, isAuthenticated]);
+  }, [id]);
 
-  const handleApplyClick = () => {
-    if (isPresidentCheckLoading) return;
+  if (clubData === undefined) return null;
 
-    if (isPresident) {
-      setIsPresidentAlertOpen(true);
-      return;
-    }
-
-    navigate(`/club/${id}/apply`);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-muted-foreground">로딩 중...</div>
-      </div>
-    );
-  }
-
-  if (notFound || !club) {
+  if (!clubData) {
     return <NotFound />;
   }
 
-  const recruitmentStatus = club.is_recruiting ? "모집중" : "모집 마감";
-  const recruitmentPeriod = formatDateRange(club.recruit_start, club.recruit_end);
-  const tags = club.tags.map((t) => t.tag_value || t.tag_key);
-
   return (
     <div className="container flex flex-col gap-8 pb-20 mx-auto w-full">
-      {/* 히어로 섹션 */}
+      {/** 히어로 섹션: 동아리 대표 이미지 및 모집 상태 뱃지 */}
       <div className="relative h-[220px] sm:h-[300px] w-full rounded-2xl overflow-hidden bg-muted">
-        {club.image_url ? (
-          <img
-            src={club.image_url}
-            alt={club.name}
-            className="object-cover w-full h-full"
-          />
+        {clubData.coverImage ? (
+          <img src={clubData.coverImage} alt={`${clubData.title} 대표 이미지`} className="h-full w-full object-cover" />
         ) : (
-          <img
-            src={`https://placehold.co/1200x400/e2e8f0/1e293b?text=${encodeURIComponent(club.name)}`}
-            alt="Club Cover"
-            className="object-cover w-full h-full"
-          />
+          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">등록된 대표 이미지가 없습니다.</div>
         )}
         <div className="absolute top-4 right-4">
-          <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
-            {recruitmentStatus}
+          <Badge size="detail" className="bg-primary font-semibold text-primary-foreground">
+            {clubData.recruitment.status}
           </Badge>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 메인 콘텐츠 */}
+        {/** 메인 콘텐츠 영역: 동아리 상세 소개 및 활동 내역 */}
         <div className="lg:col-span-2 space-y-8">
+          {/** 타이틀 및 헤더: 카테고리, 동아리명, 태그 정보 */}
           <div className="space-y-4">
-            {club.division && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <span className="font-semibold text-primary">{club.division}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <span className="font-semibold text-primary">
+                {clubData.category}
+              </span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {club.name}
+              {clubData.title}
             </h1>
-            {club.description && (
-              <p className="text-base sm:text-lg text-muted-foreground">
-                {club.description}
-              </p>
-            )}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="px-3 py-1 text-secondary-foreground text-sm font-normal"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <p className="text-base sm:text-lg text-muted-foreground">
+              {clubData.description}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {clubData.tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  size="detail"
+                  className="font-normal text-secondary-foreground"
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
 
           <Separator />
 
-          {/* 동아리 소개 */}
-          {(club.activity_purpose || club.description) && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold">동아리 소개</h2>
-              <div className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
-                {club.activity_purpose || club.description}
-              </div>
-            </section>
-          )}
+          {/** 동아리 소개 섹션: 상세 설명 텍스트 */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-bold">동아리 소개</h2>
+            <div className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
+              {clubData.longDescription.trim()}
+            </div>
+          </section>
 
-          {/* 활동 분야 */}
-          {(club.field || club.atmosphere || club.activity_period) && (
-            <section className="space-y-3">
-              <h2 className="text-xl font-bold">활동 정보</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
-                {club.field && (
-                  <div>
-                    <span className="font-semibold text-foreground">활동 분야: </span>
-                    {club.field}
+          {/** 주요 활동 갤러리: 활동 사진 및 제목 리스트 */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-bold">주요 활동</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {clubData.activities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="rounded-lg overflow-hidden border bg-card"
+                >
+                  <img
+                    src={activity.image}
+                    alt={activity.title}
+                    className="w-full h-48 sm:h-55 object-cover object-bottom"
+                  />
+                  <div className="p-3">
+                    <p className="font-bold text-center text-sm">
+                      {activity.title}
+                    </p>
                   </div>
-                )}
-                {club.atmosphere && (
-                  <div>
-                    <span className="font-semibold text-foreground">분위기: </span>
-                    {club.atmosphere}
-                  </div>
-                )}
-                {club.activity_period && (
-                  <div>
-                    <span className="font-semibold text-foreground">활동 기간: </span>
-                    {club.activity_period}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* 활동 사진 */}
-          {club.activity_images && club.activity_images.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-xl font-bold">활동 사진</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {club.activity_images.map((url, idx) => (
-                  <div
-                    key={idx}
-                    className="aspect-square rounded-xl overflow-hidden bg-muted"
-                  >
-                    <img
-                      src={url}
-                      alt={`활동 사진 ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
-        {/* 사이드 모집 정보 */}
+        {/** 사이드 모집 정보: 모집 기간, 대상, 절차 등 중요 정보 */}
         <div className="lg:col-span-1">
           <div className="space-y-6 lg:sticky lg:top-24">
             <Card className="border-border shadow-sm">
@@ -247,64 +137,39 @@ export function ClubDetail() {
                   <Calendar className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <p className="font-semibold text-sm">모집 기간</p>
-                    <p className="text-sm text-muted-foreground">{recruitmentPeriod}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {clubData.recruitment.period}
+                    </p>
                   </div>
                 </div>
-                {(club.contact_email || club.contact_phone) && (
-                  <div className="flex items-start gap-3">
-                    <User className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-sm">연락처</p>
-                      {club.contact_email && (
-                        <p className="text-sm text-muted-foreground">{club.contact_email}</p>
-                      )}
-                      {club.contact_phone && (
-                        <p className="text-sm text-muted-foreground">{club.contact_phone}</p>
-                      )}
-                    </div>
+                <div className="flex items-start gap-3">
+                  <User className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">모집 대상</p>
+                    <p className="text-sm text-muted-foreground">
+                      {clubData.recruitment.target}
+                    </p>
                   </div>
-                )}
-                {club.open_chat_url && (
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-sm">오픈채팅</p>
-                      <a
-                        href={club.open_chat_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        링크 열기
-                      </a>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">선발 절차</p>
+                    <p className="text-sm text-muted-foreground">
+                      {clubData.recruitment.process}
+                    </p>
                   </div>
-                )}
+                </div>
 
                 <Separator className="my-2" />
 
                 <Button
-                  onClick={handleApplyClick}
-                  className="w-full font-bold py-6 shadow-md transition-all"
-                  disabled={
-                    !club.is_recruiting ||
-                    hasApplied ||
-                    isPresidentCheckLoading
-                  }
-                  variant={hasApplied ? "outline" : "default"}
+                  onClick={() => {
+                    navigate(`/club/${id}/apply`);
+                  }}
+                  className="w-full font-bold text-primary-foreground py-6 shadow-md hover:shadow-lg transition-all cursor-pointer"
                 >
-                  {hasApplied ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-600" />
-                      <span className="text-emerald-700">지원 완료</span>
-                    </>
-                  ) : isPresidentCheckLoading ? (
-                    "지원 자격 확인 중..."
-                  ) : club.is_recruiting ? (
-                    "지원하기"
-                  ) : (
-                    "모집 마감"
-                  )}
+                  지원하기
                 </Button>
               </CardContent>
             </Card>
@@ -315,23 +180,6 @@ export function ClubDetail() {
           </div>
         </div>
       </div>
-
-      <AlertDialog
-        open={isPresidentAlertOpen}
-        onOpenChange={setIsPresidentAlertOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>지원할 수 없습니다</AlertDialogTitle>
-            <AlertDialogDescription>
-              동아리 관리자는 본인 동아리에 신청할 수 없습니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>확인</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

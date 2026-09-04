@@ -62,10 +62,9 @@ export function Login() {
     setLoginError(false);
 
     try {
-      const id = parseInt(studentId, 10);
-      await login(id, password);
+      await login(studentId, password);
       // 최초 로그인(관심사 미선택) 시 온보딩으로, 이후에는 홈으로 이동
-      const goToOnboarding = FEATURES.onboarding && !hasCompletedInterests(id);
+      const goToOnboarding = FEATURES.onboarding && !hasCompletedInterests(studentId);
       navigate(goToOnboarding ? "/onboarding/interests" : "/");
     } catch {
       setLoginError(true);

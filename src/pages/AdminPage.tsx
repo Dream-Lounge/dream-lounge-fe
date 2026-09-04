@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   PlusCircle,
   Settings,
@@ -18,9 +19,11 @@ import {
   Plus,
   X,
   SquarePen,
-  Pencil,
   ChevronDown,
-  Loader2,
+  Eye,
+  Info,
+  Mail,
+  Link2,
 } from "lucide-react";
 import { CLUB_DIVISION_KEYS } from "@/data/clubDirectoryMeta";
 import { Card } from "@/components/ui/card";
@@ -28,24 +31,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, type Club, type FormQuestion, type AdminApplicationListItem, type PostListItem, type AdminApplicationDetail } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { FEATURES } from "@/config/features";
+import { useAuth } from "@/hooks/useAuth";
+import { api, ApiRequestError, type AdminApplicationDetail, type PostListItem } from "@/lib/api";
 
 type AdminTab =
   | "club-register"
@@ -96,492 +94,478 @@ const ADMIN_MENU: {
     : []),
 ];
 
-const STATUS_LABEL: Record<string, string> = {
-  draft: "임시저장",
-  submitted: "검토중",
-  pending: "보류",
-  passed: "합격",
-  failed: "불합격",
+const QUESTION_TYPES = [
+  "단답형",
+  "장문형",
+  "객관식",
+  "체크박스",
+] as const;
+type QuestionType = (typeof QUESTION_TYPES)[number];
+
+const QUESTION_TYPE_TO_API: Record<QuestionType, string> = {
+  단답형: "text",
+  장문형: "textarea",
+  객관식: "choice",
+  체크박스: "multiselect",
 };
 
-const STATUS_CLASS: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-500",
-  submitted: "bg-[#FFF9E8] text-[#B48319]",
-  pending: "bg-[#EEF1F6] text-[#5A6B86]",
-  passed: "bg-[#E8FAEE] text-[#14863F]",
-  failed: "bg-[#FDECEE] text-[#D7263D]",
+function questionTypeFromApi(type: string): QuestionType {
+  if (type === "textarea") return "장문형";
+  if (type === "choice") return "객관식";
+  if (type === "multiselect") return "체크박스";
+  return "단답형";
+}
+
+/** 선택지를 입력받아야 하는 유형 */
+function hasOptions(type: QuestionType) {
+  return type === "객관식" || type === "체크박스";
+}
+
+interface ApplicationQuestion {
+  id: string;
+  title: string;
+  type: QuestionType;
+  required: boolean;
+  /** 객관식일 때 보여줄 선택지 */
+  options?: string[];
+}
+
+const APPLICATION_STATUSES = ["검토중", "합격", "불합격", "보류"] as const;
+type ApplicationStatusValue = (typeof APPLICATION_STATUSES)[number];
+
+function statusFromApi(status: string): ApplicationStatusValue {
+  if (status === "passed") return "합격";
+  if (status === "failed") return "불합격";
+  if (status === "pending") return "보류";
+  return "검토중";
+}
+
+function statusToApi(status: ApplicationStatusValue): "pending" | "passed" | "failed" | null {
+  if (status === "합격") return "passed";
+  if (status === "불합격") return "failed";
+  if (status === "보류") return "pending";
+  return null;
+}
+
+interface SubmittedApplication {
+  id: string;
+  name: string;
+  studentId: string;
+  major: string;
+  submittedAt: string;
+  status: ApplicationStatusValue;
+}
+
+const STATUS_SELECT_CLASS: Record<ApplicationStatusValue, string> = {
+  합격: "bg-[#E8FAEE] text-[#14863F]",
+  불합격: "bg-[#FDECEE] text-[#D7263D]",
+  보류: "bg-[#EEF1F6] text-[#5A6B86]",
+  검토중: "bg-[#FFF9E8] text-[#B48319]",
 };
 
-const STATUS_SELECT_CLASS: Record<string, string> = {
-  submitted: "bg-[#FFF9E8] text-[#B48319]",
-  pending: "bg-[#EEF1F6] text-[#5A6B86]",
-  passed: "bg-[#E8FAEE] text-[#14863F]",
-  failed: "bg-[#FDECEE] text-[#D7263D]",
-};
+/** 상세페이지에 노출할 태그 최대 개수 */
+const MAX_TAGS = 5;
 
 const CLUB_DETAIL_DESCRIPTION_PLACEHOLDER =
   "예: 코딩 스터디, 프로젝트, 세미나 등을 통해 함께 성장하는 학술 동아리입니다.";
 
 export function AdminPage() {
-  useAuth();
-
-  const [activeTab, setActiveTab] = useState<AdminTab>("club-register");
-
-  // Club state
-  const [presidentClub, setPresidentClub] = useState<Club | null>(null);
-  const [isClubLoading, setIsClubLoading] = useState(true);
+  const { managedClubs } = useAuth();
+  const [selectedClubId, setSelectedClubId] = useState(managedClubs[0]?.club_id ?? "");
+  const [activeTab, setActiveTab] = useState<AdminTab>("application-form");
   const [clubName, setClubName] = useState("");
-  const [clubType, setClubType] = useState<"central" | "department" | "">("");
-  const [clubDivision, setClubDivision] = useState("");
-  const [divisionOpen, setDivisionOpen] = useState(false);
-  const [questionTypeOpen, setQuestionTypeOpen] = useState(false);
-  const [recruitmentTarget, setRecruitmentTarget] = useState("");
-  const [isRecruiting, setIsRecruiting] = useState(false);
-  const [recruitStart, setRecruitStart] = useState("");
-  const [recruitEnd, setRecruitEnd] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [isTagInputVisible, setIsTagInputVisible] = useState(false);
-  const [isSavingClub, setIsSavingClub] = useState(false);
-
-  // Image state
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
-  const [coverLocalPreview, setCoverLocalPreview] = useState<string | null>(null);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const [activityPhotos, setActivityPhotos] = useState<string[]>([]);
-  const [isUploadingActivity, setIsUploadingActivity] = useState(false);
-  const coverInputRef = useRef<HTMLInputElement>(null);
-  const activityInputRef = useRef<HTMLInputElement>(null);
-  const replacingPhotoIdxRef = useRef<number | null>(null);
-
-  // Application form state
-  const [formId, setFormId] = useState<string | null>(null);
-  const [formQuestions, setFormQuestions] = useState<FormQuestion[]>([]);
-  const [isFormLoading, setIsFormLoading] = useState(false);
-  const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false);
-  const [newQuestionText, setNewQuestionText] = useState("");
-  const [newQuestionType, setNewQuestionType] = useState("단답형");
-  const [newQuestionRequired, setNewQuestionRequired] = useState(true);
-  const [newQuestionOptions, setNewQuestionOptions] = useState(["", ""]);
-  const [isSavingForm, setIsSavingForm] = useState(false);
-
-  // Applications state
-  const [applications, setApplications] = useState<AdminApplicationListItem[]>([]);
-  const [isAppsLoading, setIsAppsLoading] = useState(false);
-  const [appSearchQuery, setAppSearchQuery] = useState("");
-  const [selectedApp, setSelectedApp] = useState<AdminApplicationDetail | null>(null);
-  const [isAppDetailOpen, setIsAppDetailOpen] = useState(false);
-  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
-
-  // Page/description state
+  const [clubCategory, setClubCategory] = useState("");
+  const [clubTagline, setClubTagline] = useState("");
   const [clubDetailDescription, setClubDetailDescription] = useState("");
-  const [isSavingPage, setIsSavingPage] = useState(false);
+  const [clubContact, setClubContact] = useState("");
+  const [clubImageUrl, setClubImageUrl] = useState("");
+  const [formExists, setFormExists] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const activityInputRef = useRef<HTMLInputElement>(null);
 
-  // Community state
-  const [posts, setPosts] = useState<PostListItem[]>([]);
-  const [isPostsLoading, setIsPostsLoading] = useState(false);
-  const [isWritePostOpen, setIsWritePostOpen] = useState(false);
-  const [newPostTitle, setNewPostTitle] = useState("");
-  const [newPostContent, setNewPostContent] = useState("");
-  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  /** 연락처·SNS 링크 (라벨 + URL) */
+  const [snsLinks, setSnsLinks] = useState<
+    { id: number; label: string; url: string }[]
+  >([]);
 
-  // Load president's club on mount
-  useEffect(() => {
-    const loadClub = async () => {
-      setIsClubLoading(true);
-      try {
-        const myClubs = await api.getMyClubs();
-        const presidentEntry = myClubs.find(c => c.role === "president");
-        if (presidentEntry) {
-          const club = await api.getClub(presidentEntry.club_id);
-          setPresidentClub(club);
-          setClubName(club.name);
-          setClubType((club.club_type as "central" | "department" | "") || "");
-          setClubDivision(club.division || "");
-          setRecruitmentTarget(club.activity_purpose || "");
-          setTags(club.tags.map((t) => t.tag_value || t.tag_key));
-          setClubDetailDescription(club.description || "");
-          setCoverImageUrl(club.image_url || null);
-          setCoverLocalPreview(club.image_url || null);
-          setActivityPhotos(club.activity_images || []);
-          setIsRecruiting(club.is_recruiting);
-          setRecruitStart(club.recruit_start || "");
-          setRecruitEnd(club.recruit_end || "");
-        } else {
-          setPresidentClub(null);
+  const addSnsLink = () => {
+    setSnsLinks((prev) => [
+      ...prev,
+      { id: prev.reduce((max, l) => Math.max(max, l.id), 0) + 1, label: "", url: "" },
+    ]);
+  };
+
+  const updateSnsLink = (
+    id: number,
+    field: "label" | "url",
+    value: string,
+  ) => {
+    setSnsLinks((prev) =>
+      prev.map((link) => (link.id === id ? { ...link, [field]: value } : link)),
+    );
+  };
+
+  /** 링크 입력을 벗어나면 스킴이 없는 주소에 https://를 붙여줍니다. */
+  const normalizeSnsLinkUrl = (id: number) => {
+    setSnsLinks((prev) =>
+      prev.map((link) => {
+        if (link.id !== id) return link;
+        const trimmed = link.url.trim();
+        if (!trimmed || /^https?:\/\//i.test(trimmed)) {
+          return { ...link, url: trimmed };
         }
-      } catch {
-        setPresidentClub(null);
-      } finally {
-        setIsClubLoading(false);
+        return { ...link, url: `https://${trimmed}` };
+      }),
+    );
+  };
+
+  const removeSnsLink = (id: number) => {
+    setSnsLinks((prev) => prev.filter((link) => link.id !== id));
+  };
+
+  /** 활동 사진 — 설명은 선택 입력 */
+  const [activityPhotos, setActivityPhotos] = useState<
+    { id: number; caption: string; url: string }[]
+  >([]);
+
+  const updatePhotoCaption = (id: number, caption: string) => {
+    setActivityPhotos((prev) =>
+      prev.map((photo) => (photo.id === id ? { ...photo, caption } : photo)),
+    );
+  };
+
+  const removeActivityPhoto = (id: number) => {
+    setActivityPhotos((prev) => prev.filter((photo) => photo.id !== id));
+  };
+
+  /** 상세페이지 태그 (최대 MAX_TAGS개) */
+  const [tags, setTags] = useState<string[]>([]);
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const removeTag = (target: string) => {
+    setTags((prev) => prev.filter((tag) => tag !== target));
+  };
+
+  const closeTagInput = () => {
+    setIsAddingTag(false);
+    setNewTag("");
+  };
+
+  /** 입력값을 #태그 형태로 정규화해 추가합니다. */
+  const commitTag = () => {
+    const value = newTag.trim().replace(/^#+/, "").trim();
+    if (!value) {
+      closeTagInput();
+      return;
+    }
+    const nextTag = `#${value}`;
+    setTags((prev) =>
+      prev.includes(nextTag) || prev.length >= MAX_TAGS
+        ? prev
+        : [...prev, nextTag],
+    );
+    closeTagInput();
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitTag();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeTagInput();
+    }
+  };
+  const [applicants, setApplicants] = useState<SubmittedApplication[]>([]);
+  const [applicantQuery, setApplicantQuery] = useState("");
+  const [selectedApplication, setSelectedApplication] = useState<AdminApplicationDetail | null>(null);
+  const [communityPosts, setCommunityPosts] = useState<PostListItem[]>([]);
+  const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [postTitle, setPostTitle] = useState("");
+  const [postContent, setPostContent] = useState("");
+
+  /** 신청폼 문항 (필수 여부를 여기서 관리) */
+  const [questions, setQuestions] = useState<ApplicationQuestion[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDetailPreviewOpen, setIsDetailPreviewOpen] = useState(false);
+
+  /** 새 문항 추가 다이얼로그 */
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newType, setNewType] = useState<QuestionType>("단답형");
+  const [newRequired, setNewRequired] = useState(false);
+  const [newOptions, setNewOptions] = useState<string[]>(["", ""]);
+  const [addSubmitted, setAddSubmitted] = useState(false);
+
+  const isChoice = hasOptions(newType);
+  const filledOptions = newOptions.map((o) => o.trim()).filter(Boolean);
+  const titleError = !newTitle.trim();
+  const optionsError = isChoice && filledOptions.length < 2;
+
+  useEffect(() => {
+    if (!selectedClubId && managedClubs[0]) setSelectedClubId(managedClubs[0].club_id);
+  }, [managedClubs, selectedClubId]);
+
+  useEffect(() => {
+    if (!selectedClubId) return;
+    let active = true;
+    const load = async () => {
+      try {
+        const [club, applicationRows, posts] = await Promise.all([
+          api.getClub(selectedClubId),
+          api.getClubApplications(selectedClubId),
+          api.getClubPosts(selectedClubId),
+        ]);
+        if (!active) return;
+        setClubName(club.name);
+        setClubCategory(club.division ?? "");
+        setClubTagline(club.description ?? "");
+        setClubDetailDescription(club.description ?? "");
+        setClubContact(club.contact_email ?? club.contact_phone ?? "");
+        setClubImageUrl(club.image_url ?? "");
+        setSnsLinks(club.open_chat_url ? [{ id: 1, label: "오픈채팅", url: club.open_chat_url }] : []);
+        setTags(club.tags.map((tag) => `#${tag.tag_value.replace(/^#/, "")}`));
+        setActivityPhotos(club.activity_images.map((url, index) => ({ id: index + 1, caption: "", url })));
+        setApplicants(applicationRows.map((row) => ({
+          id: row.id,
+          name: row.user_name,
+          studentId: row.user_student_id,
+          major: "—",
+          submittedAt: row.submitted_at ? new Intl.DateTimeFormat("ko-KR").format(new Date(row.submitted_at)) : "—",
+          status: statusFromApi(row.status),
+        })));
+        setCommunityPosts(posts);
+        setSelectedPostIds([]);
+        try {
+          const applicationForm = await api.getClubForm(selectedClubId);
+          if (!active) return;
+          setFormExists(true);
+          setQuestions([...applicationForm.questions]
+            .sort((a, b) => a.order_index - b.order_index)
+            .map((question) => ({
+              id: question.id,
+              title: question.question_text,
+              type: questionTypeFromApi(question.question_type),
+              required: question.is_required,
+              options: question.options ?? undefined,
+            })));
+        } catch (error) {
+          if (error instanceof ApiRequestError && error.status === 404) {
+            setFormExists(false);
+            setQuestions([]);
+          } else throw error;
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "관리자 데이터를 불러오지 못했습니다.");
       }
     };
-    loadClub();
-  }, []);
+    void load();
+    return () => { active = false; };
+  }, [selectedClubId]);
 
-  // Load form when switching to application-form tab
-  const loadForm = useCallback(async (clubId: string) => {
-    setIsFormLoading(true);
-    try {
-      const form = await api.getClubForm(clubId);
-      setFormId(form.id);
-      setFormQuestions(form.questions);
-    } catch {
-      setFormId(null);
-      setFormQuestions([]);
-    } finally {
-      setIsFormLoading(false);
-    }
-  }, []);
+  const filteredApplicants = useMemo(() => {
+    const query = applicantQuery.trim().toLowerCase();
+    if (!query) return applicants;
+    return applicants.filter((applicant) =>
+      `${applicant.name} ${applicant.studentId} ${applicant.major}`.toLowerCase().includes(query),
+    );
+  }, [applicantQuery, applicants]);
 
-  // Load applications when switching to submitted-applications tab
-  const loadApplications = useCallback(async (clubId: string) => {
-    setIsAppsLoading(true);
-    try {
-      const data = await api.getClubApplications(clubId);
-      setApplications(data);
-    } catch {
-      setApplications([]);
-    } finally {
-      setIsAppsLoading(false);
-    }
-  }, []);
-
-  // Load posts when switching to community-board tab
-  const loadPosts = useCallback(async (clubId: string) => {
-    setIsPostsLoading(true);
-    try {
-      const data = await api.getPosts(clubId);
-      setPosts(data);
-    } catch {
-      setPosts([]);
-    } finally {
-      setIsPostsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!presidentClub) return;
-    if (activeTab === "application-form") loadForm(presidentClub.id);
-    else if (activeTab === "submitted-applications") loadApplications(presidentClub.id);
-    else if (activeTab === "community-board") loadPosts(presidentClub.id);
-  }, [activeTab, presidentClub, loadForm, loadApplications, loadPosts]);
-
-  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setCoverLocalPreview(URL.createObjectURL(file));
-    setIsUploadingCover(true);
-    try {
-      const { image_url } = await api.uploadClubImage(file);
-      setCoverImageUrl(image_url);
-      setCoverLocalPreview(image_url);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.");
-      setCoverLocalPreview(coverImageUrl);
-    } finally {
-      setIsUploadingCover(false);
-    }
+  const openAddQuestion = () => {
+    setNewTitle("");
+    setNewType("단답형");
+    setNewRequired(false);
+    setNewOptions(["", ""]);
+    setAddSubmitted(false);
+    setIsAddOpen(true);
   };
 
-  const handleActivityFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    const localUrl = URL.createObjectURL(file);
-    const idx = replacingPhotoIdxRef.current;
-    if (idx !== null) {
-      setActivityPhotos((prev) => prev.map((p, i) => (i === idx ? localUrl : p)));
-    } else {
-      setActivityPhotos((prev) => [...prev, localUrl]);
-    }
-    setIsUploadingActivity(true);
+  const updateOption = (index: number, value: string) => {
+    setNewOptions((prev) =>
+      prev.map((option, i) => (i === index ? value : option)),
+    );
+  };
+
+  const addOption = () => setNewOptions((prev) => [...prev, ""]);
+
+  const removeOption = (index: number) => {
+    setNewOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const submitNewQuestion = async () => {
+    setAddSubmitted(true);
+    if (titleError || optionsError || !selectedClubId) return;
     try {
-      const { image_url } = await api.uploadClubImage(file);
-      if (idx !== null) {
-        setActivityPhotos((prev) => prev.map((p, i) => (i === idx ? image_url : p)));
-      } else {
-        setActivityPhotos((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = image_url;
-          return next;
-        });
+      if (!formExists) {
+        await api.createClubForm(selectedClubId, `${clubName || "동아리"} 지원서`);
+        setFormExists(true);
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.");
-      if (idx !== null) {
-        setActivityPhotos((prev) => prev.filter((_, i) => i !== idx));
-      } else {
-        setActivityPhotos((prev) => prev.slice(0, -1));
-      }
-    } finally {
-      setIsUploadingActivity(false);
-      replacingPhotoIdxRef.current = null;
-    }
-  };
-
-  const handleSaveClub = async () => {
-    if (!clubName.trim()) {
-      toast.error("동아리명을 입력해주세요.");
-      return;
-    }
-    setIsSavingClub(true);
-    try {
-      const tagObjects = tags.map((t) => ({ tag_key: t.replace(/^#/, ""), tag_value: t }));
-      if (presidentClub) {
-        const updated = await api.updateClub(presidentClub.id, {
-          name: clubName.trim(),
-          club_type: clubType || undefined,
-          division: clubDivision || undefined,
-          activity_purpose: recruitmentTarget || undefined,
-          tags: tagObjects,
-          image_url: coverImageUrl || undefined,
-          is_recruiting: isRecruiting,
-          recruit_start: recruitStart || undefined,
-          recruit_end: recruitEnd || undefined,
-        });
-        setPresidentClub(updated);
-        toast.success("동아리 정보가 저장되었습니다.");
-      } else {
-        const created = await api.createClub({
-          name: clubName.trim(),
-          club_type: clubType || undefined,
-          division: clubDivision || undefined,
-          tags: tagObjects,
-          image_url: coverImageUrl || undefined,
-          activity_images: activityPhotos.length > 0 ? activityPhotos : undefined,
-          is_recruiting: isRecruiting,
-          recruit_start: recruitStart || undefined,
-          recruit_end: recruitEnd || undefined,
-        });
-        setPresidentClub(created);
-        toast.success("동아리가 등록되었습니다.");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "저장에 실패했습니다.");
-    } finally {
-      setIsSavingClub(false);
-    }
-  };
-
-  const handleAddTag = () => {
-    const t = tagInput.trim();
-    if (!t) return;
-    const formatted = t.startsWith("#") ? t : `#${t}`;
-    if (tags.length >= 5) {
-      toast.error("태그는 최대 5개까지 추가할 수 있습니다.");
-      return;
-    }
-    if (!tags.includes(formatted)) {
-      setTags(prev => [...prev, formatted]);
-    }
-    setTagInput("");
-    setIsTagInputVisible(false);
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(prev => prev.filter(t => t !== tag));
-  };
-
-  const handleCreateForm = async () => {
-    if (!presidentClub) return;
-    setIsSavingForm(true);
-    try {
-      const form = await api.createClubForm(presidentClub.id, `${presidentClub.name} 신청폼`);
-      setFormId(form.id);
-      setFormQuestions(form.questions);
-      toast.success("신청폼이 생성되었습니다.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "폼 생성에 실패했습니다.");
-    } finally {
-      setIsSavingForm(false);
-    }
-  };
-
-  const handleAddQuestion = async () => {
-    if (!presidentClub || !newQuestionText.trim()) {
-      toast.error("문항 내용을 입력해주세요.");
-      return;
-    }
-    if (!formId) {
-      toast.error("먼저 신청폼을 생성해주세요.");
-      return;
-    }
-    const isMultipleChoice = newQuestionType.includes("객관식");
-    const normalizedOptions = newQuestionOptions
-      .map((option) => option.trim())
-      .filter(Boolean);
-    if (isMultipleChoice && normalizedOptions.length < 2) {
-      toast.error("객관식 문항에는 선택지를 2개 이상 입력해주세요.");
-      return;
-    }
-    if (isMultipleChoice && new Set(normalizedOptions).size !== normalizedOptions.length) {
-      toast.error("객관식 선택지는 서로 다르게 입력해주세요.");
-      return;
-    }
-    setIsSavingForm(true);
-    try {
-      const q = await api.addFormQuestion(presidentClub.id, {
-        question_text: newQuestionText.trim(),
-        question_type: newQuestionType,
-        is_required: newQuestionRequired,
-        options: isMultipleChoice ? normalizedOptions : null,
+      const created = await api.addFormQuestion(selectedClubId, {
+        question_text: newTitle.trim(),
+        question_type: QUESTION_TYPE_TO_API[newType],
+        is_required: newRequired,
+        order_index: questions.length,
+        options: isChoice ? filledOptions : null,
       });
-      setFormQuestions(prev => [...prev, q]);
-      setNewQuestionText("");
-      setNewQuestionType("단답형");
-      setNewQuestionRequired(true);
-      setNewQuestionOptions(["", ""]);
-      setIsAddQuestionOpen(false);
-      toast.success("문항이 추가되었습니다.");
+      setQuestions((prev) => [...prev, {
+        id: created.id,
+        title: created.question_text,
+        type: questionTypeFromApi(created.question_type),
+        required: created.is_required,
+        options: created.options ?? undefined,
+      }]);
+      setIsAddOpen(false);
+      toast.success("문항을 추가했습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "문항 추가에 실패했습니다.");
-    } finally {
-      setIsSavingForm(false);
     }
   };
 
-  const handleDeleteQuestion = async (questionId: string) => {
-    if (!presidentClub) return;
+  const removeQuestion = async (id: string) => {
+    if (!selectedClubId) return;
     try {
-      await api.deleteFormQuestion(presidentClub.id, questionId);
-      setFormQuestions(prev => prev.filter(q => q.id !== questionId));
-      toast.success("문항이 삭제되었습니다.");
+      await api.deleteFormQuestion(selectedClubId, id);
+      setQuestions((prev) => prev.filter((question) => question.id !== id));
+      toast.success("문항을 삭제했습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "문항 삭제에 실패했습니다.");
     }
   };
 
-  const handleToggleRequired = async (questionId: string, currentValue: boolean) => {
-    if (!presidentClub) return;
+  const toggleRequired = async (id: string) => {
+    if (!selectedClubId) return;
+    const question = questions.find((item) => item.id === id);
+    if (!question) return;
     try {
-      const updated = await api.updateFormQuestion(presidentClub.id, questionId, {
-        is_required: !currentValue,
-      });
-      setFormQuestions(prev => prev.map(q => q.id === questionId ? updated : q));
+      const updated = await api.updateFormQuestion(selectedClubId, id, { is_required: !question.required });
+      setQuestions((prev) => prev.map((item) => item.id === id ? { ...item, required: updated.is_required } : item));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "수정에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "문항 수정에 실패했습니다.");
     }
   };
 
-  const handleStatusUpdate = async (appId: string, status: "pending" | "passed" | "failed") => {
-    if (!presidentClub) return;
-    setUpdatingStatusId(appId);
-    try {
-      const updated = await api.updateApplicationStatus(presidentClub.id, appId, status);
-      setApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, status: updated.status } : a)));
-      if (selectedApp?.id === appId) {
-        setSelectedApp((prev) => prev ? { ...prev, status: updated.status } : prev);
-      }
-      toast.success(`상태가 "${STATUS_LABEL[status]}"(으)로 변경되었습니다.`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "상태 변경에 실패했습니다.");
-    } finally {
-      setUpdatingStatusId(null);
-    }
+  /** 상태 변경 확인 다이얼로그 대상 (null이면 닫힘) */
+  const [statusEdit, setStatusEdit] = useState<{
+    applicant: SubmittedApplication;
+    nextStatus: ApplicationStatusValue;
+  } | null>(null);
+
+  const openStatusEdit = (
+    applicant: SubmittedApplication,
+    nextStatus: ApplicationStatusValue,
+  ) => {
+    setStatusEdit({ applicant, nextStatus });
   };
 
-  const handleViewApplication = async (appId: string) => {
-    if (!presidentClub) return;
-    try {
-      const detail = await api.getClubApplication(presidentClub.id, appId);
-      setSelectedApp(detail);
-      setIsAppDetailOpen(true);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "지원서를 불러오는데 실패했습니다.");
-    }
+  const closeStatusEdit = () => {
+    setStatusEdit(null);
   };
 
-  const handleSavePage = async () => {
-    if (!presidentClub) return;
-    setIsSavingPage(true);
-    try {
-      const updated = await api.updateClub(presidentClub.id, {
-        description: clubDetailDescription,
-        activity_images: activityPhotos,
-      });
-      setPresidentClub(updated);
-      toast.success("페이지 설정이 저장되었습니다.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "저장에 실패했습니다.");
-    } finally {
-      setIsSavingPage(false);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (!presidentClub || !newPostTitle.trim() || !newPostContent.trim()) {
-      toast.error("제목과 내용을 입력해주세요.");
+  const confirmStatusChange = async () => {
+    if (!statusEdit) return;
+    const { applicant, nextStatus } = statusEdit;
+    const apiStatus = statusToApi(nextStatus);
+    if (!selectedClubId || !apiStatus) {
+      closeStatusEdit();
       return;
     }
-    setIsSubmittingPost(true);
     try {
-      await api.createPost(presidentClub.id, {
-        title: newPostTitle.trim(),
-        content: newPostContent.trim(),
+      await api.updateClubApplicationStatus(selectedClubId, applicant.id, apiStatus);
+      setApplicants((prev) => prev.map((row) => row.id === applicant.id ? { ...row, status: nextStatus } : row));
+      closeStatusEdit();
+      toast.success("신청서 상태를 변경했습니다.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "상태 변경에 실패했습니다.");
+    }
+  };
+
+  const saveClub = async () => {
+    if (!selectedClubId || !clubName.trim() || !clubCategory) {
+      toast.error("동아리명과 카테고리를 입력해주세요.");
+      return;
+    }
+    const contact = clubContact.trim();
+    try {
+      await api.updateClub(selectedClubId, {
+        name: clubName.trim(),
+        division: clubCategory,
+        description: clubDetailDescription.trim() || clubTagline.trim(),
+        contact_email: contact.includes("@") ? contact : null,
+        contact_phone: contact && !contact.includes("@") ? contact : null,
+        open_chat_url: snsLinks.find((link) => link.url.trim())?.url.trim() ?? null,
+        image_url: clubImageUrl || null,
+        activity_images: activityPhotos.map((photo) => photo.url).filter(Boolean),
+        tags: tags.map((tag) => ({ tag_key: "custom", tag_value: tag.replace(/^#/, "") })),
       });
-      toast.success("게시글이 등록되었습니다.");
-      setIsWritePostOpen(false);
-      setNewPostTitle("");
-      setNewPostContent("");
-      loadPosts(presidentClub.id);
+      toast.success("동아리 정보를 저장했습니다.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "동아리 정보 저장에 실패했습니다.");
+    }
+  };
+
+  const uploadImage = async (file: File, target: "cover" | "activity") => {
+    try {
+      const url = await api.uploadClubImage(file);
+      if (target === "cover") setClubImageUrl(url);
+      else setActivityPhotos((prev) => [...prev, { id: prev.reduce((max, item) => Math.max(max, item.id), 0) + 1, caption: "", url }]);
+      toast.success("이미지를 업로드했습니다.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.");
+    }
+  };
+
+  const openApplicationDetail = async (applicationId: string) => {
+    if (!selectedClubId) return;
+    try {
+      setSelectedApplication(await api.getClubApplication(selectedClubId, applicationId));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "신청서 상세를 불러오지 못했습니다.");
+    }
+  };
+
+  const createCommunityPost = async () => {
+    if (!selectedClubId || !postTitle.trim() || !postContent.trim()) return;
+    try {
+      await api.createClubPost(selectedClubId, postTitle.trim(), postContent.trim());
+      setCommunityPosts(await api.getClubPosts(selectedClubId));
+      setPostTitle("");
+      setPostContent("");
+      setIsPostDialogOpen(false);
+      toast.success("게시글을 등록했습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "게시글 등록에 실패했습니다.");
-    } finally {
-      setIsSubmittingPost(false);
     }
   };
 
-  const handleDeletePost = async (postId: number | string) => {
-    if (!presidentClub) return;
-    if (!confirm("게시글을 삭제하시겠습니까?")) return;
+  const deleteCommunityPosts = async (postIds: string[]) => {
+    if (!selectedClubId || postIds.length === 0) return;
     try {
-      await api.deletePost(presidentClub.id, postId);
-      setPosts(prev => prev.filter(p => p.id !== postId));
-      toast.success("게시글이 삭제되었습니다.");
+      await Promise.all(postIds.map((postId) => api.deleteClubPost(selectedClubId, postId)));
+      setCommunityPosts((prev) => prev.filter((post) => !postIds.includes(post.id)));
+      setSelectedPostIds([]);
+      toast.success("게시글을 삭제했습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "삭제에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "게시글 삭제에 실패했습니다.");
     }
   };
 
-  const handleToggleNotice = async (postId: number | string) => {
-    if (!presidentClub) return;
+  const toggleSelectedNotices = async () => {
+    if (!selectedClubId || selectedPostIds.length === 0) return;
     try {
-      const updated = await api.toggleNotice(presidentClub.id, postId);
-      setPosts(prev => prev.map(p => p.id === postId ? updated : p));
+      await Promise.all(selectedPostIds.map((postId) => api.toggleClubPostNotice(selectedClubId, postId)));
+      setCommunityPosts(await api.getClubPosts(selectedClubId));
+      setSelectedPostIds([]);
+      toast.success("공지 상태를 변경했습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "공지 설정에 실패했습니다.");
-    }
-  };
-
-  const filteredApplications = applications.filter(app => {
-    const q = appSearchQuery.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      app.user_name?.toLowerCase().includes(q) ||
-      String(app.user_student_id).includes(q)
-    );
-  });
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      return new Date(dateStr).toLocaleDateString("ko-KR").replace(/\. /g, ".").replace(/\.$/, "");
-    } catch {
-      return dateStr;
+      toast.error(error instanceof Error ? error.message : "공지 상태 변경에 실패했습니다.");
     }
   };
 
   const renderMainContent = () => {
-    if (isClubLoading) {
-      return (
-        <Card className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm flex items-center justify-center">
-          <div className="text-muted-foreground">로딩 중...</div>
-        </Card>
-      );
-    }
-
     if (activeTab === "club-register") {
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -589,136 +573,45 @@ export function AdminPage() {
             동아리 정보
           </h2>
           <div className="mt-0 border-t border-slate-200 pt-5">
-            {/* Row 1: 동아리명 + 분과 */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <h3 className="text-base font-bold text-slate-800">
                   동아리명 <span className="text-red-500">*</span>
                 </h3>
                 <Input
-                  placeholder="예: CPR"
-                  className="mt-3 h-10 bg-white"
                   value={clubName}
                   onChange={(e) => setClubName(e.target.value)}
+                  placeholder="예: CPR"
+                  className="mt-3 h-10 bg-white"
                 />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800">분과</h3>
-                <Popover open={divisionOpen} onOpenChange={setDivisionOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={divisionOpen}
-                      className={cn(
-                        "mt-3 h-10 w-full justify-between bg-white font-normal",
-                        !clubDivision && "text-muted-foreground",
-                      )}
-                    >
-                      {clubDivision || "기타"}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-1" align="start">
+                <h3 id="club-category-label" className="text-base font-bold text-slate-800">
+                  카테고리 <span className="text-red-500">*</span>
+                </h3>
+                <div className="relative mt-3">
+                  <select
+                    id="club-category"
+                    aria-labelledby="club-category-label"
+                    value={clubCategory}
+                    onChange={(e) => setClubCategory(e.target.value)}
+                    className={cn(
+                      "h-10 w-full appearance-none rounded-md border border-input bg-white px-3 pr-10 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      !clubCategory && "text-muted-foreground",
+                    )}
+                  >
+                    <option value="" disabled>
+                      분과를 선택해주세요
+                    </option>
                     {CLUB_DIVISION_KEYS.map((division) => (
-                      <button
-                        key={division}
-                        type="button"
-                        onClick={() => {
-                          setClubDivision(division);
-                          setDivisionOpen(false);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                          clubDivision === division && "bg-accent text-accent-foreground font-medium",
-                        )}
-                      >
-                        <Check
-                          className={cn(
-                            "h-4 w-4 shrink-0",
-                            clubDivision === division ? "opacity-100 text-primary" : "opacity-0",
-                          )}
-                        />
+                      <option key={division} value={division} className="text-foreground">
                         {division}
-                      </button>
+                      </option>
                     ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            {/* Row 2: 동아리 구분 + 모집 기간 */}
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <h3 className="text-base font-bold text-slate-800">동아리 구분</h3>
-                <div className="mt-3 flex gap-3">
-                  {(["central", "department"] as const).map((type) => {
-                    const label = type === "central" ? "중앙동아리" : "학과동아리";
-                    const selected = clubType === type;
-                    return (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setClubType(type)}
-                        className={cn(
-                          "flex h-10 flex-1 items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors",
-                          selected
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex h-4 w-4 items-center justify-center rounded-full border-2 transition-colors",
-                            selected ? "border-primary" : "border-muted-foreground/50",
-                          )}
-                        >
-                          {selected && (
-                            <span className="h-2 w-2 rounded-full bg-primary" />
-                          )}
-                        </span>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">모집 기간</h3>
-                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                    <div
-                      onClick={() => setIsRecruiting(v => !v)}
-                      className={cn(
-                        "relative h-5 w-9 rounded-full transition-colors",
-                        isRecruiting ? "bg-primary" : "bg-slate-200"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-                          isRecruiting ? "translate-x-4" : "translate-x-0"
-                        )}
-                      />
-                    </div>
-                    <span className="text-sm text-slate-600">
-                      {isRecruiting ? "모집 중" : "마감"}
-                    </span>
-                  </label>
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={recruitStart}
-                    onChange={(e) => setRecruitStart(e.target.value)}
-                    className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary min-w-0"
-                  />
-                  <span className="text-slate-400 shrink-0">~</span>
-                  <input
-                    type="date"
-                    value={recruitEnd}
-                    onChange={(e) => setRecruitEnd(e.target.value)}
-                    className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary min-w-0"
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden
                   />
                 </div>
               </div>
@@ -727,59 +620,27 @@ export function AdminPage() {
             <div className="mt-5">
               <h3 className="text-base font-bold text-slate-800">
                 대표 이미지{" "}
-                <span className="text-sm font-medium text-slate-400">(권장: 1920×1080px · jpg/png/webp/gif · 최대 5MB)</span>
+                <span className="text-sm font-medium text-slate-400">(권장: 1920×1080px)</span>
               </h3>
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={handleCoverFileChange}
-              />
               <button
                 type="button"
-                disabled={isUploadingCover}
-                onClick={() => coverInputRef.current?.click()}
-                className="relative mt-3 flex h-44 w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-60"
+                onClick={() => imageInputRef.current?.click()}
+                className="mt-3 flex h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100"
               >
-                {coverLocalPreview ? (
-                  <>
-                    <img
-                      src={coverLocalPreview}
-                      alt="대표 이미지 미리보기"
-                      className="absolute inset-0 h-full w-full object-cover rounded-xl"
-                    />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-                      {isUploadingCover ? (
-                        <Loader2 className="size-6 animate-spin text-white" />
-                      ) : (
-                        <>
-                          <ImageIcon className="mb-1 size-6 text-white" />
-                          <span className="text-xs font-medium text-white">클릭하여 변경</span>
-                        </>
-                      )}
-                    </div>
-                  </>
-                ) : isUploadingCover ? (
-                  <Loader2 className="size-8 animate-spin text-slate-400" />
-                ) : (
-                  <>
-                    <ImageIcon className="mb-2 size-8 text-slate-400" />
-                    <span className="text-sm font-medium">클릭하여 이미지 업로드</span>
-                  </>
-                )}
+                {clubImageUrl ? <img src={clubImageUrl} alt="동아리 대표" className="h-full w-full rounded-xl object-cover" /> : <><ImageIcon className="mb-2 size-8 text-slate-400" /><span className="text-sm font-medium">클릭하여 이미지 업로드</span></>}
               </button>
+              <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, "cover"); event.target.value = ""; }} />
             </div>
 
             <div className="mt-5">
               <h3 className="text-base font-bold text-slate-800">
-                모집 대상 및 자격 요건 <span className="text-red-500">*</span>
+                동아리 한줄 소개 <span className="text-red-500">*</span>
               </h3>
               <Textarea
-                placeholder="지원 가능한 대상과 자격 요건을 입력해주세요."
+                value={clubTagline}
+                onChange={(e) => setClubTagline(e.target.value)}
+                placeholder="동아리를 소개하는 글을 입력해주세요."
                 className="mt-3 min-h-[84px] resize-none bg-white"
-                value={recruitmentTarget}
-                onChange={(e) => setRecruitmentTarget(e.target.value)}
               />
             </div>
 
@@ -796,57 +657,109 @@ export function AdminPage() {
                     {tag}
                     <button
                       type="button"
-                      className="inline-flex size-4 items-center justify-center rounded-full bg-[#D9E6FB] text-[#1B4A8F]"
+                      onClick={() => removeTag(tag)}
+                      className="inline-flex size-4 items-center justify-center rounded-full bg-[#D9E6FB] text-[#1B4A8F] transition-colors hover:bg-[#C3D8F7]"
                       aria-label={`${tag} 삭제`}
-                      onClick={() => handleRemoveTag(tag)}
                     >
                       <X className="size-3" />
                     </button>
                   </span>
                 ))}
-                {isTagInputVisible ? (
-                  <div className="inline-flex items-center gap-1">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.preventDefault(); handleAddTag(); }
-                        if (e.key === "Escape") { setIsTagInputVisible(false); setTagInput(""); }
-                      }}
-                      placeholder="#태그"
-                      className="h-8 w-24 rounded-full border border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary"
-                      autoFocus
-                    />
+
+                {/* 마지막: 추가 입력 또는 추가 버튼 */}
+                {isAddingTag ? (
+                  <input
+                    ref={tagInputRef}
+                    autoFocus
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    onBlur={commitTag}
+                    placeholder="입력 후 Enter"
+                    maxLength={20}
+                    aria-label="태그 직접 입력"
+                    className="h-8 w-36 rounded-full border border-primary bg-white px-3 text-sm font-semibold text-slate-700 outline-none ring-2 ring-primary/30 placeholder:font-normal placeholder:text-slate-400"
+                  />
+                ) : (
+                  tags.length < MAX_TAGS && (
                     <button
                       type="button"
-                      onClick={handleAddTag}
-                      className="inline-flex h-8 items-center gap-1 rounded-full bg-primary px-3 text-sm font-semibold text-white"
+                      onClick={() => {
+                        setNewTag("");
+                        setIsAddingTag(true);
+                      }}
+                      className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
                     >
-                      추가
+                      <Plus className="size-3.5" />
+                      태그 추가
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-                    onClick={() => setIsTagInputVisible(true)}
-                  >
-                    <Plus className="size-3.5" />
-                    태그 추가
-                  </button>
+                  )
                 )}
               </div>
             </section>
 
+            <section className="mt-5">
+              <h3 className="text-base font-bold text-slate-800">
+                연락처 · SNS 링크
+              </h3>
+
+              <div className="mt-3 flex items-center gap-2">
+                <Input
+                  value={clubContact}
+                  onChange={(e) => setClubContact(e.target.value)}
+                  placeholder="이메일 또는 전화번호 (예: dreamlounge@cju.ac.kr)"
+                  className="h-10 flex-1 bg-white"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addSnsLink}
+                  className="h-10 shrink-0"
+                >
+                  <Plus className="mr-1 size-4" />
+                  링크 추가
+                </Button>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2">
+                {snsLinks.map((link) => (
+                  <div key={link.id} className="flex items-center gap-2">
+                    <Input
+                      value={link.label}
+                      onChange={(e) =>
+                        updateSnsLink(link.id, "label", e.target.value)
+                      }
+                      placeholder="예: 인스타그램"
+                      aria-label="링크 이름"
+                      className="h-10 w-32 shrink-0 bg-white sm:w-40"
+                    />
+                    <Input
+                      value={link.url}
+                      onChange={(e) =>
+                        updateSnsLink(link.id, "url", e.target.value)
+                      }
+                      onBlur={() => normalizeSnsLinkUrl(link.id)}
+                      placeholder="instagram.com/dreamlounge"
+                      aria-label="링크 주소"
+                      className="h-10 flex-1 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSnsLink(link.id)}
+                      aria-label="링크 삭제"
+                      className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <div className="mt-8 flex justify-end">
-              <Button
-                className="h-10 w-full rounded-lg px-5 sm:w-auto"
-                onClick={handleSaveClub}
-                disabled={isSavingClub}
-              >
+              <Button onClick={() => void saveClub()} className="h-10 w-full rounded-lg px-5 sm:w-auto">
                 <Save className="mr-1 size-4" />
-                {isSavingClub ? "저장 중..." : presidentClub ? "저장" : "동아리 등록"}
+                저장
               </Button>
             </div>
           </div>
@@ -855,110 +768,86 @@ export function AdminPage() {
     }
 
     if (activeTab === "application-form") {
-      if (!presidentClub) {
-        return (
-          <Card className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-muted-foreground">먼저 동아리를 등록해주세요.</p>
-          </Card>
-        );
-      }
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
               신청폼 설정
             </h2>
-            {formId ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button
+                variant="outline"
+                onClick={() => setIsPreviewOpen(true)}
+                className="h-9 w-full rounded-lg px-4 sm:w-auto"
+              >
+                <Eye className="mr-1 size-4" />
+                미리보기
+              </Button>
+              <Button
+                onClick={openAddQuestion}
                 className="h-9 w-full rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800 sm:w-auto"
-                onClick={() => setIsAddQuestionOpen(true)}
               >
                 <CirclePlus className="mr-1 size-4" />새 문항 추가
               </Button>
-            ) : (
-              <Button
-                className="h-9 w-full rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800 sm:w-auto"
-                onClick={handleCreateForm}
-                disabled={isSavingForm}
-              >
-                {isSavingForm ? "생성 중..." : "신청폼 생성"}
-              </Button>
-            )}
+            </div>
           </div>
 
           <div className="mt-0 border-t border-slate-200 pt-5">
-            {isFormLoading ? (
-              <div className="py-8 text-center text-muted-foreground">로딩 중...</div>
-            ) : formQuestions.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                {formId ? "등록된 문항이 없습니다. 새 문항을 추가해주세요." : "신청폼을 먼저 생성해주세요."}
-              </div>
-            ) : (
-              <ul className="space-y-4">
-                {formQuestions.map((question, index) => (
-                  <li
-                    key={question.id}
-                    className="rounded-xl border border-slate-200 bg-white px-5 py-4"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex items-center gap-3">
-                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
-                          {index + 1}
-                        </span>
-                        <p className="text-sm font-semibold text-foreground">
-                          {question.question_text}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3 pt-1 sm:justify-end shrink-0">
-                        <span className="inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
-                          {question.question_type}
-                        </span>
-                        <label className="inline-flex cursor-pointer items-center gap-2 align-bottom text-xs font-semibold text-slate-700">
-                          <input
-                            type="checkbox"
-                            className="size-4 rounded border-slate-300"
-                            checked={question.is_required}
-                            onChange={() => handleToggleRequired(question.id, question.is_required)}
-                          />
-                          필수 응답
-                        </label>
-                        <button
-                          type="button"
-                          className="text-slate-400 transition-colors hover:text-slate-600"
-                          aria-label="문항 삭제"
-                          onClick={() => handleDeleteQuestion(question.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
+            <ul className="space-y-4">
+              {questions.map((question, index) => (
+                <li
+                  key={question.id}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-4"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex items-center gap-3">
+                      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
+                        {index + 1}
+                      </span>
+                      <p className="text-sm font-semibold text-foreground">
+                        {question.title}
+                      </p>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
 
-            {formId && (
-              <div className="mt-8 flex justify-end">
-                <Button className="h-10 w-full rounded-lg px-5 sm:w-auto">
-                  <Save className="mr-1 size-4" />
-                  변경사항 저장
-                </Button>
-              </div>
-            )}
+                    <div className="flex items-center gap-3 pt-1 sm:justify-end shrink-0">
+                      <span className="inline-flex rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
+                        {question.type}
+                      </span>
+                      <label className="inline-flex cursor-pointer items-center gap-2 align-bottom text-xs font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={question.required}
+                          onChange={() => void toggleRequired(question.id)}
+                          className="size-4 rounded border-slate-300"
+                        />
+                        필수 응답
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => void removeQuestion(question.id)}
+                        className="text-slate-400 transition-colors hover:text-destructive"
+                        aria-label={`${question.title} 문항 삭제`}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 flex justify-end">
+              <Button onClick={() => toast.success("변경사항이 저장되었습니다.")} className="h-10 w-full rounded-lg px-5 sm:w-auto">
+                <Save className="mr-1 size-4" />
+                변경사항 저장
+              </Button>
+            </div>
           </div>
         </Card>
       );
     }
 
     if (activeTab === "submitted-applications") {
-      if (!presidentClub) {
-        return (
-          <Card className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-muted-foreground">먼저 동아리를 등록해주세요.</p>
-          </Card>
-        );
-      }
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -967,9 +856,8 @@ export function AdminPage() {
                 신청서 관리
               </h2>
               <span className="rounded-full bg-[#EEF4FF] px-3 py-1 text-lg font-extrabold text-[#1F4F95]">
-                총 {filteredApplications.length}명
+                총 {applicants.length}명
               </span>
-              <span className="text-sm text-slate-400">{presidentClub.name}</span>
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
@@ -977,17 +865,16 @@ export function AdminPage() {
                 <Search className="size-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="이름, 학번 검색"
+                  placeholder="이름, 학번, 학과 검색"
+                  value={applicantQuery}
+                  onChange={(event) => setApplicantQuery(event.target.value)}
                   className="h-full w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                  value={appSearchQuery}
-                  onChange={(e) => setAppSearchQuery(e.target.value)}
                 />
               </label>
               <button
                 type="button"
-                onClick={() => loadApplications(presidentClub.id)}
                 className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 sm:w-11"
-                aria-label="새로고침"
+                aria-label="필터"
               >
                 <SlidersHorizontal className="size-4" />
               </button>
@@ -995,115 +882,181 @@ export function AdminPage() {
           </div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-            {isAppsLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="size-6 animate-spin text-slate-400" />
-              </div>
-            ) : filteredApplications.length === 0 ? (
-              <div className="py-16 text-center text-sm text-slate-400">
-                {appSearchQuery ? "검색 결과가 없습니다." : "제출된 신청서가 없습니다."}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-[560px] w-full table-fixed">
-                  <thead className="bg-[#F8FAFD]">
-                    <tr className="h-12 text-left text-sm font-semibold text-slate-500">
-                      <th className="w-[56px] px-4">NO.</th>
-                      <th className="w-[180px] px-4">이름 / 학번</th>
-                      <th className="w-[130px] px-4">지원일시</th>
-                      <th className="w-[140px] px-4">상태</th>
-                      <th className="w-[100px] px-4 text-center">상세보기</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    {filteredApplications.map((applicant, idx) => (
-                      <tr
-                        key={applicant.id}
-                        className="h-[72px] border-t border-slate-100 text-sm text-slate-700 first:border-t-0"
-                      >
-                        <td className="px-4 text-sm font-semibold text-slate-600">{idx + 1}</td>
-                        <td className="px-4">
-                          <div className="text-sm font-bold leading-tight text-slate-900">
-                            {applicant.user_name}
-                          </div>
-                          <div className="mt-1 text-xs font-medium text-slate-500">
-                            {applicant.user_student_id}
-                          </div>
-                        </td>
-                        <td className="px-4 text-sm font-semibold text-slate-500">
-                          {formatDate(applicant.submitted_at || "")}
-                        </td>
-                        <td className="px-4">
-                          {applicant.status === "passed" || applicant.status === "failed" ? (
-                            <span className={cn("inline-flex rounded-full px-3 py-1 text-xs font-bold", STATUS_CLASS[applicant.status])}>
-                              {STATUS_LABEL[applicant.status]}
-                            </span>
-                          ) : (
-                            <div className="relative inline-flex">
-                              <select
-                                value={applicant.status}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val !== "submitted") {
-                                    handleStatusUpdate(applicant.id, val as "pending" | "passed" | "failed");
-                                  }
-                                }}
-                                disabled={updatingStatusId === applicant.id}
-                                aria-label={`${applicant.user_name} 상태 변경`}
-                                className={cn(
-                                  "h-7 cursor-pointer appearance-none rounded-full border-transparent pl-3 pr-7 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-60",
-                                  STATUS_SELECT_CLASS[applicant.status] ?? "bg-slate-100 text-slate-600",
-                                )}
-                              >
-                                <option value="submitted">{STATUS_LABEL.submitted}</option>
-                                <option value="pending">{STATUS_LABEL.pending}</option>
-                                <option value="passed">{STATUS_LABEL.passed}</option>
-                                <option value="failed">{STATUS_LABEL.failed}</option>
-                              </select>
-                              {updatingStatusId === applicant.id ? (
-                                <Loader2 className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 animate-spin" />
-                              ) : (
-                                <ChevronDown className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2" aria-hidden />
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 text-center">
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#EDF3FF] px-3 text-sm font-semibold text-[#2B63B4] transition-colors hover:bg-[#E2EDFF]"
-                            onClick={() => handleViewApplication(applicant.id)}
+            <div className="overflow-x-auto">
+              <table className="min-w-[760px] w-full table-fixed">
+              <thead className="bg-[#F8FAFD]">
+                <tr className="h-12 text-left text-sm font-semibold text-slate-500">
+                  <th className="w-[72px] px-4">NO.</th>
+                  <th className="w-[160px] px-4">이름 / 학번</th>
+                  <th className="w-[160px] px-4">학과</th>
+                  <th className="w-[130px] px-4">지원일시</th>
+                  <th className="w-[120px] px-4">상태</th>
+                  <th className="w-[130px] px-4 text-center">상세보기</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {filteredApplicants.map((applicant, index) => {
+                  return (
+                    <tr
+                      key={applicant.id}
+                      className="h-[88px] border-t border-slate-100 text-sm text-slate-700 first:border-t-0"
+                    >
+                      <td className="px-4 text-sm font-semibold text-slate-600">
+                        {index + 1}
+                      </td>
+                      <td className="px-4">
+                        <div className="text-sm font-bold leading-tight text-slate-900">
+                          {applicant.name}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-500">
+                          {applicant.studentId}
+                        </div>
+                      </td>
+                      <td className="px-4 text-sm font-semibold text-slate-700">
+                        {applicant.major}
+                      </td>
+                      <td className="px-4 text-sm font-semibold text-slate-500">
+                        {applicant.submittedAt}
+                      </td>
+                      <td className="px-4">
+                        <div className="relative inline-flex">
+                          <select
+                            value={applicant.status}
+                            onChange={(e) =>
+                              openStatusEdit(
+                                applicant,
+                                e.target.value as ApplicationStatusValue,
+                              )
+                            }
+                            aria-label={`${applicant.name} 상태 변경`}
+                            className={cn(
+                              "h-7 cursor-pointer appearance-none rounded-full border-transparent pl-3 pr-7 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                              STATUS_SELECT_CLASS[applicant.status],
+                            )}
                           >
-                            보기
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            {APPLICATION_STATUSES.map((status) => (
+                              <option key={status} value={status} className="bg-white text-slate-700">
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2"
+                            aria-hidden
+                          />
+                        </div>
+
+                      </td>
+                      <td className="px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => void openApplicationDetail(applicant.id)}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-[#EDF3FF] px-4 text-sm font-semibold text-[#2B63B4] transition-colors hover:bg-[#E2EDFF]"
+                        >
+                          보기
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-medium text-slate-500">전체 {applicants.length}명 중 {filteredApplicants.length}명</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-400"
+                >
+                  이전
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-bold text-[#2B63B4]"
+                >
+                  1
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
+                >
+                  2
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-500"
+                >
+                  3
+                </button>
+                <button
+                  type="button"
+                  className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700"
+                >
+                  다음
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </Card>
       );
     }
 
     if (activeTab === "page-tags") {
-      if (!presidentClub) {
-        return (
-          <Card className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-muted-foreground">먼저 동아리를 등록해주세요.</p>
-          </Card>
-        );
-      }
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-2xl align-bottom font-bold text-foreground">
-            상세페이지 설정
-          </h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-2xl align-bottom font-bold text-foreground">
+              상세페이지 설정
+            </h2>
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailPreviewOpen(true)}
+              className="h-9 w-full rounded-lg px-4 sm:w-auto"
+            >
+              <Eye className="mr-1 size-4" />
+              미리보기
+            </Button>
+          </div>
 
           <div className="mt-0 border-t border-slate-200 pt-6">
             <section>
+              <h3 className="flex items-center gap-1.5 text-base font-bold text-slate-800">
+                상단 배너 이미지
+                <span className="text-sm font-medium text-slate-400">
+                  (권장: 1500×500px)
+                </span>
+                <span className="group relative inline-flex">
+                  <button
+                    type="button"
+                    aria-label="배너 이미지 안내"
+                    aria-describedby="banner-crop-tip"
+                    className="inline-flex text-slate-400 transition-colors hover:text-slate-600 focus-visible:text-slate-600 focus-visible:outline-none"
+                  >
+                    <Info className="size-4" />
+                  </button>
+                  <span
+                    id="banner-crop-tip"
+                    role="tooltip"
+                    className="pointer-events-none absolute top-full left-1/2 z-20 mt-2 w-60 -translate-x-1/2 rounded-lg bg-slate-800 px-3 py-2 text-xs font-normal leading-relaxed text-white opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                  >
+                    화면 너비에 따라 좌우나 위아래가 잘릴 수 있습니다. 로고와
+                    문구는 가운데에 배치해주세요.
+                  </span>
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                className="mt-3 flex aspect-[3/1] w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100"
+              >
+                {clubImageUrl ? <img src={clubImageUrl} alt="상단 배너" className="h-full w-full rounded-xl object-cover" /> : <><ImageIcon className="mb-2 size-8 text-slate-400" /><span className="text-sm font-medium">클릭하여 이미지 업로드</span><span className="mt-1 text-xs text-slate-400">JPG, PNG · 최대 5MB</span></>}
+              </button>
+              <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, "cover"); event.target.value = ""; }} />
+            </section>
+
+            <section className="mt-6">
               <h3 className="text-base font-bold text-slate-800">
                 동아리 상세 설명
               </h3>
@@ -1151,80 +1104,54 @@ export function AdminPage() {
             </section>
 
             <section className="mt-6">
-              <h3 className="text-base font-bold text-slate-800">
-                활동 사진 추가
-                <span className="ml-2 text-sm font-medium text-slate-400">(최대 5장)</span>
-              </h3>
-              <input
-                ref={activityInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={handleActivityFileChange}
-              />
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                {activityPhotos.map((url, idx) => (
+              <h3 className="text-base font-bold text-slate-800">활동 사진</h3>
+              <div className="mt-3 flex flex-wrap items-start gap-3">
+                {activityPhotos.map((photo, index) => (
                   <div
-                    key={idx}
-                    className="group relative h-[96px] w-[96px] overflow-hidden rounded-xl border border-slate-200 sm:h-[116px] sm:w-[116px]"
+                    key={photo.id}
+                    className="flex w-[120px] flex-col gap-1.5 sm:w-[140px]"
                   >
-                    <img src={url} alt={`활동 사진 ${idx + 1}`} className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="relative">
+                      <img src={photo.url} alt={photo.caption || `활동 사진 ${index + 1}`} className="h-[96px] w-full rounded-xl border border-slate-200 object-cover sm:h-[116px]" />
                       <button
                         type="button"
-                        onClick={() => {
-                          replacingPhotoIdxRef.current = idx;
-                          activityInputRef.current?.click();
-                        }}
-                        className="inline-flex size-8 items-center justify-center rounded-full bg-white/80 text-slate-700 hover:bg-white"
-                        aria-label="사진 교체"
+                        onClick={() => removeActivityPhoto(photo.id)}
+                        aria-label={`사진 ${index + 1} 삭제`}
+                        className="absolute -top-1.5 -right-1.5 inline-flex size-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-destructive"
                       >
-                        <ImageIcon className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActivityPhotos((prev) => prev.filter((_, i) => i !== idx))}
-                        className="inline-flex size-8 items-center justify-center rounded-full bg-white/80 text-destructive hover:bg-white"
-                        aria-label="사진 삭제"
-                      >
-                        <X className="size-4" />
+                        <X className="size-3" />
                       </button>
                     </div>
+                    <Input
+                      value={photo.caption}
+                      onChange={(e) =>
+                        updatePhotoCaption(photo.id, e.target.value)
+                      }
+                      placeholder="설명 (선택)"
+                      maxLength={30}
+                      aria-label={`사진 ${index + 1} 설명`}
+                      className="h-8 bg-white px-2 text-xs"
+                    />
                   </div>
                 ))}
-                {activityPhotos.length < 5 && (
-                  <button
-                    type="button"
-                    disabled={isUploadingActivity}
-                    onClick={() => {
-                      replacingPhotoIdxRef.current = null;
-                      activityInputRef.current?.click();
-                    }}
-                    className="flex h-[96px] w-[96px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-60 sm:h-[116px] sm:w-[116px]"
-                  >
-                    {isUploadingActivity ? (
-                      <Loader2 className="size-6 animate-spin" />
-                    ) : (
-                      <>
-                        <div className="inline-flex size-8 items-center justify-center rounded-full border border-slate-300">
-                          <Plus className="size-4" />
-                        </div>
-                        <span className="mt-2 text-sm font-semibold">사진 추가</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => activityInputRef.current?.click()}
+                  className="flex h-[96px] w-[120px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 transition-colors hover:bg-slate-50 sm:h-[116px] sm:w-[140px]"
+                >
+                  <div className="inline-flex size-8 items-center justify-center rounded-full border border-slate-300">
+                    <Plus className="size-4" />
+                  </div>
+                  <span className="mt-2 text-sm font-semibold">사진 추가</span>
+                </button>
+                <input ref={activityInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, "activity"); event.target.value = ""; }} />
               </div>
             </section>
 
             <div className="mt-8 flex justify-end">
-              <Button
-                className="h-10 w-full rounded-lg bg-[#0A5CB5] px-6 text-white hover:bg-[#0A4F9D] sm:w-auto"
-                onClick={handleSavePage}
-                disabled={isSavingPage}
-              >
+              <Button onClick={() => void saveClub()} className="h-10 w-full rounded-lg bg-[#0A5CB5] px-6 text-white hover:bg-[#0A4F9D] sm:w-auto">
                 <Save className="mr-1.5 size-4" />
-                {isSavingPage ? "저장 중..." : "페이지 설정 저장"}
+                페이지 설정 저장
               </Button>
             </div>
           </div>
@@ -1233,27 +1160,13 @@ export function AdminPage() {
     }
 
     if (activeTab === "community-board") {
-      if (!presidentClub) {
-        return (
-          <Card className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-muted-foreground">먼저 동아리를 등록해주세요.</p>
-          </Card>
-        );
-      }
       return (
         <Card className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-2xl align-bottom font-bold text-foreground">
               게시판 관리
             </h2>
-            <Button
-              className="h-11 w-full rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b] sm:w-auto"
-              onClick={() => {
-                setNewPostTitle("");
-                setNewPostContent("");
-                setIsWritePostOpen(true);
-              }}
-            >
+            <Button onClick={() => setIsPostDialogOpen(true)} className="h-11 w-full rounded-xl bg-[#0F1B33] px-5 text-sm font-semibold text-white hover:bg-[#111f3b] sm:w-auto">
               <SquarePen className="mr-2 size-4" />
               게시글 작성
             </Button>
@@ -1273,64 +1186,47 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {isPostsLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">로딩 중...</td>
+                {communityPosts.map((post) => (
+                  <tr
+                    key={post.id}
+                    className="h-[56px] border-t border-slate-100 text-sm font-medium text-slate-700 first:border-t-0"
+                  >
+                    <td className="px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedPostIds.includes(post.id)}
+                        onChange={(event) => setSelectedPostIds((prev) => event.target.checked ? [...prev, post.id] : prev.filter((id) => id !== post.id))}
+                        className="size-5 rounded border-slate-300 align-middle"
+                        aria-label={`${post.title} 선택`}
+                      />
+                    </td>
+                    <td className="px-4">
+                      <div className="flex items-center gap-2">
+                        {post.is_notice ? (
+                          <Badge className="font-semibold">공지</Badge>
+                        ) : null}
+                        <span className="truncate text-[15px] font-semibold text-slate-800">
+                          {post.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 text-sm text-slate-600">{post.author_name}</td>
+                    <td className="px-4 text-sm text-slate-500">{new Intl.DateTimeFormat("ko-KR").format(new Date(post.created_at))}</td>
+                    <td className="px-4 text-sm text-slate-500">{post.comment_count}</td>
+                    <td className="px-4">
+                      <div className="flex items-center justify-center gap-3 text-slate-400">
+                        <button
+                          type="button"
+                          onClick={() => void deleteCommunityPosts([post.id])}
+                          className="transition-colors hover:text-slate-600"
+                          aria-label={`${post.title} 삭제`}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                ) : posts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">게시글이 없습니다.</td>
-                  </tr>
-                ) : (
-                  posts.map((post) => (
-                    <tr
-                      key={post.id}
-                      className="h-[56px] border-t border-slate-100 text-sm font-medium text-slate-700 first:border-t-0"
-                    >
-                      <td className="px-4">
-                        <input
-                          type="checkbox"
-                          className="size-5 rounded border-slate-300 align-middle"
-                          aria-label={`${post.title} 선택`}
-                        />
-                      </td>
-                      <td className="px-4">
-                        <div className="flex items-center gap-2">
-                          {post.is_notice ? (
-                            <Badge className="px-2 py-0.5 text-[11px] font-semibold">공지</Badge>
-                          ) : null}
-                          <span className="truncate text-[15px] font-semibold text-slate-800">
-                            {post.title}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 text-sm text-slate-600">{post.author_name}</td>
-                      <td className="px-4 text-sm text-slate-500">{formatDate(post.created_at)}</td>
-                      <td className="px-4 text-sm text-slate-500">{post.comment_count ?? 0}</td>
-                      <td className="px-4">
-                        <div className="flex items-center justify-center gap-3 text-slate-400">
-                          <button
-                            type="button"
-                            className="transition-colors hover:text-slate-600"
-                            aria-label={`${post.title} 공지 토글`}
-                            onClick={() => handleToggleNotice(post.id)}
-                            title={post.is_notice ? "공지 해제" : "공지로 등록"}
-                          >
-                            <Pencil className="size-4" />
-                          </button>
-                          <button
-                            type="button"
-                            className="transition-colors hover:text-destructive"
-                            aria-label={`${post.title} 삭제`}
-                            onClick={() => handleDeletePost(post.id)}
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
               </table>
             </div>
@@ -1338,12 +1234,14 @@ export function AdminPage() {
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-3">
               <button
                 type="button"
+                onClick={() => void deleteCommunityPosts(selectedPostIds)}
                 className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               >
                 선택 삭제
               </button>
               <button
                 type="button"
+                onClick={() => void toggleSelectedNotices()}
                 className="h-8 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               >
                 공지로 등록
@@ -1365,286 +1263,502 @@ export function AdminPage() {
   };
 
   return (
-    <>
-      <section className="w-full rounded-xl border border-border bg-[#F6F8FB]">
-        <div className="flex min-h-[760px] flex-col lg:flex-row">
-          <aside className="w-full shrink-0 border-b border-border bg-[#F3F5F8] lg:w-[248px] lg:border-r lg:border-b-0">
-            <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
-              <div className="text-2xl font-extrabold tracking-tight text-[#1B4A8F]">
-                Dream Lounge
-              </div>
-              <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-slate-400">
-                ADMINISTRATOR
-              </div>
+    <section className="w-full rounded-xl border border-border bg-[#F6F8FB]">
+      <div className="flex min-h-[760px] flex-col lg:flex-row">
+        <aside className="w-full shrink-0 border-b border-border bg-[#F3F5F8] lg:w-[248px] lg:border-r lg:border-b-0">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+            <div className="text-2xl font-extrabold tracking-tight text-[#1B4A8F]">
+              Dream Lounge
             </div>
+            <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-slate-400">
+              ADMINISTRATOR
+            </div>
+          </div>
 
-            <nav className="space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-5" aria-label="관리자 메뉴">
-              {ADMIN_MENU.map((group) => (
-                <div key={group.section}>
-                  <p className="mb-2 px-2 text-xs font-semibold text-slate-400">
-                    {group.section}
-                  </p>
-                  <ul className="space-y-1">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.tab;
-                      return (
-                        <li key={item.label}>
-                          <button
-                            type="button"
-                            onClick={() => setActiveTab(item.tab)}
-                            className={cn(
-                              "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors",
-                              isActive
-                                ? "border-r-2 border-primary bg-[#EAF1FC] text-primary"
-                                : "text-slate-600 hover:bg-slate-100",
-                            )}
-                          >
-                            <Icon className="size-4" />
-                            <span>{item.label}</span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </nav>
-          </aside>
+          <nav className="space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-5" aria-label="관리자 메뉴">
+            {ADMIN_MENU.map((group) => (
+              <div key={group.section}>
+                <p className="mb-2 px-2 text-xs font-semibold text-slate-400">
+                  {group.section}
+                </p>
+                <ul className="space-y-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.tab;
+                    return (
+                      <li key={item.label}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(item.tab)}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors",
+                            isActive
+                              ? "border-r-2 border-primary bg-[#EAF1FC] text-primary"
+                              : "text-slate-600 hover:bg-slate-100",
+                          )}
+                        >
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </aside>
 
-          <div className="min-w-0 flex-1 bg-[#F6F8FB]">
-            <div className="p-3 sm:p-5 lg:p-8">{renderMainContent()}</div>
+        <div className="min-w-0 flex-1 bg-[#F6F8FB]">
+          <div className="p-3 sm:p-5 lg:p-8">
+            {managedClubs.length > 1 && (
+              <div className="mb-4 flex justify-end">
+                <select value={selectedClubId} onChange={(event) => setSelectedClubId(event.target.value)} aria-label="관리할 동아리 선택" className="h-10 rounded-md border border-input bg-white px-3 text-sm">
+                  {managedClubs.map((club) => <option key={club.club_id} value={club.club_id}>{club.club_name}</option>)}
+                </select>
+              </div>
+            )}
+            {renderMainContent()}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* 새 문항 추가 Dialog */}
-      <Dialog open={isAddQuestionOpen} onOpenChange={setIsAddQuestionOpen}>
-        <DialogContent className="max-w-md">
+      {/* 새 문항 추가 */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent
+          className="max-h-[85vh] overflow-y-auto sm:max-w-lg"
+          aria-describedby={undefined}
+        >
           <DialogHeader>
-            <DialogTitle>새 문항 추가</DialogTitle>
+            <DialogTitle className="mb-2.5 font-bold">새 문항 추가</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-2">
-            <div>
-              <label className="text-sm font-medium text-slate-700">문항 내용</label>
+
+          <div className="flex flex-col gap-5">
+            {/* 문항 내용 */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="new-question-title"
+                className="text-sm font-semibold text-foreground"
+              >
+                문항 내용 <span className="text-destructive">*</span>
+              </label>
               <Input
-                className="mt-1"
-                placeholder="질문을 입력해주세요"
-                value={newQuestionText}
-                onChange={(e) => setNewQuestionText(e.target.value)}
+                id="new-question-title"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="지원자에게 물어볼 내용을 입력해주세요."
+                maxLength={100}
+                className={cn(
+                  addSubmitted &&
+                    titleError &&
+                    "border-destructive focus-visible:ring-destructive",
+                )}
               />
+              {addSubmitted && titleError && (
+                <p className="text-sm text-destructive">
+                  문항 내용을 입력해주세요.
+                </p>
+              )}
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">유형</label>
-              <Popover open={questionTypeOpen} onOpenChange={setQuestionTypeOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={questionTypeOpen}
-                    className="mt-1 h-10 w-full justify-between bg-white font-normal"
-                  >
-                    {newQuestionType}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-1" align="start">
-                  {["단답형", "장문형", "객관식 (단일선택)"].map((type) => (
+
+            {/* 유형 */}
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-foreground">유형</span>
+              <div className="flex flex-wrap gap-2">
+                {QUESTION_TYPES.map((type) => {
+                  const isActive = newType === type;
+                  return (
                     <button
                       key={type}
                       type="button"
-                      onClick={() => {
-                        setNewQuestionType(type);
-                        setQuestionTypeOpen(false);
-                      }}
+                      onClick={() => setNewType(type)}
+                      aria-pressed={isActive}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                        newQuestionType === type && "bg-accent text-accent-foreground font-medium",
+                        "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                        isActive
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:bg-muted/60",
                       )}
                     >
-                      <Check
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          newQuestionType === type ? "opacity-100 text-primary" : "opacity-0",
-                        )}
-                      />
                       {type}
                     </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
+                  );
+                })}
+              </div>
             </div>
-            {newQuestionType.includes("객관식") && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700">선택지</label>
-                  <span className="text-xs text-slate-500">최소 2개</span>
-                </div>
+
+            {/* 객관식 선택지 */}
+            {isChoice && (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  선택지 <span className="text-destructive">*</span>
+                </span>
                 <div className="flex flex-col gap-2">
-                  {newQuestionOptions.map((option, index) => (
+                  {newOptions.map((option, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-xs text-slate-500">
-                        {index + 1}
-                      </span>
                       <Input
                         value={option}
+                        onChange={(e) => updateOption(index, e.target.value)}
                         placeholder={`선택지 ${index + 1}`}
-                        onChange={(event) => {
-                          const nextOptions = [...newQuestionOptions];
-                          nextOptions[index] = event.target.value;
-                          setNewQuestionOptions(nextOptions);
-                        }}
-                        className="h-9 bg-white"
+                        maxLength={50}
+                        aria-label={`선택지 ${index + 1}`}
                       />
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-9 shrink-0 text-slate-400 hover:text-destructive"
-                        disabled={newQuestionOptions.length <= 2}
-                        onClick={() => {
-                          setNewQuestionOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
-                        }}
+                        onClick={() => removeOption(index)}
+                        disabled={newOptions.length <= 2}
                         aria-label={`선택지 ${index + 1} 삭제`}
+                        className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        <X className="size-4" />
-                      </Button>
+                        <Trash2 className="size-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
+                {addSubmitted && optionsError && (
+                  <p className="text-sm text-destructive">
+                    선택지를 2개 이상 입력해주세요.
+                  </p>
+                )}
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="mt-3 w-full border-dashed bg-white"
-                  onClick={() => setNewQuestionOptions((prev) => [...prev, ""])}
+                  onClick={addOption}
+                  className="h-9 self-start"
                 >
                   <Plus className="mr-1 size-4" />
                   선택지 추가
                 </Button>
               </div>
             )}
-            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+
+            {/* 필수 응답 */}
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
               <input
                 type="checkbox"
+                checked={newRequired}
+                onChange={() => setNewRequired((prev) => !prev)}
                 className="size-4 rounded border-slate-300"
-                checked={newQuestionRequired}
-                onChange={(e) => setNewQuestionRequired(e.target.checked)}
               />
-              필수 응답
+              필수 응답으로 설정
             </label>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddQuestionOpen(false)} disabled={isSavingForm}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsAddOpen(false)}
+            >
               취소
             </Button>
-            <Button onClick={handleAddQuestion} disabled={isSavingForm}>
-              {isSavingForm ? "추가 중..." : "추가"}
+            <Button type="button" onClick={submitNewQuestion}>
+              추가
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 지원서 상세 Dialog */}
-      <Dialog open={isAppDetailOpen} onOpenChange={setIsAppDetailOpen}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      {/* 신청폼 미리보기 — 지원자에게 보이는 모습 */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent
+          className="max-h-[85vh] overflow-y-auto sm:max-w-lg"
+          aria-describedby={undefined}
+        >
           <DialogHeader>
-            <DialogTitle>지원서 상세</DialogTitle>
+            <DialogTitle className="mb-2.5 font-bold">
+              신청폼 미리보기
+            </DialogTitle>
           </DialogHeader>
-          {selectedApp && (
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-bold text-slate-900">{selectedApp.user_name}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-bold",
-                      STATUS_CLASS[selectedApp.status] ?? "bg-slate-100 text-slate-500",
-                    )}
+
+          {questions.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              아직 등록된 문항이 없습니다.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {questions.map((question, index) => (
+                <div key={question.id} className="flex flex-col gap-2">
+                  <label
+                    htmlFor={`preview-q-${question.id}`}
+                    className="flex gap-1.5 text-sm font-semibold text-foreground"
                   >
-                    {STATUS_LABEL[selectedApp.status] ?? selectedApp.status}
-                  </span>
-                </div>
-                <span className="text-sm text-slate-500">학번: {selectedApp.user_student_id}</span>
-                <span className="text-sm text-slate-500">
-                  지원일: {selectedApp.submitted_at ? formatDate(selectedApp.submitted_at) : "-"}
-                </span>
-              </div>
+                    <span className="text-muted-foreground">{index + 1}.</span>
+                    <span>
+                      {question.title}
+                      {question.required && (
+                        <span className="ml-1 text-destructive">*</span>
+                      )}
+                    </span>
+                  </label>
 
-              <div className="flex flex-col gap-4">
-                {selectedApp.answers?.map((a, i) => (
-                  <div key={a.question_id ?? i} className="flex flex-col gap-1.5">
-                    <p className="text-sm font-semibold text-slate-700">Q{i + 1}.</p>
-                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 whitespace-pre-wrap">
-                      {a.answer_text || <span className="text-slate-400">답변 없음</span>}
+                  {question.type === "단답형" && (
+                    <Input
+                      id={`preview-q-${question.id}`}
+                      placeholder="답변을 입력해주세요."
+                    />
+                  )}
+
+                  {question.type === "장문형" && (
+                    <Textarea
+                      id={`preview-q-${question.id}`}
+                      placeholder="답변을 입력해주세요."
+                      className="min-h-[120px] resize-none"
+                    />
+                  )}
+
+                  {hasOptions(question.type) && (
+                    <div className="flex flex-col gap-2">
+                      {question.options?.map((option, optionIndex) => (
+                        <label
+                          key={`${question.id}-${optionIndex}`}
+                          className="inline-flex cursor-pointer items-center gap-2 text-sm text-foreground"
+                        >
+                          {question.type === "객관식" ? (
+                            <input
+                              type="radio"
+                              name={`preview-q-${question.id}`}
+                              className="size-4 border-slate-300"
+                            />
+                          ) : (
+                            <input
+                              type="checkbox"
+                              name={`preview-q-${question.id}`}
+                              className="size-4 rounded border-slate-300"
+                            />
+                          )}
+                          {option}
+                        </label>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {selectedApp.status !== "passed" && selectedApp.status !== "failed" && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm font-semibold text-slate-600">심사 결과 변경</p>
-                  <div className="flex gap-2">
-                    {(["pending", "passed", "failed"] as const).map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        disabled={updatingStatusId === selectedApp.id || selectedApp.status === s}
-                        onClick={() => handleStatusUpdate(selectedApp.id, s)}
-                        className={cn(
-                          "flex-1 h-9 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50",
-                          s === "passed"
-                            ? "bg-[#E8FAEE] text-[#14863F] hover:bg-[#d0f5dc]"
-                            : s === "failed"
-                              ? "bg-[#FDECEE] text-[#D7263D] hover:bg-[#fbd9dc]"
-                              : "bg-[#FFF0E8] text-[#B45B19] hover:bg-[#fde1cc]",
-                        )}
-                      >
-                        {updatingStatusId === selectedApp.id ? (
-                          <Loader2 className="size-4 animate-spin mx-auto" />
-                        ) : (
-                          STATUS_LABEL[s]
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
 
-      {/* 게시글 작성 Dialog */}
-      <Dialog open={isWritePostOpen} onOpenChange={setIsWritePostOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>게시글 작성</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 py-2">
-            <Input
-              placeholder="제목을 입력해주세요"
-              value={newPostTitle}
-              onChange={(e) => setNewPostTitle(e.target.value)}
-            />
-            <Textarea
-              placeholder="내용을 입력해주세요"
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              className="min-h-[160px] resize-none"
-            />
-          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsWritePostOpen(false)} disabled={isSubmittingPost}>
-              취소
-            </Button>
-            <Button onClick={handleCreatePost} disabled={isSubmittingPost}>
-              {isSubmittingPost ? "등록 중..." : "등록"}
+            <Button type="button" onClick={() => setIsPreviewOpen(false)}>
+              닫기
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+
+      {/* 상세페이지 미리보기 — 지원자에게 보이는 모습 */}
+      <Dialog open={isDetailPreviewOpen} onOpenChange={setIsDetailPreviewOpen}>
+        <DialogContent
+          className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
+          aria-describedby={undefined}
+        >
+          <DialogHeader>
+            <DialogTitle className="mb-2.5 font-bold">
+              상세페이지 미리보기
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-6">
+            {/* 상단 배너 */}
+            <div className="relative aspect-[3/1] w-full overflow-hidden rounded-xl bg-slate-100">
+              {clubImageUrl ? <img src={clubImageUrl} alt={`${clubName || "동아리"} 배너`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-400"><ImageIcon className="size-7" aria-hidden /><span className="text-xs font-medium">등록된 배너 이미지 없음</span></div>}
+              <div className="absolute top-3 right-3">
+                <Badge size="detail" className="bg-primary font-semibold text-primary-foreground">
+                  모집중
+                </Badge>
+              </div>
+            </div>
+
+            {/* 카테고리 · 동아리명 · 한줄 소개 · 태그 — ClubDetail과 동일 구성 */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-semibold text-primary">
+                  {clubCategory || "분과 미선택"}
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                {clubName.trim() || (
+                  <span className="text-muted-foreground/60">
+                    동아리명 미입력
+                  </span>
+                )}
+              </h3>
+              <p
+                className={cn(
+                  "text-base whitespace-pre-line sm:text-lg",
+                  clubTagline.trim()
+                    ? "text-muted-foreground"
+                    : "text-muted-foreground/60",
+                )}
+              >
+                {clubTagline.trim() || "한줄 소개 미입력"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    size="detail"
+                    className="font-normal text-secondary-foreground"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* 동아리 소개 */}
+            <section className="space-y-4">
+              <h4 className="text-xl font-bold">동아리 소개</h4>
+              <div
+                className={cn(
+                  "text-base leading-relaxed whitespace-pre-line",
+                  clubDetailDescription.trim()
+                    ? "text-muted-foreground"
+                    : "text-muted-foreground/60",
+                )}
+              >
+                {clubDetailDescription.trim() ||
+                  "아직 작성된 상세 설명이 없습니다."}
+              </div>
+            </section>
+
+            {/* 주요 활동 */}
+            <section className="space-y-4">
+              <h4 className="text-xl font-bold">주요 활동</h4>
+              {activityPhotos.length === 0 ? (
+                <p className="text-base text-muted-foreground/60">
+                  등록된 활동 사진이 없습니다.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {activityPhotos.map((photo, index) => (
+                    <div
+                      key={photo.id}
+                      className="flex flex-col overflow-hidden rounded-lg border bg-card"
+                    >
+                      {/* 설명이 없는 카드는 이미지가 남은 높이를 채웁니다. */}
+                      <img src={photo.url} alt={photo.caption || `활동 사진 ${index + 1}`} className="min-h-48 w-full flex-1 object-cover" />
+                      {/* 설명은 선택 입력이라 비어 있으면 표시하지 않습니다. */}
+                      {photo.caption.trim() && (
+                        <div className="p-3">
+                          <p className="text-center text-sm font-bold">
+                            {photo.caption}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* 연락처 · SNS — 입력된 것이 하나라도 있을 때만 노출 */}
+            {(clubContact.trim() ||
+              snsLinks.some((link) => link.label.trim() && link.url.trim())) && (
+              <section className="space-y-4">
+                <h4 className="text-xl font-bold">연락처</h4>
+                <div className="flex flex-col gap-3">
+                  {clubContact.trim() && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="size-4 shrink-0 text-primary" aria-hidden />
+                      {clubContact}
+                    </div>
+                  )}
+                  {snsLinks
+                    .filter((link) => link.label.trim() && link.url.trim())
+                    .map((link) => (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
+                      >
+                        <Link2 className="size-4 shrink-0" aria-hidden />
+                        {link.label}
+                      </a>
+                    ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => setIsDetailPreviewOpen(false)}
+            >
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>게시글 작성</DialogTitle><DialogDescription>관리자가 작성한 게시글은 공지로 등록됩니다.</DialogDescription></DialogHeader>
+          <div className="flex flex-col gap-3">
+            <Input value={postTitle} onChange={(event) => setPostTitle(event.target.value)} placeholder="제목을 입력해주세요." />
+            <Textarea value={postContent} onChange={(event) => setPostContent(event.target.value)} placeholder="내용을 입력해주세요." className="min-h-40 resize-none" />
+          </div>
+          <DialogFooter><Button variant="ghost" onClick={() => setIsPostDialogOpen(false)}>취소</Button><Button onClick={() => void createCommunityPost()} disabled={!postTitle.trim() || !postContent.trim()}>등록</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={selectedApplication !== null} onOpenChange={(open) => { if (!open) setSelectedApplication(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>신청서 상세</DialogTitle>
+            <DialogDescription>{selectedApplication?.user_name} · {selectedApplication?.user_student_id}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            {selectedApplication?.answers.map((answer, index) => {
+              const question = questions.find((item) => item.id === answer.question_id);
+              return <div key={answer.question_id} className="rounded-lg border p-3"><p className="text-sm font-semibold">{index + 1}. {question?.title ?? "질문"}</p><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{answer.answer_text || "답변 없음"}</p></div>;
+            })}
+          </div>
+          <DialogFooter><Button onClick={() => setSelectedApplication(null)}>닫기</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 상태 변경 확인 다이얼로그 */}
+      <Dialog
+        open={statusEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) closeStatusEdit();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>상태 변경</DialogTitle>
+            <DialogDescription>
+              {statusEdit && (
+                <>
+                  <span className="font-semibold text-foreground">
+                    {statusEdit.applicant.name}
+                  </span>
+                  님의 상태를{" "}
+                  <span className="font-semibold text-foreground">
+                    {statusEdit.nextStatus}
+                  </span>
+                  (으)로 변경합니다.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={closeStatusEdit}>
+              취소
+            </Button>
+            <Button type="button" onClick={confirmStatusChange}>
+              저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }

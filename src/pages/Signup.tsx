@@ -46,6 +46,7 @@ export function Signup() {
     null,
   );
   const [verifyCode, setVerifyCode] = useState("");
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [verifyCodeError, setVerifyCodeError] = useState(false);
 
   const [password, setPassword] = useState("");
@@ -90,6 +91,7 @@ export function Signup() {
     ) {
       setEmailStage("idle");
       setVerifyCode("");
+      setVerificationToken(null);
       setVerifyCodeError(false);
     }
   }, [schoolEmail, emailStage, emailRequestedFor]);
@@ -129,7 +131,7 @@ export function Signup() {
         department: selectedDepartment,
         phone,
         email: schoolEmail.trim(),
-        verificationCode: verifyCode.trim(),
+        verificationToken: verificationToken ?? "",
         password,
         requiredPrivacyConsent,
         optionalPrivacyConsent,
@@ -207,6 +209,7 @@ export function Signup() {
       setEmailRequestedFor(email);
       setEmailStage("pending");
       setVerifyCode("");
+      setVerificationToken(null);
       setVerifyCodeError(false);
       toast.message("인증번호를 발송했습니다.");
     } catch (error) {
@@ -225,6 +228,7 @@ export function Signup() {
       await api.sendEmailVerification(email);
       setEmailRequestedFor(email);
       setVerifyCode("");
+      setVerificationToken(null);
       setVerifyCodeError(false);
       toast.success("인증번호를 다시 보냈습니다.");
     } catch (error) {
@@ -239,7 +243,8 @@ export function Signup() {
     }
     setApiError(null);
     try {
-      await api.confirmEmailVerification(emailRequestedFor, verifyCode.trim());
+      const token = await api.confirmEmailVerification(emailRequestedFor, verifyCode.trim());
+      setVerificationToken(token);
       setEmailStage("verified");
       setVerifyCodeError(false);
       setErrors((prev) => ({ ...prev, emailVerification: false }));

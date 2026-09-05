@@ -349,11 +349,18 @@ export function AdminPage() {
 
   /** 새 문항 추가 다이얼로그 */
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<QuestionType>("단답형");
   const [newRequired, setNewRequired] = useState(false);
   const [newOptions, setNewOptions] = useState<string[]>(["", ""]);
   const [addSubmitted, setAddSubmitted] = useState(false);
+  const [draggingQuestionId, setDraggingQuestionId] = useState<string | null>(null);
+  const questionPressTimerRef = useRef<number | null>(null);
+  const questionPressStartRef = useRef({ x: 0, y: 0 });
+  const questionOrderRef = useRef<ApplicationQuestion[]>([]);
+  const questionOrderBeforeDragRef = useRef<ApplicationQuestion[]>([]);
+  const didLongPressRef = useRef(false);
 
   const isChoice = hasOptions(newType);
   const filledOptions = newOptions.map((o) => o.trim()).filter(Boolean);
@@ -389,12 +396,21 @@ export function AdminPage() {
             ];
         setContactLinks(savedContactLinks.map((link, index) => ({ ...link, id: index + 1 })));
         setTags(club.tags.map((tag) => `#${tag.tag_value.replace(/^#/, "")}`));
-        setActivityPhotos(club.activity_images.map((url, index) => ({ id: index + 1, caption: "", url })));
+        const savedActivityPhotos = club.activity_image_details?.length
+          ? [...club.activity_image_details]
+              .sort((a, b) => a.order_index - b.order_index)
+              .map((photo, index) => ({
+                id: index + 1,
+                caption: photo.caption ?? "",
+                url: photo.image_url,
+              }))
+          : club.activity_images.map((url, index) => ({ id: index + 1, caption: "", url }));
+        setActivityPhotos(savedActivityPhotos);
         setApplicants(applicationRows.map((row) => ({
           id: row.id,
           name: row.user_name,
           studentId: row.user_student_id,
-          major: "—",
+          major: row.user_department ?? "—",
           submittedAt: row.submitted_at ? new Intl.DateTimeFormat("ko-KR").format(new Date(row.submitted_at)) : "—",
           status: statusFromApi(row.status),
         })));
@@ -453,11 +469,78 @@ export function AdminPage() {
     return Array.from({ length: visibleCount }, (_, index) => start + index);
   }, [applicantTotalPages, safeApplicantPage]);
 
+  useEffect(() => {
+    questionOrderRef.current = questions;
+  }, [questions]);
+
+  useEffect(() => {
+    if (!draggingQuestionId) return;
+
+    const finishReorder = () => {
+      const reorderedQuestions = questionOrderRef.current;
+      const previousQuestions = questionOrderBeforeDragRef.current;
+      setDraggingQuestionId(null);
+      document.body.style.userSelect = "";
+      window.setTimeout(() => {
+        didLongPressRef.current = false;
+      }, 250);
+
+      if (!selectedClubId) return;
+      if (
+        reorderedQuestions.every(
+          (question, index) => question.id === previousQuestions[index]?.id,
+        )
+      ) {
+        return;
+      }
+      void api
+        .reorderFormQuestions(
+          selectedClubId,
+          reorderedQuestions.map((question) => question.id),
+        )
+        .then(() => toast.success("문항 순서를 변경했습니다."))
+        .catch((error) => {
+          setQuestions(previousQuestions);
+          toast.error(
+            error instanceof Error ? error.message : "문항 순서 변경에 실패했습니다.",
+          );
+        });
+    };
+
+    window.addEventListener("pointerup", finishReorder, { once: true });
+    window.addEventListener("pointercancel", finishReorder, { once: true });
+    return () => {
+      window.removeEventListener("pointerup", finishReorder);
+      window.removeEventListener("pointercancel", finishReorder);
+      document.body.style.userSelect = "";
+    };
+  }, [draggingQuestionId, selectedClubId]);
+
+  useEffect(
+    () => () => {
+      if (questionPressTimerRef.current !== null) {
+        window.clearTimeout(questionPressTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const openAddQuestion = () => {
+    setEditingQuestionId(null);
     setNewTitle("");
     setNewType("단답형");
     setNewRequired(false);
     setNewOptions(["", ""]);
+    setAddSubmitted(false);
+    setIsAddOpen(true);
+  };
+
+  const openEditQuestion = (question: ApplicationQuestion) => {
+    setEditingQuestionId(question.id);
+    setNewTitle(question.title);
+    setNewType(question.type);
+    setNewRequired(question.required);
+    setNewOptions(question.options?.length ? [...question.options] : ["", ""]);
     setAddSubmitted(false);
     setIsAddOpen(true);
   };
@@ -474,7 +557,7 @@ export function AdminPage() {
     setNewOptions((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const submitNewQuestion = async () => {
+  const submitQuestion = async () => {
     setAddSubmitted(true);
     if (titleError || optionsError || !selectedClubId) return;
     try {
@@ -482,24 +565,115 @@ export function AdminPage() {
         await api.createClubForm(selectedClubId, `${clubName || "동아리"} 지원서`);
         setFormExists(true);
       }
-      const created = await api.addFormQuestion(selectedClubId, {
+      const payload = {
         question_text: newTitle.trim(),
         question_type: QUESTION_TYPE_TO_API[newType],
         is_required: newRequired,
-        order_index: questions.length,
         options: isChoice ? filledOptions : null,
-      });
-      setQuestions((prev) => [...prev, {
-        id: created.id,
-        title: created.question_text,
-        type: questionTypeFromApi(created.question_type),
-        required: created.is_required,
-        options: created.options ?? undefined,
-      }]);
+      };
+      if (editingQuestionId) {
+        const updated = await api.updateFormQuestion(
+          selectedClubId,
+          editingQuestionId,
+          payload,
+        );
+        setQuestions((prev) =>
+          prev.map((question) =>
+            question.id === editingQuestionId
+              ? {
+                  id: updated.id,
+                  title: updated.question_text,
+                  type: questionTypeFromApi(updated.question_type),
+                  required: updated.is_required,
+                  options: updated.options ?? undefined,
+                }
+              : question,
+          ),
+        );
+      } else {
+        const created = await api.addFormQuestion(selectedClubId, {
+          ...payload,
+          order_index: questions.length,
+        });
+        setQuestions((prev) => [
+          ...prev,
+          {
+            id: created.id,
+            title: created.question_text,
+            type: questionTypeFromApi(created.question_type),
+            required: created.is_required,
+            options: created.options ?? undefined,
+          },
+        ]);
+      }
       setIsAddOpen(false);
-      toast.success("문항을 추가했습니다.");
+      toast.success(editingQuestionId ? "문항을 수정했습니다." : "문항을 추가했습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "문항 추가에 실패했습니다.");
+      toast.error(
+        error instanceof Error ? error.message : "문항 저장에 실패했습니다.",
+      );
+    }
+  };
+
+  const isQuestionControl = (target: EventTarget | null) =>
+    target instanceof Element &&
+    Boolean(target.closest("button, input, label, select, textarea, a"));
+
+  const startQuestionPress = (
+    event: React.PointerEvent<HTMLLIElement>,
+    questionId: string,
+  ) => {
+    if (isQuestionControl(event.target)) return;
+    if (questionPressTimerRef.current !== null) {
+      window.clearTimeout(questionPressTimerRef.current);
+    }
+    didLongPressRef.current = false;
+    questionPressStartRef.current = { x: event.clientX, y: event.clientY };
+    questionPressTimerRef.current = window.setTimeout(() => {
+      didLongPressRef.current = true;
+      questionOrderBeforeDragRef.current = [...questionOrderRef.current];
+      setDraggingQuestionId(questionId);
+      document.body.style.userSelect = "none";
+      questionPressTimerRef.current = null;
+    }, 450);
+  };
+
+  const moveQuestion = (event: React.PointerEvent<HTMLLIElement>) => {
+    if (!draggingQuestionId) {
+      const distance = Math.hypot(
+        event.clientX - questionPressStartRef.current.x,
+        event.clientY - questionPressStartRef.current.y,
+      );
+      if (distance > 8 && questionPressTimerRef.current !== null) {
+        window.clearTimeout(questionPressTimerRef.current);
+        questionPressTimerRef.current = null;
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-question-id]");
+    const targetId = target?.dataset.questionId;
+    if (!targetId || targetId === draggingQuestionId) return;
+
+    setQuestions((prev) => {
+      const sourceIndex = prev.findIndex((item) => item.id === draggingQuestionId);
+      const targetIndex = prev.findIndex((item) => item.id === targetId);
+      if (sourceIndex < 0 || targetIndex < 0) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      questionOrderRef.current = next;
+      return next;
+    });
+  };
+
+  const cancelPendingQuestionPress = () => {
+    if (questionPressTimerRef.current !== null) {
+      window.clearTimeout(questionPressTimerRef.current);
+      questionPressTimerRef.current = null;
     }
   };
 
@@ -589,9 +763,25 @@ export function AdminPage() {
         contact_links: normalizedContactLinks,
         image_url: clubImageUrl || null,
         activity_images: activityPhotos.map((photo) => photo.url).filter(Boolean),
+        activity_image_details: activityPhotos
+          .filter((photo) => photo.url)
+          .map((photo) => ({
+            image_url: photo.url,
+            caption: photo.caption.trim() || null,
+          })),
         tags: tags.map((tag) => ({ tag_key: "custom", tag_value: tag.replace(/^#/, "") })),
       });
       setClubImageUrl(updatedClub.image_url ?? "");
+      const persistedActivityPhotos = updatedClub.activity_image_details?.length
+        ? [...updatedClub.activity_image_details]
+            .sort((a, b) => a.order_index - b.order_index)
+            .map((photo, index) => ({
+              id: index + 1,
+              caption: photo.caption ?? "",
+              url: photo.image_url,
+            }))
+        : updatedClub.activity_images.map((url, index) => ({ id: index + 1, caption: "", url }));
+      setActivityPhotos(persistedActivityPhotos);
       const persistedContactLinks = updatedClub.contact_links?.length
         ? updatedClub.contact_links
         : normalizedContactLinks;
@@ -898,7 +1088,22 @@ export function AdminPage() {
               {questions.map((question, index) => (
                 <li
                   key={question.id}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-4"
+                  data-question-id={question.id}
+                  onPointerDown={(event) => startQuestionPress(event, question.id)}
+                  onPointerMove={moveQuestion}
+                  onPointerUp={cancelPendingQuestionPress}
+                  onPointerCancel={cancelPendingQuestionPress}
+                  onClick={(event) => {
+                    if (didLongPressRef.current || isQuestionControl(event.target)) return;
+                    openEditQuestion(question);
+                  }}
+                  className={cn(
+                    "cursor-pointer rounded-xl border border-slate-200 bg-white px-5 py-4 transition-colors",
+                    draggingQuestionId === question.id
+                      ? "touch-none cursor-grabbing border-primary bg-primary/5 shadow-md"
+                      : "hover:border-slate-300",
+                  )}
+                  title="클릭하여 수정 · 길게 눌러 순서 변경"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex items-center gap-3">
@@ -1429,14 +1634,22 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* 새 문항 추가 */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+      {/* 문항 추가·수정 */}
+      <Dialog
+        open={isAddOpen}
+        onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) setEditingQuestionId(null);
+        }}
+      >
         <DialogContent
           className="max-h-[85vh] overflow-y-auto sm:max-w-lg"
           aria-describedby={undefined}
         >
           <DialogHeader>
-            <DialogTitle className="mb-2.5 font-bold">새 문항 추가</DialogTitle>
+            <DialogTitle className="mb-2.5 font-bold">
+              {editingQuestionId ? "문항 수정" : "새 문항 추가"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col gap-5">
@@ -1558,8 +1771,8 @@ export function AdminPage() {
             >
               취소
             </Button>
-            <Button type="button" onClick={submitNewQuestion}>
-              추가
+            <Button type="button" onClick={submitQuestion}>
+              {editingQuestionId ? "저장" : "추가"}
             </Button>
           </DialogFooter>
         </DialogContent>

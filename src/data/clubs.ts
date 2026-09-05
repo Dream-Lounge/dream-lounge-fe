@@ -42,11 +42,19 @@ export function mapClubResponse(club: ClubResponse): ClubData {
     description: club.description || `${club.name} 동아리입니다.`,
     longDescription: club.description || `${club.name} 활동을 소개합니다.`,
     coverImage: club.image_url ?? undefined,
-    activities: club.activity_images.map((image, index) => ({
-      id: index + 1,
-      title: `${club.name} 활동 ${index + 1}`,
-      image,
-    })),
+    activities: club.activity_image_details?.length
+      ? [...club.activity_image_details]
+          .sort((a, b) => a.order_index - b.order_index)
+          .map((activity, index) => ({
+            id: index + 1,
+            title: activity.caption || `${club.name} 활동 ${index + 1}`,
+            image: activity.image_url,
+          }))
+      : club.activity_images.map((image, index) => ({
+          id: index + 1,
+          title: `${club.name} 활동 ${index + 1}`,
+          image,
+        })),
     contacts: club.contact_links?.length
       ? club.contact_links
       : [

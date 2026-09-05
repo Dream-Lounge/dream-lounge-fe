@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    api.logout();
+    void api.logout();
     setUser(null);
     setManagedClubs([]);
   }, []);

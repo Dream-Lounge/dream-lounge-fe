@@ -51,13 +51,13 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/about" element={<About />} />
           <Route path="/club/:id" element={<ClubDetail />} />
-          {FEATURES.clubCommunity && (
-            <Route path="/club/:id/community" element={<ClubCommunity />} />
-          )}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
+            {FEATURES.clubCommunity && (
+              <Route path="/club/:id/community" element={<ClubCommunity />} />
+            )}
             {FEATURES.myClubs && (
               <Route path="/users/:studentId/clubs" element={<MyClubs />} />
             )}

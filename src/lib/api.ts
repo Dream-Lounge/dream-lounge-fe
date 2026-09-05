@@ -54,7 +54,7 @@ export interface SignupRequest {
   department: string;
   phone: string;
   email: string;
-  verificationCode: string;
+  verificationToken: string;
   password: string;
   requiredPrivacyConsent?: boolean;
   optionalPrivacyConsent?: boolean;
@@ -82,6 +82,7 @@ export interface ClubResponse {
   contact_links: ClubContactLink[];
   image_url: string | null;
   activity_images: string[];
+  activity_image_details: ClubActivityImageDetail[];
   division: string | null;
   field: string | null;
   activity_purpose: string | null;
@@ -91,6 +92,12 @@ export interface ClubResponse {
   is_recruiting: boolean;
   member_count: number;
   tags: Array<{ tag_key: string; tag_value: string }>;
+}
+
+export interface ClubActivityImageDetail {
+  image_url: string;
+  caption: string | null;
+  order_index: number;
 }
 
 export type ClubContactLinkType = "email" | "phone" | "url";
@@ -142,6 +149,10 @@ export interface ClubWriteRequest {
   contact_links?: ClubContactLink[];
   image_url?: string | null;
   activity_images?: string[];
+  activity_image_details?: Array<{
+    image_url: string;
+    caption: string | null;
+  }>;
   division?: string | null;
   field?: string | null;
   atmosphere?: string | null;
@@ -158,6 +169,7 @@ export interface AdminApplicationListItem {
   user_id: string;
   user_name: string;
   user_student_id: string;
+  user_department: string | null;
   status: string;
   submitted_at: string | null;
 }
@@ -439,11 +451,12 @@ class ApiClient {
     }, false);
   }
 
-  async confirmEmailVerification(email: string, code: string): Promise<void> {
-    await this.request("/auth/email-verify/confirm", {
+  async confirmEmailVerification(email: string, code: string): Promise<string> {
+    const response = await this.request<{ message: string; verification_token: string }>("/auth/email-verify/confirm", {
       method: "POST",
       body: JSON.stringify({ email, code }),
     }, false);
+    return response.verification_token;
   }
 
   async login(studentId: string, password: string): Promise<LoginResponse> {
@@ -457,8 +470,18 @@ class ApiClient {
     return { ...response, user };
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const accessToken = this.getAccessToken();
     this.clearTokens();
+    if (!accessToken) return;
+    try {
+      await fetch(`${this.baseUrl}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch {
+      // 로컬 자격 증명은 이미 제거했다. 서버 세션은 만료 시 자동 종료된다.
+    }
   }
 
   async getCurrentUser(): Promise<User> {
@@ -478,7 +501,7 @@ class ApiClient {
         department: data.department,
         phone: data.phone,
         email: data.email,
-        verification_code: data.verificationCode,
+        verification_token: data.verificationToken,
         password: data.password,
         privacy_consent: {
           required_agreed: data.requiredPrivacyConsent ?? false,
@@ -763,7 +786,7 @@ class ApiClient {
   }
 
   getClubPosts(clubId: string): Promise<PostListItem[]> {
-    return this.request<PostListItem[]>(`/clubs/${encodeURIComponent(clubId)}/posts`, {}, false);
+    return this.request<PostListItem[]>(`/clubs/${encodeURIComponent(clubId)}/posts`);
   }
 
   createClubPost(clubId: string, title: string, content: string): Promise<PostDetailResponse> {
@@ -776,8 +799,6 @@ class ApiClient {
   getClubPost(clubId: string, postId: string): Promise<PostDetailResponse> {
     return this.request<PostDetailResponse>(
       `/clubs/${encodeURIComponent(clubId)}/posts/${encodeURIComponent(postId)}`,
-      {},
-      false,
     );
   }
 

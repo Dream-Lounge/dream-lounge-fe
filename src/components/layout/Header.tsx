@@ -14,6 +14,7 @@ import { FEATURES } from "@/config/features";
 
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
+    ...(FEATURES.clubNews ? [{ label: "동아리 뉴스", to: "/news" }] : []),
     { label: "Dream Lounge", to: "/about" },
     { label: "고객센터", to: "/support" },
 ];

@@ -1,7 +1,5 @@
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { RecruitingSection } from "@/components/home/RecruitingSection";
-import { NewsSection } from "@/components/home/NewsSection";
-import { FEATURES } from "@/config/features";
 
 /**
  * 메인 홈 페이지 컴포넌트
@@ -15,9 +13,6 @@ export function Home() {
 
       {/** 모집중인 동아리 및 분과별 섹션 (기존 검색 섹션 대체) */}
       <RecruitingSection />
-
-      {/** 동아리 뉴스 섹션 */}
-      {FEATURES.clubNews && <NewsSection />}
     </div>
   );
 }

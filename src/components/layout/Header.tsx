@@ -14,7 +14,6 @@ import { FEATURES } from "@/config/features";
 
 const NAV_ITEMS = [
     { label: "동아리 찾기", to: "/clubs" },
-    ...(FEATURES.clubNews ? [{ label: "동아리 뉴스", to: "/news" }] : []),
     { label: "Dream Lounge", to: "/about" },
     { label: "고객센터", to: "/support" },
 ];
@@ -25,12 +24,13 @@ const NAV_ITEMS = [
  * - 반응형 디자인을 고려하여 제작되었습니다.
  */
 export function Header() {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, isClubAdmin, logout } = useAuth();
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
+    const [search, setSearch] = useState("");
 
-    const submitSearch = () => {
-        const query = searchTerm.trim();
+    const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const query = search.trim();
         navigate(query ? `/clubs?search=${encodeURIComponent(query)}` : "/clubs");
     };
 
@@ -62,7 +62,10 @@ export function Header() {
                 {/** 검색 + 사용자 (높이 h-9로 네비와 맞춤) */}
                 <div className="shrink-0 flex items-center gap-2 sm:gap-3 h-9">
                     {/** 검색 바 (sm 이상) */}
-                    <div className="hidden sm:block w-[min(100%,14rem)] md:w-56 lg:max-w-sm">
+                    <form
+                        className="hidden sm:block w-[min(100%,14rem)] md:w-56 lg:max-w-sm"
+                        onSubmit={handleSearch}
+                    >
                         <div className="relative h-9">
                             <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
                             <Input
@@ -70,14 +73,11 @@ export function Header() {
                                 id="search-input"
                                 placeholder="동아리 검색"
                                 type="search"
-                                value={searchTerm}
-                                onChange={(event) => setSearchTerm(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter") submitSearch();
-                                }}
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
                             />
                         </div>
-                    </div>
+                    </form>
 
                     {/** 사용자 메뉴 */}
                     <Popover>
@@ -94,12 +94,6 @@ export function Header() {
                                             {user?.name}님 반갑습니다.
                                         </div>
                                         <Separator className="my-1" />
-                                        <Link
-                                            to="/mypage"
-                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                        >
-                                            마이페이지
-                                        </Link>
                                         <Link
                                             to={`/users/${user?.studentId}/applications`}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
@@ -120,14 +114,19 @@ export function Header() {
                                                 내 동아리
                                             </Link>
                                         )}
-                                        <Link
-                                            to="/admin"
-                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                        >
-                                            관리자
-                                        </Link>
+                                        {isClubAdmin && (
+                                            <Link
+                                                to="/admin"
+                                                className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
+                                            >
+                                                관리자
+                                            </Link>
+                                        )}
                                         <button
-                                            onClick={logout}
+                                            onClick={() => {
+                                                logout();
+                                                navigate("/", { replace: true });
+                                            }}
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             로그아웃
@@ -142,30 +141,16 @@ export function Header() {
                                             로그인
                                         </Link>
                                         <Link
-                                            to={user ? `/users/${user.studentId}/applications` : "/users/guest/applications"}
+                                            to="/users/guest/applications"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             지원 내역
                                         </Link>
                                         <Link
-                                            to={user ? `/users/${user.studentId}/drafts` : "/users/guest/drafts"}
+                                            to="/users/guest/drafts"
                                             className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
                                         >
                                             임시저장함
-                                        </Link>
-                                        {FEATURES.myClubs && (
-                                            <Link
-                                                to={user ? `/users/${user.studentId}/clubs` : "/users/0/clubs"}
-                                                className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                            >
-                                                내 동아리
-                                            </Link>
-                                        )}
-                                        <Link
-                                            to="/admin"
-                                            className="w-full px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-sm transition-colors text-left"
-                                        >
-                                            관리자
                                         </Link>
                                     </>
                                 )}

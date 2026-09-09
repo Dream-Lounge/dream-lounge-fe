@@ -37,12 +37,12 @@ export const DEFAULT_INTEREST_TAGS = [
   "재테크",
 ] as const;
 
-function storageKey(studentId: number): string {
+function storageKey(studentId: string | number): string {
   return `${STORAGE_PREFIX}${studentId}`;
 }
 
 /** 저장된 관심사 목록을 반환합니다. 저장된 적이 없으면 null. */
-export function getStoredInterests(studentId: number): string[] | null {
+export function getStoredInterests(studentId: string | number): string[] | null {
   const raw = localStorage.getItem(storageKey(studentId));
   if (raw === null) return null;
   try {
@@ -54,11 +54,11 @@ export function getStoredInterests(studentId: number): string[] | null {
 }
 
 /** 관심사 목록을 저장합니다. (온보딩 완료로 기록됨) */
-export function saveInterests(studentId: number, tags: string[]): void {
+export function saveInterests(studentId: string | number, tags: string[]): void {
   localStorage.setItem(storageKey(studentId), JSON.stringify(tags));
 }
 
 /** 해당 사용자가 온보딩(관심사 선택)을 완료했는지 여부 */
-export function hasCompletedInterests(studentId: number): boolean {
+export function hasCompletedInterests(studentId: string | number): boolean {
   return localStorage.getItem(storageKey(studentId)) !== null;
 }

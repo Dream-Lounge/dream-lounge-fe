@@ -1,6 +1,6 @@
 export interface Application {
   id: string;
-  studentId: number;
+  studentId: string | number;
   clubId: string;
   clubName: string;
   clubImage: string;

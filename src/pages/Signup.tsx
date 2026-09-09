@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 import { validators, ERROR_MESSAGES } from "@/lib/validators";
 import { api } from "@/lib/api";
 
-
 type EmailVerificationStage = "idle" | "pending" | "verified";
 
 /**
@@ -47,12 +46,13 @@ export function Signup() {
     null,
   );
   const [verifyCode, setVerifyCode] = useState("");
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [verifyCodeError, setVerifyCodeError] = useState(false);
 
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [privacyRequired, setPrivacyRequired] = useState(false);
-  const [privacyOptional, setPrivacyOptional] = useState(false);
+  const [requiredPrivacyConsent, setRequiredPrivacyConsent] = useState(false);
+  const [optionalPrivacyConsent, setOptionalPrivacyConsent] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -91,6 +91,7 @@ export function Signup() {
     ) {
       setEmailStage("idle");
       setVerifyCode("");
+      setVerificationToken(null);
       setVerifyCodeError(false);
     }
   }, [schoolEmail, emailStage, emailRequestedFor]);
@@ -110,7 +111,7 @@ export function Signup() {
       passwordMismatch: password !== passwordConfirm,
       emailVerification:
         !schoolEmailInvalid && emailStage !== "verified",
-      privacyConsent: !privacyRequired,
+      privacyConsent: !requiredPrivacyConsent,
     };
 
     setErrors(newErrors);
@@ -129,12 +130,11 @@ export function Signup() {
         name,
         department: selectedDepartment,
         phone,
-        password,
-        passwordConfirm,
         email: schoolEmail.trim(),
-        verificationCode: verifyCode.trim(),
-        privacyConsentRequired: privacyRequired,
-        privacyConsentOptional: privacyOptional,
+        verificationToken: verificationToken ?? "",
+        password,
+        requiredPrivacyConsent,
+        optionalPrivacyConsent,
       });
 
       navigate("/login");
@@ -202,15 +202,18 @@ export function Signup() {
     setErrors((prev) => ({ ...prev, schoolEmail: invalid }));
     if (invalid) return;
 
+    setApiError(null);
     try {
-      await api.sendEmailVerification(schoolEmail.trim());
-      setEmailRequestedFor(schoolEmail.trim());
+      const email = schoolEmail.trim();
+      await api.sendEmailVerification(email);
+      setEmailRequestedFor(email);
       setEmailStage("pending");
       setVerifyCode("");
+      setVerificationToken(null);
       setVerifyCodeError(false);
-      toast.success("인증번호를 발송했습니다.");
+      toast.message("인증번호를 발송했습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "인증번호 발송에 실패했습니다.");
+      setApiError(error instanceof Error ? error.message : "인증번호 발송에 실패했습니다.");
     }
   };
 
@@ -219,23 +222,36 @@ export function Signup() {
       setErrors((prev) => ({ ...prev, schoolEmail: true }));
       return;
     }
+    setApiError(null);
     try {
-      await api.sendEmailVerification(schoolEmail.trim());
-      toast.success("인증번호를 다시 발송했습니다.");
+      const email = schoolEmail.trim();
+      await api.sendEmailVerification(email);
+      setEmailRequestedFor(email);
+      setVerifyCode("");
+      setVerificationToken(null);
+      setVerifyCodeError(false);
+      toast.success("인증번호를 다시 보냈습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "인증번호 발송에 실패했습니다.");
+      setApiError(error instanceof Error ? error.message : "인증번호 재발송에 실패했습니다.");
     }
   };
 
   const handleConfirmVerificationCode = async () => {
+    if (!emailRequestedFor || verifyCode.trim().length !== 6) {
+      setVerifyCodeError(true);
+      return;
+    }
+    setApiError(null);
     try {
-      await api.confirmEmailVerification(schoolEmail.trim(), verifyCode.trim());
+      const token = await api.confirmEmailVerification(emailRequestedFor, verifyCode.trim());
+      setVerificationToken(token);
       setEmailStage("verified");
       setVerifyCodeError(false);
       setErrors((prev) => ({ ...prev, emailVerification: false }));
       toast.success("이메일 인증이 완료되었습니다.");
-    } catch {
+    } catch (error) {
       setVerifyCodeError(true);
+      setApiError(error instanceof Error ? error.message : "이메일 인증에 실패했습니다.");
     }
   };
 
@@ -568,40 +584,57 @@ export function Signup() {
                 )}
               </Field>
 
-              <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-4">
-                <p className="text-sm font-medium text-foreground mb-3">개인정보 수집·이용 동의</p>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={privacyRequired}
-                    onChange={(e) => {
-                      setPrivacyRequired(e.target.checked);
-                      if (e.target.checked && errors.privacyConsent) {
-                        setErrors((prev) => ({ ...prev, privacyConsent: false }));
-                      }
-                    }}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
-                  />
-                  <span className="text-sm leading-snug">
-                    <span className="font-medium">[필수]</span> 개인정보 수집·이용에 동의합니다.
-                    <span className="ml-1 text-xs text-muted-foreground">(이름, 학번, 학과, 연락처, 이메일)</span>
-                  </span>
-                </label>
-                {errors.privacyConsent && (
-                  <p className="text-sm text-destructive pl-7">개인정보 수집·이용 동의(필수)를 체크해주세요.</p>
+              <section
+                className={cn(
+                  "rounded-xl border bg-slate-50 p-4 sm:p-5",
+                  errors.privacyConsent && "border-destructive",
                 )}
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={privacyOptional}
-                    onChange={(e) => setPrivacyOptional(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
-                  />
-                  <span className="text-sm leading-snug">
-                    <span className="font-medium">[선택]</span> 마케팅·홍보 목적의 개인정보 이용에 동의합니다.
-                  </span>
-                </label>
-              </div>
+                aria-labelledby="privacy-consent-title"
+              >
+                <h3
+                  id="privacy-consent-title"
+                  className="text-base font-bold text-foreground"
+                >
+                  개인정보 수집·이용 동의
+                </h3>
+                <div className="mt-4 flex flex-col gap-3">
+                  <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={requiredPrivacyConsent}
+                      onChange={(event) => {
+                        setRequiredPrivacyConsent(event.target.checked);
+                        if (event.target.checked) {
+                          setErrors((prev) => ({ ...prev, privacyConsent: false }));
+                        }
+                      }}
+                      className="mt-1 size-4 shrink-0 rounded border-slate-300 accent-primary"
+                    />
+                    <span>
+                      <strong>[필수] 개인정보 수집·이용에 동의합니다.</strong>{" "}
+                      <span className="text-muted-foreground">
+                        (이름, 학번, 학과, 연락처, 이메일)
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={optionalPrivacyConsent}
+                      onChange={(event) => setOptionalPrivacyConsent(event.target.checked)}
+                      className="mt-1 size-4 shrink-0 rounded border-slate-300 accent-primary"
+                    />
+                    <span>
+                      <strong>[선택] 마케팅·홍보 목적의 개인정보 이용에 동의합니다.</strong>
+                    </span>
+                  </label>
+                </div>
+                {errors.privacyConsent && (
+                  <p className="mt-3 text-sm text-destructive">
+                    필수 개인정보 수집·이용에 동의해주세요.
+                  </p>
+                )}
+              </section>
 
               {apiError && (
                 <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">

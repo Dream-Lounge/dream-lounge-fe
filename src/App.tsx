@@ -19,8 +19,6 @@ import { ClubsPage } from "@/pages/ClubsPage";
 import { ClubNews } from "@/pages/ClubNews";
 import { Support } from "@/pages/Support";
 import { About } from "@/pages/About";
-import { MyPage } from "@/pages/MyPage";
-import { PostDetail } from "@/pages/PostDetail";
 import { NotFound } from "@/pages/error/NotFound";
 import { FEATURES } from "@/config/features";
 
@@ -53,20 +51,16 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/about" element={<About />} />
           <Route path="/club/:id" element={<ClubDetail />} />
-          {FEATURES.clubCommunity && (
-            <Route path="/club/:id/community" element={<ClubCommunity />} />
-          )}
-          {FEATURES.clubCommunity && (
-            <Route path="/club/:id/community/:postId" element={<PostDetail />} />
-          )}
-          {FEATURES.myClubs && (
-            <Route path="/users/:studentId/clubs" element={<MyClubs />} />
-          )}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route path="/mypage" element={<MyPage />} />
+            {FEATURES.clubCommunity && (
+              <Route path="/club/:id/community" element={<ClubCommunity />} />
+            )}
+            {FEATURES.myClubs && (
+              <Route path="/users/:studentId/clubs" element={<MyClubs />} />
+            )}
             <Route path="/club/:id/apply" element={<ClubApplication />} />
             <Route
               path="/applications/:id/edit"

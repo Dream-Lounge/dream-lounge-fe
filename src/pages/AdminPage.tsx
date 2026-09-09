@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -218,6 +219,7 @@ export function AdminPage() {
   const [clubDetailDescription, setClubDetailDescription] = useState("");
   const [newContactValue, setNewContactValue] = useState("");
   const [clubImageUrl, setClubImageUrl] = useState("");
+  const [isRecruiting, setIsRecruiting] = useState(true);
   const [formExists, setFormExists] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
@@ -387,6 +389,7 @@ export function AdminPage() {
         setClubTagline(club.description ?? "");
         setClubDetailDescription(club.description ?? "");
         setClubImageUrl(club.image_url ?? "");
+        setIsRecruiting(club.is_recruiting);
         const savedContactLinks = club.contact_links?.length
           ? club.contact_links
           : [
@@ -762,6 +765,7 @@ export function AdminPage() {
         open_chat_url: firstUrl,
         contact_links: normalizedContactLinks,
         image_url: clubImageUrl || null,
+        is_recruiting: isRecruiting,
         activity_images: activityPhotos.map((photo) => photo.url).filter(Boolean),
         activity_image_details: activityPhotos
           .filter((photo) => photo.url)
@@ -772,6 +776,7 @@ export function AdminPage() {
         tags: tags.map((tag) => ({ tag_key: "custom", tag_value: tag.replace(/^#/, "") })),
       });
       setClubImageUrl(updatedClub.image_url ?? "");
+      setIsRecruiting(updatedClub.is_recruiting);
       const persistedActivityPhotos = updatedClub.activity_image_details?.length
         ? [...updatedClub.activity_image_details]
             .sort((a, b) => a.order_index - b.order_index)
@@ -899,6 +904,29 @@ export function AdminPage() {
                     aria-hidden
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <h3 id="club-recruiting-label" className="text-base font-bold text-slate-800">
+                모집 상태
+              </h3>
+              <div className="mt-3 flex items-center gap-3">
+                <Switch
+                  id="club-recruiting"
+                  aria-labelledby="club-recruiting-label"
+                  checked={isRecruiting}
+                  onCheckedChange={setIsRecruiting}
+                />
+                <label
+                  htmlFor="club-recruiting"
+                  className={cn(
+                    "cursor-pointer text-sm font-semibold",
+                    isRecruiting ? "text-primary" : "text-slate-500",
+                  )}
+                >
+                  {isRecruiting ? "모집중" : "모집 마감"}
+                </label>
               </div>
             </div>
 
@@ -1881,8 +1909,16 @@ export function AdminPage() {
             <div className="relative aspect-[3/1] w-full overflow-hidden rounded-xl bg-slate-100">
               {clubImageUrl ? <img src={clubImageUrl} alt={`${clubName || "동아리"} 배너`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-400"><ImageIcon className="size-7" aria-hidden /><span className="text-xs font-medium">등록된 배너 이미지 없음</span></div>}
               <div className="absolute top-3 right-3">
-                <Badge size="detail" className="bg-primary font-semibold text-primary-foreground">
-                  모집중
+                <Badge
+                  size="detail"
+                  className={cn(
+                    "font-semibold",
+                    isRecruiting
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-slate-500 text-white",
+                  )}
+                >
+                  {isRecruiting ? "모집중" : "모집 마감"}
                 </Badge>
               </div>
             </div>
